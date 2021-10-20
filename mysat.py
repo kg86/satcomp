@@ -1,6 +1,6 @@
 from __future__ import annotations
 from collections import defaultdict
-from typing import Any
+from typing import Any, Callable, Tuple
 from numpy.core.numeric import full
 import sympy
 
@@ -314,6 +314,40 @@ class LogEncoding:
             #     self.consts.append(~self.ds[i])
             # self.consts.append(tpre)
         return res
+
+        # assert isinstance(eq, Or)
+        # nvar = new_var()
+        # literals = [rec(clause) for clause in eq.args]
+        # new_clauses = []
+        # for literal in literals:
+        #     new_clauses.append([nvar, -literal])
+        # new_clause = [-nvar] + literals
+        # new_clauses.append(new_clause)
+        # if debug:
+        #     print(f"{nvar}={Or(*literals)}, cnf={And(*new_clauses)}")
+        # # assert is_nnf(And(*new_clauses))
+        # new_formula.extend(new_clauses)
+        # return nvar
+
+
+def pysat_or(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
+    nvar = new_var()
+    new_clauses = []
+    for x in xs:
+        new_clauses.append(pysat_if(-nvar, -x))
+    new_clause = pysat_if_and_then_or([nvar], xs)
+    new_clauses.append(new_clause)
+    return nvar, new_clauses
+
+
+def pysat_and(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
+    nvar = new_var()
+    new_clauses = []
+    for x in xs:
+        new_clauses.append(pysat_if(nvar, x))
+    new_clause = pysat_if_and_then_or([-nvar], [-x for x in xs])
+    new_clauses.append(new_clause)
+    return nvar, new_clauses
 
 
 def pysat_atleast_one(xs: list[int]) -> list[int]:
