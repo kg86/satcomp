@@ -134,56 +134,8 @@ def sol2refs(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
             if sol[lm.getid(lm.lit.ref, i, j)]:
                 refs[i] = j
                 break
-    # for i in range(n):
-    #     if sol[lm.id(lm.lit.root, i)]:
-    #         refs[i] = -1
-    # for depth in range(n - 1):
-    #     for i in range(n):
-    #         for j in occ[text[i]]:
-    #             if i == j:
-    #                 continue
-    #             key = (lm.lit.link_to, depth, i, j)
-
-    #             if lm.contains(*key) and sol[lm.getid(*key)]:
-    #                 refs[j] = i
     logger.debug(f"refs={refs}")
     return refs
-
-
-# def show_sol(lm: BiDirLiteralManager, sol: list[int], text: bytes):
-#     n = len(text)
-#     occ = make_occa(text)
-#     pinfo = defaultdict(list)
-#     refs = sol2links(lm, sol, text)
-#     for i in range(n):
-#         pinfo[i].append(chr(text[i]))
-#         pinfo[i].append(f"(ref, {refs[i]})")
-#         key = (lm.lit.root, 0, i)
-#         lid = lm.id(*key)
-#         if lit_by_id(sol, lid):
-#             pinfo[i].append(str(key))
-#         fbeg_key = (lm.lit.fbeg, i)
-#         # logger.debug(f"{key}, {lm.id(*key)}, {lit_by_id(sol, lm.id(*key))}")
-#         if lit_by_id(sol, lm.id(*fbeg_key)):
-#             pinfo[i].append(str(fbeg_key))
-#     for depth in range(1):
-#         for i in range(n):
-#             for j in occ[text[i]]:
-#                 if i == j:
-#                     continue
-#                 link_key = (lm.lit.link_to, depth, i, j)
-#                 if lit_by_id(sol, lm.id(*link_key)):
-#                     pinfo[i].append(str(link_key))
-#     for i in range(n):
-#         logger.debug(f"i={i} " + ", ".join(pinfo[i]))
-
-#     # for step in range(n - 1):
-#     #     link = None
-#     #     for (i, j) in pairs(n):
-#     #         lid = lm.id(lm.lit.link_to, step, i, j)
-#     #         lit = lit_by_id(sol, lid)
-#     #         if lit:
-#     #             logger.debug(lm.id2str(lid))
 
 
 def show_sol2(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
@@ -361,204 +313,6 @@ def sol2bidirectional(
     return res
 
 
-# def bidirectional(text: bytes):
-#     n = len(text)
-#     wcnf = WCNF()
-#     lm = BiDirLiteralManager(text)
-#     occ = make_occa(text)
-
-#     # def valid_link(opt):
-#     #     assert len(opt) == 4
-#     #     assert 0 <= opt[1] < n - 1
-#     #     assert 0 <= opt[2], opt[3] < n
-#     #     assert opt[2] != opt[3]
-
-#     # def valid_can_link(opt):
-#     #     assert len(opt) == 3
-#     #     assert 0 <= opt[1] < n - 1
-#     #     assert 0 <= opt[2] < n
-
-#     # lm.validf[lm.lit.link_to] = valid_link
-#     # lm.validf[lm.lit.can_link] = valid_can_link
-#     wcnf.append([lm.sym2id(lm.true)])
-#     wcnf.append([lm.sym2id(lm.false)])
-
-#     # 位置0はfactorの開始位置となる
-#     wcnf.append([lm.id(lm.lit.fbeg, 0)])
-#     # rootとrootの次の位置はfactorの開始位置
-#     for i in range(n):
-#         root0 = lm.id(lm.lit.root, 0, i)
-#         fbeg0 = lm.id(lm.lit.fbeg, i)
-#         wcnf.append([-fbeg0], weight=1)
-#         wcnf.append(pysat_if(root0, fbeg0))
-#         if i + 1 < n:
-#             fbeg1 = lm.id(lm.lit.fbeg, i + 1)
-#             wcnf.append(pysat_if(root0, fbeg1))
-
-#     # 2文字一致する位置リスト
-#     match2 = defaultdict(list)
-#     for i in range(n - 1):
-#         for j in range(i):
-#             if text[i : i + 2] == text[j : j + 2]:
-#                 match2[i].append(j)
-#                 match2[j].append(i)
-#     # i to jへのリンクが有り、i+1 to j+1へリンクが可能であれば、必ずリンクする
-#     for depth in range(n - 1):
-#         for i in range(n - 1):
-#             for j in match2[i]:
-#                 link0 = lm.id(lm.lit.link_to, depth, i, j)
-#                 link1 = lm.id(lm.lit.link_to, depth, i + 1, j + 1)
-#                 rooti1 = lm.id(lm.lit.root, depth, i + 1)
-#                 rootj1 = lm.id(lm.lit.root, depth, j + 1)
-#                 if_body = [link0, -rooti1, rootj1]
-#                 if_then = link1
-#                 wcnf.append(pysat_if_all(if_body, if_then))
-
-#     # factorの開始位置
-#     # i to jへのリンクが有り T[i-1]!=T[j-1]であれば、位置jはfactorの開始位置
-#     # i to jへのリンクが有り T[i-1]==T[j-1]かつi-1 to j-1のリンクがなければ、位置jはfactorの開始位置
-#     # i to jへのリンクが有り i=0なら、位置jはfactorの開始位置
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             for j in occ[text[i]]:
-#                 if i == j or j == 0:
-#                     continue
-#                 link_ij0 = lm.id(lm.lit.link_to, depth, i, j)
-#                 fbeg_j = lm.id(lm.lit.fbeg, j)
-#                 if i == 0 or text[i - 1] != text[j - 1]:
-#                     # logger.debug(f"(depth, i, j)={(depth, i,j)}")
-#                     if_body = link_ij0
-#                     if_then = fbeg_j
-#                     wcnf.append(pysat_if(if_body, if_then))
-#                 else:
-#                     link_ij1 = lm.id(lm.lit.link_to, depth, i - 1, j - 1)
-#                     if_body = [-link_ij1, link_ij0]
-#                     if_then = fbeg_j
-#                     wcnf.append(pysat_if_all(if_body, if_then))
-#                     # else:
-#                     #     if_body = link_ij0
-#                     #     if_then = fbeg_j
-#                     #     wcnf.append(pysat_if(if_body, if_then))
-
-#     # 各文字について、rootが１つ以上必ず存在する
-#     # for pos in occ.values():
-#     #     roots = [lm.id(lm.lit.root, 0, i) for i in pos]
-#     #     wcnf.append(pysat_atleast_one(roots))
-
-#     # root propagation
-#     # 深さdでrootなら深さd+1でもroot
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             root0 = lm.id(lm.lit.root, depth, i)
-#             root1 = lm.id(lm.lit.root, depth + 1, i)
-#             wcnf.append(pysat_if(root0, root1))
-#     # 深さn-1ではすべての位置がrootとなる
-#     for i in range(n):
-#         root = lm.id(lm.lit.root, n - 1, i)
-#         wcnf.append([root], weight=n + 1)
-
-#     # rootでないノードからlinkは出ない
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             root0 = lm.id(lm.lit.root, depth, i)
-#             for j in occ[text[i]]:
-#                 if i == j:
-#                     continue
-#                 link_ij = lm.id(lm.lit.link_to, depth, i, j)
-#                 wcnf.append(pysat_if(-root0, -link_ij))
-
-#     # i to j at depth>1のリンクが有るならば, k to j at depth-1 or
-#     for depth in range(1, n - 1):
-#         for i in range(n):
-#             for j in occ[text[i]]:
-#                 if i == j:
-#                     continue
-#                 link_ij = lm.sym(lm.lit.link_to, depth, i, j)
-#                 links_to_i = [
-#                     lm.sym(lm.lit.link_to, depth - 1, k, i)
-#                     for k in occ[text[i]]
-#                     if k != i and k != j
-#                 ]
-#                 eq = sympy_if(link_ij, atleast_one(links_to_i))
-#                 wcnf.extend(sympy_cnf_pysat(lm.new_id, eq))
-
-#     # 各位置は参照を持つ
-#     ## rootから
-#     ## if link i to j at depth, i at depth+1 is root
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             root1 = lm.getid(lm.lit.root, depth + 1, i)
-#             for j in occ[text[i]]:
-#                 if i == j:
-#                     continue
-#                 link0 = lm.id(lm.lit.link_to, depth, i, j)
-#                 wcnf.append(pysat_if(link0, root1))
-
-#     # for c, pos in occ.items():
-#     #     print(c, pos)
-#     #     for i in pos:
-#     #         root = lm.id(lm.lit.root, 0, i)
-#     #         for j in pos:
-#     #             if i != j:
-#     #                 link_to = lm.id(lm.lit.link_to, 0, i, j)
-#     #                 wcnf.append(pysat_if(link_to, root))
-
-#     # position jへのリンクの数は高々１
-#     # iへのリンクの数+depth=0でのrootは必ず１
-#     for i in range(n):
-#         rooti = lm.getid(lm.lit.root, 0, i)
-#         links_i = [
-#             lm.id(lm.lit.link_to, depth, j, i)
-#             for depth in range(n - 1)
-#             for j in occ[text[i]]
-#             if i != j
-#         ]
-#         wcnf.extend(pysat_equal(lm, 1, links_i + [rooti]))
-#         # wcnf.extend(
-#         #     CardEnc.equals(
-#         #         links_i + [rooti],
-#         #         bound=1,
-#         #         # encoding=EncType.totalizer,
-#         #         encoding=EncType.mtotalizer,
-#         #         top_id=lm.top() + 1,
-#         #     )
-#         # )
-
-#     # 各位置はrootもしくは参照される
-#     # for i in range(n):
-#     #     root = lm.id(lm.lit.root, 0, i)
-#     #     links = [lm.id(lm.lit.link_to, 0, j, i) for j in occ[text[i]] if i != j]
-#     #     wcnf.extend(pysat_equal(lm, 1, links + [root]))
-
-#     # solver runs
-
-#     logger.info(
-#         f"#literals = {lm.top()}, # hard clauses={len(wcnf.hard)}, # of soft clauses={len(wcnf.soft)}"
-#     )
-#     solver = RC2(wcnf)
-#     sol = solver.compute()
-#     assert sol is not None
-#     sold = dict()
-#     for x in sol:
-#         sold[abs(x)] = x > 0
-#     # logger.debug(sol)
-#     def show_lits(lits):
-#         for lit in sorted(lits):
-#             if lit[1]:
-#                 logger.debug(lit[0])
-
-#     show_lits(sol2lits2(lm, sold, lm.lit.link_to))
-#     # show_lits(sol2lits2(lm, sold, lm.lit.root))
-#     show_sol2(lm, sold, text)
-#     factors = sol2bidirectional(lm, sold, text)
-
-#     logger.debug(factors)
-#     logger.debug(f"original={text}")
-#     logger.debug(f"decode={decode(factors).decode('utf8')}")
-#     assert decode(factors) == text
-#     return factors
-
-
 def make_occa2(text: bytes) -> dict[int, list[int]]:
     match2 = defaultdict(list)
     for i in range(len(text) - 1):
@@ -569,241 +323,7 @@ def make_occa2(text: bytes) -> dict[int, list[int]]:
     return match2
 
 
-# def bidirectional2(text: bytes):
-#     logger.info("bidirectional_solver start")
-#     n = len(text)
-#     wcnf = WCNF()
-#     lm = BiDirLiteralManager(text)
-#     occ1 = make_occa(text)
-#     occ2 = make_occa2(text)
-#     lz77fs = lz77.encode(text)
-
-#     wcnf.append([lm.sym2id(lm.true)])
-#     wcnf.append([lm.sym2id(lm.false)])
-
-#     # literalを列挙する
-#     # これ以降literalの新規作成は行わないようにする
-#     lits = [lm.sym2id(lm.true)]
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             for j in occ1[text[i]]:
-#                 if i == j:
-#                     continue
-#                 lits.append(lm.id(lm.lit.link_to, depth, i, j))
-#     for depth in range(n):
-#         for i in range(n):
-#             lits.append(lm.id(lm.lit.root, depth, i))
-#     for i in range(n):
-#         lits.append(lm.id(lm.lit.fbeg, i))
-#     for i in range(n):
-#         for j in occ1[text[i]]:
-#             if i == j:
-#                 continue
-#             lits.append(lm.id(lm.lit.ref, i, j))
-#     wcnf.append(lits)
-
-#     # rootとrootの次の位置はfactorの開始位置
-#     for i in range(n):
-#         root0 = lm.getid(lm.lit.root, 0, i)
-#         fbeg0 = lm.getid(lm.lit.fbeg, i)
-#         wcnf.append([-fbeg0], weight=1)
-#         wcnf.append(pysat_if(root0, fbeg0))
-#         if i + 1 < n:
-#             fbeg1 = lm.getid(lm.lit.fbeg, i + 1)
-#             wcnf.append(pysat_if(root0, fbeg1))
-
-#     # i to jへのリンクが有り、i+1 to j+1へリンクが可能であれば、必ずリンクする
-#     # for depth in range(n - 1):
-#     #     for i in range(n - 1):
-#     #         for j in occ2[i]:
-#     #             link0 = lm.id(lm.lit.link_to, depth, i, j)
-#     #             link1 = lm.id(lm.lit.link_to, depth, i + 1, j + 1)
-#     #             rooti1 = lm.id(lm.lit.root, depth, i + 1)
-#     #             rootj1 = lm.id(lm.lit.root, depth, j + 1)
-#     #             if_body = [link0, -rooti1, rootj1]
-#     #             if_then = link1
-#     #             wcnf.append(pysat_if_all(if_body, if_then))
-
-#     # factorの開始位置
-#     # i to jへのリンクが有り T[i-1]!=T[j-1]であれば、位置jはfactorの開始位置
-#     # i to jへのリンクが有り T[i-1]==T[j-1]かつi-1 to j-1のリンクがなければ、位置jはfactorの開始位置
-#     # i to jへのリンクが有り i=0なら、位置jはfactorの開始位置
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             for j in occ1[text[i]]:
-#                 if i == j or j == 0:
-#                     continue
-#                 link_ij0 = lm.getid(lm.lit.link_to, depth, i, j)
-#                 fbeg_j = lm.getid(lm.lit.fbeg, j)
-#                 # if i == 0 or text[i - 1] != text[j - 1]:
-#                 #     # logger.debug(f"(depth, i, j)={(depth, i,j)}")
-#                 #     if_body = link_ij0
-#                 #     if_then = fbeg_j
-#                 #     wcnf.append(pysat_if(if_body, if_then))
-#                 # else:
-#                 #     link_ij1 = lm.getid(lm.lit.link_to, depth, i - 1, j - 1)
-#                 #     if_body = [-link_ij1, link_ij0]
-#                 #     if_then = fbeg_j
-#                 #     wcnf.append(pysat_if_all(if_body, if_then))
-#     # ref
-#     # linkからrefを決める
-#     # refからfbegを決める
-#     for i in range(n):
-#         for j in occ1[text[i]]:
-#             if i == j:
-#                 continue
-#             assert 0 <= i, j < n
-#             ref0 = lm.getid(lm.lit.ref, j, i)
-#             fbeg = lm.getid(lm.lit.fbeg, j)
-#             for depth in range(n - 1):
-#                 link = lm.getid(lm.lit.link_to, depth, i, j)
-#                 wcnf.append(pysat_if(link, ref0))
-#             # if i == 0 or j == 0:
-#             #     # 位置0はfactorの開始位置
-#             #     # 位置0を参照する位置はfactorの開始位置
-#             #     wcnf.append(pysat_if(ref0, fbeg))
-#             # if i > 0 and j > 0 and text[i - 1] != text[j - 1]:
-#             if i == 0 or j == 0 or text[i - 1] != text[j - 1]:
-#                 wcnf.append(pysat_if(ref0, fbeg))
-#             if i > 0 and j > 0 and text[i - 1] == text[j - 1]:
-#                 ref1 = lm.getid(lm.lit.ref, j - 1, i - 1)
-#                 fbeg0 = lm.getid(lm.lit.fbeg, j)
-#                 if i == 4 and j == 1:
-#                     logger.debug(
-#                         f"(i, j)={(i,j), {lm.id2str(ref1), lm.id2str(ref0), lm.id2str(fbeg0)}}"
-#                     )
-#                 wcnf.append(pysat_if_all([-ref1, ref0], fbeg0))
-#                 wcnf.append(pysat_if_all([ref1, ref0], -fbeg0))
-#     # 参照はたかだか１つ
-#     for i in range(n):
-#         refs = [lm.getid(lm.lit.ref, i, j) for j in occ1[text[i]] if i != j]
-#         wcnf.extend(CardEnc.atmost(refs, bound=1, vpool=lm.vpool))
-
-#     # 各文字について、rootが１つ以上必ず存在する
-#     # for pos in occ.values():
-#     #     roots = [lm.id(lm.lit.root, 0, i) for i in pos]
-#     #     wcnf.append(pysat_atleast_one(roots))
-
-#     # root propagation
-#     # 深さdでrootなら深さd+1でもroot
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             root0 = lm.getid(lm.lit.root, depth, i)
-#             root1 = lm.getid(lm.lit.root, depth + 1, i)
-#             wcnf.append(pysat_if(root0, root1))
-#             wcnf.append(pysat_if(-root1, -root0))
-#     # 深さn-1ではすべての位置がrootとなる
-#     # for i in range(n):
-#     #     root = lm.getid(lm.lit.root, n - 1, i)
-#     #     wcnf.append([root], weight=n + 1)
-
-#     # rootでないノードからlinkは出ない
-#     # for depth in range(n - 1):
-#     #     for i in range(n):
-#     #         root0 = lm.getid(lm.lit.root, depth, i)
-#     #         for j in occ1[text[i]]:
-#     #             if i == j:
-#     #                 continue
-#     #             link_ij = lm.getid(lm.lit.link_to, depth, i, j)
-#     #             wcnf.append(pysat_if(-root0, -link_ij))
-
-#     # i to j at depth>1のリンクが有るならば, k to j at depth-1 のリンクが必ず存在する
-#     for depth in range(1, n - 1):
-#         for i in range(n):
-#             for j in occ1[text[i]]:
-#                 if i == j:
-#                     continue
-#                 # link_ij = lm.sym(lm.lit.link_to, depth, i, j)
-#                 link_ij = lm.id2sym(lm.getid(lm.lit.link_to, depth, i, j))
-#                 links_to_i = [
-#                     lm.id2sym(lm.getid(lm.lit.link_to, depth - 1, k, i))
-#                     for k in occ1[text[i]]
-#                     if k != i and k != j
-#                 ]
-#                 eq = sympy_if(link_ij, atleast_one(links_to_i))
-#                 wcnf.extend(sympy_cnf_pysat(lm.new_id, eq))
-
-#     # 各位置は参照を持つ
-#     ## rootから
-#     ## if link i to j at depth, i at depth+1 is root
-#     for depth in range(n - 1):
-#         for i in range(n):
-#             root0 = lm.getid(lm.lit.root, depth, i)
-#             for j in occ1[text[i]]:
-#                 if i == j:
-#                     continue
-#                 root1 = lm.getid(lm.lit.root, depth + 1, j)
-#                 ref0 = lm.getid(lm.lit.link_to, depth, i, j)
-#                 wcnf.append(pysat_if(ref0, root1))
-#                 wcnf.append(pysat_if(ref0, root0))
-
-#     # for c, pos in occ.items():
-#     #     print(c, pos)
-#     #     for i in pos:
-#     #         root = lm.id(lm.lit.root, 0, i)
-#     #         for j in pos:
-#     #             if i != j:
-#     #                 link_to = lm.id(lm.lit.link_to, 0, i, j)
-#     #                 wcnf.append(pysat_if(link_to, root))
-
-#     # position jへのリンクの数は高々１
-#     # iへのリンクの数+depth=0でのrootは必ず１
-#     for i in range(n):
-#         rooti = lm.getid(lm.lit.root, 0, i)
-#         links_i = [
-#             lm.id(lm.lit.link_to, depth, j, i)
-#             for depth in range(n - 1)
-#             for j in occ1[text[i]]
-#             if i != j
-#         ]
-#         wcnf.extend(pysat_equal(lm, 1, links_i + [rooti]))
-
-#     # 各位置はrootもしくは参照される
-#     # for i in range(n):
-#     #     root = lm.id(lm.lit.root, 0, i)
-#     #     links = [lm.id(lm.lit.link_to, 0, j, i) for j in occ[text[i]] if i != j]
-#     #     wcnf.extend(pysat_equal(lm, 1, links + [root]))
-
-#     # solver runs
-
-#     # assumptions
-#     # opt_fbegs = [0, 5, 9, 12, 14, 15, 20]
-#     # for i in range(n):
-#     #     fbeg = lm.getid(lm.lit.fbeg, i)
-#     #     if i in opt_fbegs:
-#     #         wcnf.append([fbeg])
-#     #     else:
-#     #         wcnf.append([-fbeg])
-
-#     logger.info(
-#         f"#literals = {lm.top()}, # hard clauses={len(wcnf.hard)}, # of soft clauses={len(wcnf.soft)}"
-#     )
-#     solver = RC2(wcnf)
-#     sol = solver.compute()
-#     assert sol is not None
-#     sold = dict()
-#     for x in sol:
-#         sold[abs(x)] = x > 0
-#     # logger.debug(sol)
-#     def show_lits(lits):
-#         for lit in sorted(lits):
-#             if lit[1]:
-#                 logger.debug(lit[0])
-
-#     show_lits(sol2lits2(lm, sold, lm.lit.link_to))
-#     show_lits(sol2lits2(lm, sold, lm.lit.ref))
-#     # show_lits(sol2lits2(lm, sold, lm.lit.root))
-#     show_sol2(lm, sold, text)
-#     factors = sol2bidirectional(lm, sold, text)
-
-#     logger.debug(factors)
-#     logger.debug(f"original={text}")
-#     logger.debug(f"decode={decode(factors).decode('utf8')}")
-#     assert decode(factors) == text
-#     return factors
-
-
-def bidirectional_v3(text: bytes):
+def bidirectional(text: bytes):
     logger.info("bidirectional_solver start")
     n = len(text)
     wcnf = WCNF()
@@ -883,6 +403,8 @@ def bidirectional_v3(text: bytes):
     # i to j at depth>1のリンクが有るならば, k to j at depth-1 のリンクが必ず存在する
     logger.debug("link is connectted, and it forms tree structure")
     for depth in range(1, max_depth - 1):
+        if depth % 30 == 0:
+            logger.debug(f"depth {depth}/{max_depth}")
         for i in range(n):
             for j in occ1[text[i]]:
                 if i == j:
@@ -898,12 +420,15 @@ def bidirectional_v3(text: bytes):
 
                 # if link_ij, then sum(links_to_i) >= 1
                 link_ij = lm.getid(lm.lit.link_to, depth, i, j)
-                links_to_i = [
-                    lm.getid(lm.lit.link_to, depth - 1, k, i)
-                    for k in occ1[text[i]]
-                    if k != i and k != j
-                ]
-                wcnf.append([-link_ij] + links_to_i)
+                dref_i = lm.getid(lm.lit.depth_ref, depth - 1, i)
+                wcnf.append(pysat_if(link_ij, dref_i))
+                # links_to_i = [
+                #     lm.getid(lm.lit.link_to, depth - 1, k, i)
+                #     for k in occ1[text[i]]
+                #     if k != i and k != j
+                # ]
+                # wcnf.append(pysat_if_and_then_or([link_ij], links_to_i))
+                # wcnf.append([-link_ij] + links_to_i)
 
     # rootは唯一つ
     for c in occ1.keys():
@@ -941,7 +466,7 @@ def bidirectional_v3(text: bytes):
     #     wcnf.extend(pysat_equal(lm, 1, links_i + [rooti]))
     # depth refの定義
     for depth in range(max_depth - 1):
-        if depth % 10 == 0:
+        if depth % 30 == 0:
             logger.debug(f"depth {depth}/{max_depth}")
         for i in range(n):
             for j in occ1[text[i]]:
@@ -966,8 +491,12 @@ def bidirectional_v3(text: bytes):
             # wcnf.extend(sympy_cnf_pysat(lm.new_id, sympy_if(dref_i_sym, if_then)))
 
             # if dref_iがfalseなら, iへのすべてのリンクはfalse
-            if_then = And(*[~lm.id2sym(x) for x in links_to_i])
-            wcnf.extend(sympy_cnf_pysat(lm.new_id, sympy_if(~dref_i_sym, if_then)))
+            if_then, clauses = pysat_and(lm.new_id, [-x for x in links_to_i])
+            # logger.debug(clauses)
+            wcnf.extend(clauses)
+            wcnf.append(pysat_if(-dref_i, if_then))
+            # if_then = And(*[~lm.id2sym(x) for x in links_to_i])
+            # wcnf.extend(sympy_cnf_pysat(lm.new_id, sympy_if(~dref_i_sym, if_then)))
     for i in range(n):
         dref_i = [
             lm.getid(lm.lit.depth_ref, depth, i) for depth in range(max_depth - 1)
@@ -1047,7 +576,7 @@ if __name__ == "__main__":
     # text = b"ababab"
     # text = b"abbbaaabb"
     # text = b"abbbaaabb"
-    factors_sol = bidirectional_v3(text)
+    factors_sol = bidirectional(text)
     logger.info(f"runtime: {timer()}")
     # logger.info("solver factors")
     bd_info(factors_sol, text)
