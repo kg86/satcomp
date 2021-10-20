@@ -320,6 +320,10 @@ def pysat_atleast_one(xs: list[int]) -> list[int]:
     return xs
 
 
+def pysat_if_and_then_or(xs: list[int], ys: list[int]) -> list[int]:
+    return [-x for x in xs] + ys
+
+
 def pysat_if_all(xs: list[int], y: int) -> list[int]:
     """
     xs[0] and xs[1] and ... -> y
