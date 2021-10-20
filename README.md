@@ -1,233 +1,66 @@
-# Computing NP-hard Repetitiveness Measures via MAX-SAT
+# Computing Minimum String Attractor
 
-This software repository contains several Python scripts for computing
-- a smallest string attractor,
-- a smallest straight-line program (SLP), and
-- a bidirectional macro scheme (BMS) with the fewest phrases,
-by using the SAT solver pySAT.
+This program computes the minimum string attractor by using SAT solver.
 
-The algorithm is described in the following paper.
+## Install
 
-> Hideo Bannai, Keisuke Goto, Masakazu Ishihata, Shunsuke Kanda, Dominik Köppl, Takaaki Nishimoto:
-Computing NP-hard Repetitiveness Measures via MAX-SAT. In Proc. 30th Annual European Symposium on Algorithms (ESA 2022), pp 12:1--12:16, 2022.
-
-The implementation reported in the ESA 2022 paper is [here](https://github.com/kg86/satcomp/releases/tag/ESA2022).
-The full version of this paper can be found [here](https://arxiv.org/abs/2207.02571).
-
-## Limitations
-
-This software has only been verified to work on Ubuntu.
-
-## Build instructions
-
-1. Install `uv` and `python3.10` on your OS.
-2. Run the following command at the root of this repository.
-
-```console
-uv sync
+```bash
+$ pip install pipenv
+$ pipenv sync
 ```
-This installs package dependencies like `python-sat` locally to the repository, which are needed for running the Python scripts.
-If the command fails, it is likely that you have a different minor version of `Python3` installed.
-
-Once the installation is done,
-you can run the Python scripts using `uv` , such as:
-
-```console
-uv run src/slp_solver.py --str "abracadabra"
-```
-
-## Automatic Evaluation
-
-The script `shell/example_run.sh` evaluates our solutions on files of the Canterbury and Calgary corpus.
-On success, it creates a JSON file `shell/example_run/benchmark.json` storing various statistics of the conducted benchmark.
-Depending on the used operating system, this script might fail.
-For that reasons, we provide a Docker image.
-The starting point for that is the script `shell/docker/gen.sh`,
-which builds a Docker image, and runs the code inside a Docker container.
-On success, it puts a `shell/docker/plot.tar` file back onto the host machine.
-This file contains LaTex code with tikz/pgf instructions,
-which can generate plots for the aforementioned datasets.
 
 ## Usage
 
-Our executables are written in Python, and can be accessed from the `src` directory.
-You can run the programs via the `uv` command as follows for the example string `abracadabra`.
-
-```console
-uv run src/slp_solver.py --str "abracadabra"
-uv run src/attractor_solver.py --algo min --str "abracadabra"
-uv run src/bidirectional_solver.py --str "abracadabra"
-```
-Common to all Python scripts are the input parameters `--str` for giving a string as an input, or `--file` for reading an input file.
-
-
-With parameter `-h` you can obtain the list of all available parameters:
-```console
-uv run src/attractor_solver.py -h
-```
-```
-usage: attractor_solver.py [-h] [--file FILE] [--str STR] [--output OUTPUT] [--contains CONTAINS [CONTAINS ...]] [--size SIZE] [--algo ALGO] [--log_level LOG_LEVEL]
+```bash
+$ pipenv run python minattractor.py -h                                                    master
+usage: minattractor.py [-h] [--file FILE] [--output OUTPUT] [--size SIZE] [--algo ALGO]
 
 Compute Minimum String Attractors.
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --file FILE           input file
-  --str STR             input string
-  --output OUTPUT       output file
-  --contains CONTAINS [CONTAINS ...]
-                        list of text positions that must be included in the string attractor, starting with index 1
-  --size SIZE           exact size or upper bound of attractor size to search
-  --algo ALGO           [min: find a minimum string attractor, exact/atmost: find a string attractor whose size is exact/atmost SIZE]
-  --log_level LOG_LEVEL
-                        log level, DEBUG/INFO/CRITICAL
+  -h, --help       show this help message and exit
+  --file FILE      input file
+  --output OUTPUT  output file
+  --size SIZE      exact size or upper bound of attractor size to search
+  --algo ALGO      [min: find a minimum string attractor, exact/atmost: find a string attractor whose size is exact/atmost SIZE]
 ```
 
-## Output format
-
-The output consists of, omitting some logging information, a line of JSON,
-which stores the following attributes:
-
-- `date`: the date of execution
-- `status`: empty in case of success; otherwise it can be used for error messages
-- `algo`: the name of the used program like `slp-sat` for our solution computing the smallest SLP
-- `file_name`: the name of the input file (empty if `--str` is used)
-- `file_len`: the length of the input (given by either `--str` or `--file`)
-- `time_prep`: the time needed for defining all hard and soft clauses
-- `time_total`: the total running time
-- `sol_nvars`: the number of defined Boolean variables for the solver
-- `sol_nhard`: the number of defined hard clauses
-- `sol_nsoft`: the number of defined soft clauses
-- `sol_navgclause`: the average number of literals a clause contains
-- `sol_ntotalvars`: the size of the CNF, i.e., the sum of all literals in each hard clause
-- `sol_nmaxclause`: the number of literals in the largest clause
-- `factor_size`: the size of the output (i.e., the smallest number of factors of a BMS, the smallest size of a string attractor, the smallest size of a grammar)
-- `factors`: an instance of a valid output attaining the size `factor_size`. This is
-  * for string attractors a list of text positions
-  * for BMS a list of pairs [pos, len] for the direction to copy from `T[pos]` a substring of length `len`. If `pos` is -1, then the factor is a ground phrase and it stores its character in `len`.
-  * for SLP a pair (start symbol, production rules), where the production rules are stored in a list (actually, a dictionary. Furthermore, the encoding is a representation of the partial parse tree and differs, in representation, slightly from a grammar)
-
-	A non-terminal is given by the triplet (`from`, `to`, `char`) such that its expansion is the substring T[`from`..`to`-1].
-	Each production rule has the shape
-      1) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)], or
-      2) (`from`, `to`, `char`): []
-
-    The first case represents an internal node in the partial parse tree, and this node has two children representing non-terminals, each defined again by this triplet of `from`, `to`, and `char` value.
-
-    The second case represents leaves of the partial parse tree.
-    - If T[`from`..`to`-1] is a single character, we know that this non-terminal expands to a single character `char`.
-    - If T[`from`..`to`-1] is longer than 1, the leaf is a non-terminal equivalent to the non-terminal (`char`, `char`+`to`-`from`, None) guaranteed to exist.
-
-Please find below concrete examples in how the output looks like.
-
-## Running Examples
-
-### Computing minimum string attractors with PySAT
-
-We compute a smallest string attractor of size `factor_size = 497` for the dataset `grammar.lsp` having a length of 3721.
+## Running Example
 
 ```bash
-uv run src/attractor_solver.py --file data/cantrbry/grammar.lsp --algo min
-```
-```json
-{"date": "2022-04-19 20:42:38.553750", "status": "", "algo": "attractor-sat", "file_name": "grammar.lsp", "file_len": 3721, "time_prep": 0.08829855918884277, "time_total": 0.38588380813598633, "sol_nvars": 3721, "sol_nhard": 1669, "sol_nsoft": 3721, "sol_navgclause": 17.860395446375076, "sol_ntotalvars": 29809, "sol_nmaxclause": 802, "factor_size": 497, "factors": [2, 5, 8, 10, 12, 14, 20, 22, 25, 28, 31, 34, 38, 44, 50, 51, 54, 57, 59, 62, 65, 69, 72, 77, 80, 85, 95, 99, 108, 114, 118, 121, 125, 133, 139, 143, 155, 161, 170, 181, 183, 186, 194, 201, 226, 239, 255, 261, 268, 276, 289, 294, 298, 307, 310, 313, 326, 341, 346, 356, 358, 378, 411, 429, 440, 449, 454, 472, 482, 489, 510, 523, 535, 546, 591, 596, 628, 650, 675, 677, 688, 707, 719, 725, 741, 759, 766, 785, 796, 805, 829, 845, 854, 872, 913, 917, 930, 941, 959, 981, 1005, 1011, 1018, 1029, 1031, 1051, 1053, 1064, 1082, 1103, 1108, 1118, 1129, 1149, 1167, 1176, 1186, 1189, 1216, 1224, 1234, 1253, 1272, 1275, 1280, 1286, 1292, 1294, 1300, 1305, 1316, 1321, 1327, 1335, 1346, 1354, 1369, 1377, 1400, 1413, 1430, 1432, 1435, 1482, 1498, 1512, 1552, 1573, 1584, 1585, 1587, 1591, 1613, 1629, 1631, 1644, 1670, 1717, 1732, 1738, 1742, 1744, 1746, 1749, 1752, 1754, 1762, 1770, 1776, 1782, 1786, 1788, 1792, 1795, 1798, 1804, 1806, 1809, 1811, 1815, 1819, 1821, 1825, 1831, 1841, 1851, 1857, 1862, 1868, 1874, 1880, 1885, 1891, 1898, 1901, 1904, 1913, 1915, 1918, 1925, 1928, 1933, 1942, 1952, 1956, 1962, 1964, 1966, 1972, 1978, 1983, 2000, 2005, 2013, 2017, 2022, 2028, 2031, 2040, 2044, 2056, 2062, 2074, 2076, 2085, 2089, 2101, 2106, 2109, 2112, 2119, 2123, 2124, 2133, 2143, 2147, 2150, 2153, 2157, 2159, 2165, 2168, 2175, 2177, 2178, 2183, 2190, 2197, 2206, 2212, 2214, 2216, 2220, 2224, 2226, 2228, 2230, 2239, 2243, 2248, 2252, 2256, 2261, 2266, 2277, 2281, 2290, 2295, 2299, 2303, 2309, 2312, 2316, 2321, 2335, 2340, 2344, 2360, 2362, 2366, 2379, 2383, 2386, 2401, 2404, 2418, 2428, 2448, 2457, 2470, 2472, 2491, 2496, 2500, 2516, 2524, 2536, 2540, 2558, 2566, 2569, 2572, 2584, 2587, 2601, 2613, 2622, 2627, 2631, 2639, 2649, 2657, 2664, 2680, 2690, 2693, 2696, 2705, 2718, 2721, 2741, 2745, 2749, 2762, 2766, 2777, 2793, 2797, 2808, 2815, 2825, 2836, 2840, 2844, 2859, 2868, 2871, 2894, 2900, 2902, 2916, 2918, 2921, 2927, 2943, 2964, 2968, 2974, 2990, 2993, 2998, 3004, 3017, 3023, 3026, 3037, 3051, 3056, 3065, 3068, 3070, 3074, 3085, 3092, 3099, 3103, 3115, 3119, 3122, 3131, 3139, 3142, 3147, 3150, 3152, 3159, 3164, 3165, 3177, 3184, 3197, 3202, 3205, 3209, 3216, 3220, 3222, 3230, 3235, 3241, 3249, 3252, 3257, 3259, 3264, 3268, 3271, 3278, 3281, 3288, 3295, 3298, 3301, 3305, 3314, 3319, 3324, 3328, 3335, 3336, 3348, 3360, 3366, 3369, 3374, 3377, 3385, 3391, 3394, 3398, 3405, 3414, 3420, 3422, 3428, 3431, 3440, 3443, 3449, 3454, 3458, 3465, 3467, 3471, 3474, 3477, 3480, 3483, 3486, 3490, 3493, 3500, 3504, 3515, 3519, 3521, 3526, 3530, 3534, 3544, 3550, 3555, 3558, 3560, 3564, 3570, 3573, 3579, 3581, 3585, 3590, 3592, 3594, 3598, 3603, 3606, 3609, 3612, 3624, 3626, 3627, 3631, 3634, 3636, 3639, 3642, 3644, 3645, 3647, 3649, 3651, 3653, 3655, 3662, 3668, 3671, 3676, 3677, 3681, 3685, 3689, 3692, 3694, 3697, 3701, 3705, 3712]}
-```
-
-### Computing minimum bidirectional macroschemes with PySAT
-
-We compute a smallest BMS of size `factor_size = 43` for `cp.html-50` of length 50.
-
-```bash
-uv run src/bidirectional_solver.py --file data/cantrbry_pref/cp.html-50
-```
-```json
-{"date": "2022-04-19 20:51:17.510793", "status": "", "algo": "bidirectional-sat", "file_name": "cp.html-50", "file_len": 50, "time_prep": 0.010410785675048828, "time_total": 0.014687776565551758, "sol_nvars": 1140, "sol_nhard": 3517, "sol_nsoft": 50, "sol_navgclause": 2.3810065396644866, "sol_ntotalvars": 8374, "sol_nmaxclause": 761, "factor_size": 43, "factors": [[-1, 60], [-1, 104], [-1, 101], [-1, 97], [-1, 100], [41, 3], [-1, 116], [-1, 105], [-1, 116], [-1, 108], [-1, 101], [-1, 62], [-1, 67], [-1, 111], [-1, 109], [-1, 112], [-1, 114], [-1, 101], [-1, 115], [-1, 115], [-1, 105], [-1, 111], [-1, 110], [-1, 32], [-1, 80], [-1, 111], [-1, 105], [-1, 110], [-1, 116], [-1, 101], [-1, 114], [-1, 115], [-1, 60], [-1, 47], [8, 6], [-1, 10], [-1, 60], [-1, 77], [-1, 69], [-1, 84], [-1, 65], [-1, 32], [-1, 72]]}
-```
-
-### Computing minimum SLP grammar with PySAT
-
-We compute a smallest SLP grammar of size `factor_size = 68` for `cp.html-50` of length 50.
-
-```console
-uv run src/slp_solver.py --file data/cantrbry_pref/cp.html-50
-```
-```json
-{"date": "2022-04-22 12:57:13.385176", "status": "", "algo": "slp-sat", "file_name": "cp.html-50", "file_len": 50, "time_prep": 0.05773806571960449, "time_total": 0.0611567497253418, "sol_nvars": 2693, "sol_nhard": 28704, "sol_nsoft": 50, "sol_navgclause": 2.7269370122630994, "sol_ntotalvars": 78274, "sol_nmaxclause": 52, "factor_size": 68, "factors": "((0, 50, None), {(49, 50, 72): None, (48, 49, 32): None, (47, 48, 65): None, (46, 47, 84): None, (45, 46, 69): None, (44, 45, 77): None, (42, 44, 6): None, (36, 42, 8): None, (35, 36, 47): None, (34, 35, 60): None, (33, 34, 115): None, (32, 33, 114): None, (31, 32, 101): None, (30, 31, 116): None, (29, 30, 110): None, (28, 29, 105): None, (27, 28, 111): None, (26, 27, 80): None, (25, 26, 32): None, (24, 25, 110): None, (23, 24, 111): None, (22, 23, 105): None, (21, 22, 115): None, (20, 21, 115): None, (19, 20, 101): None, (18, 19, 114): None, (17, 18, 112): None, (16, 17, 109): None, (15, 16, 111): None, (14, 15, 67): None, (13, 14, 62): None, (12, 13, 101): None, (11, 12, 108): None, (10, 11, 116): None, (9, 10, 105): None, (8, 9, 116): None, (8, 14, None): ((8, 13, None), (13, 14, 62)), (7, 8, 60): None, (6, 7, 10): None, (6, 8, None): ((6, 7, 10), (7, 8, 60)), (5, 6, 62): None, (4, 5, 100): None, (3, 4, 97): None, (2, 3, 101): None, (1, 2, 104): None, (0, 1, 60): None, (0, 50, None): ((0, 49, None), (49, 50, 72)), (0, 2, None): ((0, 1, 60), (1, 2, 104)), (0, 3, None): ((0, 2, None), (2, 3, 101)), (0, 4, None): ((0, 3, None), (3, 4, 97)), (0, 5, None): ((0, 4, None), (4, 5, 100)), (0, 6, None): ((0, 5, None), (5, 6, 62)), (0, 8, None): ((0, 6, None), (6, 8, None)), (0, 14, None): ((0, 8, None), (8, 14, None)), (0, 15, None): ((0, 14, None), (14, 15, 67)), (0, 16, None): ((0, 15, None), (15, 16, 111)), (0, 17, None): ((0, 16, None), (16, 17, 109)), (0, 18, None): ((0, 17, None), (17, 18, 112)), (0, 19, None): ((0, 18, None), (18, 19, 114)), (0, 20, None): ((0, 19, None), (19, 20, 101)), (0, 21, None): ((0, 20, None), (20, 21, 115)), (0, 22, None): ((0, 21, None), (21, 22, 115)), (0, 23, None): ((0, 22, None), (22, 23, 105)), (0, 24, None): ((0, 23, None), (23, 24, 111)), (0, 25, None): ((0, 24, None), (24, 25, 110)), (0, 26, None): ((0, 25, None), (25, 26, 32)), (0, 27, None): ((0, 26, None), (26, 27, 80)), (0, 28, None): ((0, 27, None), (27, 28, 111)), (0, 29, None): ((0, 28, None), (28, 29, 105)), (0, 30, None): ((0, 29, None), (29, 30, 110)), (0, 31, None): ((0, 30, None), (30, 31, 116)), (0, 32, None): ((0, 31, None), (31, 32, 101)), (0, 33, None): ((0, 32, None), (32, 33, 114)), (0, 34, None): ((0, 33, None), (33, 34, 115)), (0, 35, None): ((0, 34, None), (34, 35, 60)), (0, 36, None): ((0, 35, None), (35, 36, 47)), (0, 42, None): ((0, 36, None), (36, 42, 8)), (0, 44, None): ((0, 42, None), (42, 44, 6)), (0, 45, None): ((0, 44, None), (44, 45, 77)), (0, 46, None): ((0, 45, None), (45, 46, 69)), (0, 47, None): ((0, 46, None), (46, 47, 84)), (0, 48, None): ((0, 47, None), (47, 48, 65)), (0, 49, None): ((0, 48, None), (48, 49, 32)), (8, 10, None): ((8, 9, 116), (9, 10, 105)), (8, 11, None): ((8, 10, None), (10, 11, 116)), (8, 12, None): ((8, 11, None), (11, 12, 108)), (8, 13, None): ((8, 12, None), (12, 13, 101))})"}
-```
-
-### Evaluation of Test Datasets
-
-We have a collection of test datasets in the folder `data`.
-To measure the output sizes of these datasets, we provide the script `shell/measure_datasets.sh`.
-It requires the program `jq` to be installed, and outputs the JSON file `shell/measure/stats.json` storing for each file the output size of each computed repetitiveness measure.
-If you apply this script on a SLURM cluster, then it batches the experiments. Collecting the final data has then to be done manually (the last lines in the shell script).
-
-### Notes
-
-The code has been tested only on Linux.
-
-## Other Misc. Code
-### Straight-forward algorithms
-
-We include implementations of straight-forward algorithms to compute the smallest string attractor,
-based on the code by Jeffrey Shallit.
-```console
-uv run src/attractor_naive.py --str "abracadabra"
+$ pipenv run python minattractor.py --file data/cantrbry/grammar.lsp --algo min
+text length = 3721
+# of min substrs = 1669
+# of min_substrs whose length < 20 = 1665
+# of min_substrs whose length >= 20 = 4
+the size of minimum attractor = 497
+minimum attractor is [3, 6, 9, 11, 13, 15, 21, 23, 26, 29, 32, 35, 39, 45, 51, 52, 55, 58, 60, 63, 66, 70, 73, 78, 81, 86, 96, 100, 109, 115, 119, 122, 126, 134, 140, 144, 156, 162, 171, 182, 184, 187, 195, 202, 227, 240, 256, 262, 269, 277, 290, 295, 299, 308, 311, 314, 327, 342, 347, 357, 359, 379, 412, 430,
+441, 450, 455, 473, 483, 490, 511, 524, 536, 547, 592, 597, 629, 651, 676, 678, 689, 708, 720, 726, 742, 760, 767, 786, 797, 806, 830, 846, 855, 873, 914, 918, 931, 942, 960, 982, 1006, 1012, 1019, 1030, 1032, 1052, 1054, 1065, 1083, 1104, 1109, 1119, 1130, 1150, 1168, 1177, 1187, 1190, 1217, 1225, 1235, 1254,
+1273, 1276, 1281, 1287, 1293, 1295, 1301, 1306, 1317, 1322, 1328, 1336, 1347, 1355, 1370, 1378, 1401, 1414, 1431, 1433, 1436, 1483, 1499, 1513, 1553, 1574,
+1585, 1586, 1588, 1592, 1614, 1630, 1632, 1645, 1671, 1718, 1733, 1739, 1743, 1745, 1747, 1750, 1753, 1755, 1763, 1771, 1777, 1783, 1787, 1789, 1793, 1796,
+1799, 1805, 1807, 1810, 1812, 1816, 1820, 1822, 1826, 1832, 1842, 1852, 1858, 1863, 1869, 1875, 1881, 1886, 1892, 1899, 1902, 1905, 1914, 1916, 1919, 1926,
+1929, 1934, 1943, 1953, 1957, 1963, 1965, 1967, 1973, 1979, 1984, 2001, 2006, 2014, 2018, 2023, 2029, 2032, 2041, 2045, 2057, 2063, 2075, 2077, 2086, 2090,
+2102, 2107, 2110, 2113, 2120, 2124, 2125, 2134, 2144, 2148, 2151, 2154, 2158, 2160, 2166, 2169, 2176, 2178, 2179, 2184, 2191, 2198, 2207, 2213, 2215, 2217,
+2221, 2225, 2227, 2229, 2231, 2240, 2244, 2249, 2253, 2257, 2262, 2267, 2278, 2282, 2291, 2296, 2300, 2304, 2310, 2313, 2317, 2322, 2336, 2341, 2345, 2361,
+2363, 2367, 2380, 2384, 2387, 2402, 2405, 2419, 2429, 2449, 2458, 2471, 2473, 2492, 2497, 2501, 2517, 2525, 2537, 2541, 2559, 2567, 2570, 2573, 2585, 2588,
+2602, 2614, 2623, 2628, 2632, 2640, 2650, 2658, 2665, 2681, 2691, 2694, 2697, 2706, 2719, 2722, 2742, 2746, 2750, 2763, 2767, 2778, 2794, 2798, 2809, 2816,
+2826, 2837, 2841, 2845, 2860, 2869, 2872, 2895, 2901, 2903, 2917, 2919, 2922, 2928, 2944, 2965, 2969, 2975, 2991, 2994, 2999, 3005, 3018, 3024, 3027, 3038,
+3052, 3057, 3066, 3069, 3071, 3075, 3086, 3093, 3100, 3104, 3116, 3120, 3123, 3132, 3140, 3143, 3148, 3151, 3153, 3160, 3165, 3166, 3178, 3185, 3198, 3203,
+3206, 3210, 3217, 3221, 3223, 3231, 3236, 3242, 3250, 3253, 3258, 3260, 3265, 3269, 3272, 3279, 3282, 3289, 3296, 3299, 3302, 3306, 3315, 3320, 3325, 3329,
+3336, 3337, 3349, 3361, 3367, 3370, 3375, 3378, 3386, 3392, 3395, 3399, 3406, 3415, 3421, 3423, 3429, 3432, 3441, 3444, 3450, 3455, 3459, 3466, 3468, 3472,
+3475, 3478, 3481, 3484, 3487, 3491, 3494, 3501, 3505, 3516, 3520, 3522, 3527, 3531, 3535, 3545, 3551, 3556, 3559, 3561, 3565, 3571, 3574, 3580, 3582, 3586,
+3591, 3593, 3595, 3599, 3604, 3607, 3610, 3613, 3625, 3627, 3628, 3632, 3635, 3637, 3640, 3643, 3645, 3646, 3648, 3650, 3652, 3654, 3656, 3663, 3669, 3672,
+3677, 3678, 3682, 3686, 3690, 3693, 3695, 3698, 3702, 3706, 3713]
+{ '# of min substrs': 1669,
+  '# of minimum attractors': 497,
+  'file name': 'data/cantrbry/grammar.lsp',
+  'minimum attractor': 'omitted',
+  'text length': 3721,
+  'times': { 'clauses': 0.01678943634033203,
+             'min substrs': 0.2576448917388916,
+             'solver run': 0.4122951030731201}}
 ```
 
-For SLP, we have a code that enumerates all full binary trees, and considers them as derivation trees.
-The size of the SLP is determined by minimizing this tree where nodes can reused.
-Two versions: one implemented in Python, and the other in `rust` is included:
+The program computes the minimum string attractor of size 497 for `grammar.lsp` of length 3721.
 
-```console
-uv run src/slp_naive.py --str "abracadabra"
-```
-or
-```console
-cd rust
-cargo run --release -- -t abracadabra
-```
-
-(We have yet to properly format the output)
-
-### Counting Minimal and right-Minimal substrings
-
-We include the code to generate Table 1 in the Appendix of the paper.
-```console
-uv run src/min_substr.py --mode=exp
-```
-
-## License
-
-Licensed under either of
-
- * Apache License, Version 2.0
-   ([LICENSE-APACHE](LICENSE-APACHE.txt) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license
-   ([LICENSE-MIT](LICENSE-MIT.txt) or http://opensource.org/licenses/MIT)
-
-at your option.
-
-Please use the following bibtex when you refer this library from your papers.
-
-```
-@inproceedings{bannai2022computing,
-  title={{Computing NP-Hard Repetitiveness Measures via MAX-SAT}},
-  author={Bannai, Hideo and Goto, Keisuke and Ishihata, Masakazu and Kanda, Shunsuke and K{\"o}ppl, Dominik and Nishimoto, Takaaki},
-  booktitle={30th Annual European Symposium on Algorithms (ESA 2022)},
-  pages={12:1--12:16},
-  year={2022}
-}
-```
-
-## Contribution
-
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
-dual licensed as above, without any additional terms or conditions.
-
-Before you submit your PR, please keep in mind the following practices:
-
-1. Use `tox -e fmt` to format the code.
-1. Use `tox -e lint` to lint and typecheck
-1. Use `tox` to run all tests and lint
+The array index of the attractors begins at 1.
