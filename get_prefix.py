@@ -1,3 +1,5 @@
+# trim the specified length prefix of given file, and save it.
+
 import sys
 import glob
 import os
@@ -21,5 +23,5 @@ def main(in_file, out_file, pref_len: int):
 
 
 if __name__ == "__main__":
-    # main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
-    make_dataset()
+    main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    # make_dataset()

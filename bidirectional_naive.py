@@ -5,7 +5,7 @@ import sys
 import os
 
 
-def bidirectional_hdbn(input_file: str, timeout: float = None) -> BiDirType:
+def bidirectional_naive(input_file: str, timeout: float = None) -> BiDirType:
     input_file = os.path.abspath(input_file)
     cmd = f"cd rustr-master && cargo run --bin optimal_bms -- --input_file {input_file}"
     print(cmd)
@@ -32,7 +32,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    bd = bidirectional_hdbn(args.file)
+    bd = bidirectional_naive(args.file)
     text = open(args.file, "rb").read()
-    bd_info(bd, text)
-    # print(bd)
+    print(bd_info(bd, text))
