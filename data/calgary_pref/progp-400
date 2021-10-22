@@ -1,0 +1,11 @@
+program interval(input,output);
+{dataflow simulator for real interval arithmetic}
+
+const
+	IMem = 500; {number of instructions}
+	DMem = 200;  {number of interval variables allowed}
+	Par = 3;   {max number of paramters for an operator}
+	Maxexp = 10; Minexp = -9;
+	Maxinf =10000; Mininf =-10000; {Tied to values of Minman and Maxman}
+	Maxman = 9999; Minman = -9999; {cannot exceed sqrt(maxint)}
+	Splitma

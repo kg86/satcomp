@@ -1,0 +1,9 @@
+.EQ
+delim $$
+.EN
+.CH "1  WHY SPEECH OUTPUT?"
+.ds RT "Why speech output?
+.ds CX "Principles of computer speech
+.pp
+Speech is our everyday, informal, communication medium.  But although we use
+it a lot, we probably don't assimilate as much information 

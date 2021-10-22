@@ -4,11 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-python-sat = "0.1.7.dev11"
+# python-sat = "0.1.7.dev11"
+python-sat = "*"
 matplotlib = "*"
 sympy = "*"
 
 [dev-packages]
+dataclasses-json = "*"
+joblib = "*"
 
 [requires]
 python_version = "3.9"

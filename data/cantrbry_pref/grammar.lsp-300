@@ -1,0 +1,10 @@
+;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*-
+
+(define-language
+  :grammar
+  '(((S $any) -> (S1 $any))
+    ((S (Compound $s1 $s2)) -> (S1 $s1) (Conjunction) (S1 $s2))
+    
+    ((S1 (Statement $v)) -> (NP $subj) (VP $subj $tense $v))
+    ((S1 (Acknowledge $a)) -> (Acknowledge $a))
+    ((S1 (Command $v

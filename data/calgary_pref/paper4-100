@@ -1,0 +1,11 @@
+.EQ
+delim $$
+.EN
+.ls 1
+.ce
+PROGRAMMING BY EXAMPLE REVISITED
+.sp
+.ce
+by John G. Cleary
+.ce
+Man-Machin
