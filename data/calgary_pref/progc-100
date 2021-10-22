@@ -1,0 +1,7 @@
+/* 
+ * Compress - data compression program 
+ */
+#define	min(a,b)	((a>b) ? b : a)
+
+/*
+ * machine vari

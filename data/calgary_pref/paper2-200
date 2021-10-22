@@ -1,0 +1,24 @@
+.pn 0
+.ls1
+.EQ
+delim $$
+.EN
+.ev1
+.ps-2
+.vs-2
+.ev
+\&
+.sp 10
+.ps+4
+.ce
+COMPUTER (IN)SECURITY \(em
+.sp
+.ce
+INFILTRATING OPEN SYSTEMS
+.ps-4
+.sp4
+.ce
+Ian H. Witten
+.sp2
+.ce4
+Department of Computer Science

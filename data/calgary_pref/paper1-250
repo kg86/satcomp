@@ -1,0 +1,23 @@
+.pn 0
+.ls1
+.EQ
+delim $$
+.EN
+.ev1
+.ps-2
+.vs-2
+.ev
+\&
+.sp 5
+.ps+4
+.ce
+ARITHMETIC CODING FOR DATA COMPRESSION
+.ps-4
+.sp4
+.ce
+Ian H. Witten, Radford M. Neal, and John G. Cleary
+.sp2
+.ce4
+Department of Computer Science
+The University of Calgary
+2500 Unive

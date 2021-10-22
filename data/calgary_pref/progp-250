@@ -1,0 +1,8 @@
+program interval(input,output);
+{dataflow simulator for real interval arithmetic}
+
+const
+	IMem = 500; {number of instructions}
+	DMem = 200;  {number of interval variables allowed}
+	Par = 3;   {max number of paramters for an operator}
+	Maxexp = 10; Mi

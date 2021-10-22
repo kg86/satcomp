@@ -1,0 +1,5 @@
+program interval(input,output);
+{dataflow simulator for real interval arithmetic}
+
+const
+	IMem = 500

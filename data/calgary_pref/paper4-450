@@ -1,0 +1,21 @@
+.EQ
+delim $$
+.EN
+.ls 1
+.ce
+PROGRAMMING BY EXAMPLE REVISITED
+.sp
+.ce
+by John G. Cleary
+.ce
+Man-Machine Systems Laboratory
+.ce
+University of Calgary.
+.sp
+.sh "Introduction"
+.pp
+Efforts to construct an artificial intelligence have relied on
+ever more complex and carefully prepared programs.  While useful in
+themselves, these programs
+are unlikely to be useful in situations where ephemeral and
+low value knowledge must be acquired.  For example a pers
