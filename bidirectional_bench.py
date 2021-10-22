@@ -8,7 +8,7 @@ from joblib import Parallel, delayed
 
 
 from bidirectional import BiDirExp, BiDirType
-from bidirectional_solver import bidirectional, bidirectional_hdbn
+
 
 exp_file_tmplate = "exp_timeout={}.txt"
 
