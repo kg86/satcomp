@@ -2,10 +2,8 @@
 import sys
 import argparse
 import os
-import subprocess
 from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
 import time
-from typing import NewType
 from dataclasses import dataclass
 
 from pysat.card import CardEnc, EncType
@@ -13,7 +11,7 @@ from pysat.formula import WCNF
 from pysat.examples.rc2 import RC2
 
 from mysat import *
-from bidirectional import BiDirType, decode_len, decode, BiDirExp, bd_info
+from bidirectional import BiDirType, decode, BiDirExp, bd_info
 from mytimer import Timer
 import lz77
 

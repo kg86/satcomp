@@ -22,29 +22,6 @@ from pysat.card import IDPool
 debug = False
 
 
-def atleast_one(lits: list[Boolean]) -> Boolean:
-    return Or(*lits)  # type: ignore
-
-
-def atmost_one(lits: list[Boolean]) -> Boolean:
-    n = len(lits)
-    return And(*[~lits[i] | ~lits[j] for i in range(n) for j in range(i + 1, n)])  # type: ignore
-
-
-def exactly_one(lits: list[Boolean]):
-    return And(atleast_one(lits) & atmost_one(lits))
-
-
-# def atleast_one_pysat(lits: list[int]) -> list[list[int]]:
-#     return [lits]
-
-
-# def atmost_one_pysat(lits: list[int]) -> list[list[int]]:
-#     res = []
-#     for i in
-#     return [lits]
-
-
 def half_adder(a: Boolean, b: Boolean) -> list[Boolean, Boolean]:  # type: ignore
     # [carry, sum]
     return a & b, a ^ b  # type: ignore
@@ -90,9 +67,10 @@ class LiteralManager:
         self.true = self.sym("true")
         self.false = self.sym("false")
 
-    def id(self, *opt) -> int:
-        # print("id", opt, opt[0])
-        return self.vpool.id(opt)
+    # def id(self, *obj) -> int:
+    #     return self.vpool.id(obj)
+    def id(self, *obj) -> int:
+        return self.new_id(*obj)
 
     def getid(self, *opt) -> int:
         assert self.contains(*opt)
@@ -121,8 +99,11 @@ class LiteralManager:
         return self.id2sym(self.new_id(name))
         # return Symbol(str(self.new_id(name)))
 
+    def id2obj(self, id: int):
+        return self.vpool.id2obj[id]
+
     def id2str(self, id: int) -> str:
-        return str(self.vpool.id2obj[id])
+        return str(self.id2obj(id))
 
     def sym2str(self, x: Boolean) -> str:
         return self.id2str(self.sym2id(x))
@@ -304,7 +285,7 @@ class LogEncoding:
         # digit
         res = self.lm.new_sym("leq")
         if self.digit < target.digit:
-            eq = tpre | atleast_one(target.ds[self.digit :])
+            eq = tpre | sympy_atleast_one(target.ds[self.digit :])
             self.consts.append(sympy_equal(res, eq))
             # self.consts.append(eq | tpre)
         elif self.digit >= target.digit:
@@ -358,19 +339,25 @@ def pysat_if_and_then_or(xs: list[int], ys: list[int]) -> list[int]:
     return [-x for x in xs] + ys
 
 
-def pysat_if_all(xs: list[int], y: int) -> list[int]:
-    """
-    xs[0] and xs[1] and ... -> y
-    """
-    return [-x for x in xs] + [y]
-
-
 def pysat_if(x: int, y: int) -> list[int]:
     return [-x, y]
 
 
 def pysat_iff(x: int, y: int) -> list[list[int]]:
     return [[-x, y], [x, -y]]
+
+
+def sympy_atleast_one(lits: list[Boolean]) -> Boolean:
+    return Or(*lits)  # type: ignore
+
+
+def sympy_atmost_one(lits: list[Boolean]) -> Boolean:
+    n = len(lits)
+    return And(*[~lits[i] | ~lits[j] for i in range(n) for j in range(i + 1, n)])  # type: ignore
+
+
+def sympy_exactly_one(lits: list[Boolean]):
+    return And(sympy_atleast_one(lits) & sympy_atmost_one(lits))
 
 
 def sympy_if(x, y) -> Boolean:
@@ -494,9 +481,9 @@ def sympy_cnf_pysat(new_var, x: Boolean | Any) -> list[list[int]]:
 
 if __name__ == "__main__":
     w, x, y, z = Symbol("w"), Symbol("x"), Symbol("y"), Symbol("z")
-    print(atleast_one([x & y, y, z]))
-    print(atmost_one([x, y, z]))
-    print(exactly_one([x, y, z]))
+    print(sympy_atleast_one([x & y, y, z]))
+    print(sympy_atmost_one([x, y, z]))
+    print(sympy_exactly_one([x, y, z]))
 
     # adder
     print("adder")

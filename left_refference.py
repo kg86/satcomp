@@ -409,8 +409,8 @@ def min_lref_scheme2(text: bytes):
             lref = lm.id(lm.lit_lref, i, j)
             # fbeg1 must refer to left
             wcnf.append(pysat_if(fbeg1, -nm0))
-            wcnf.append(pysat_if_all([fbeg0, -fbeg1, lref], nm0))
-            wcnf.append(pysat_if_all([nm0, -fbeg1, -fbeg2], nm1))
+            wcnf.append(pysat_if_and_then_or([fbeg0, -fbeg1, lref], [nm0]))
+            wcnf.append(pysat_if_and_then_or([nm0, -fbeg1, -fbeg2], [nm1]))
 
     # each position refers to previous position or itself.
     print(
