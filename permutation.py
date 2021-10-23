@@ -1,4 +1,4 @@
-# permutaitonを作成する
+# Compute permutation by using SAT solver
 
 from collections import namedtuple
 import sys
@@ -96,7 +96,7 @@ def permutation():
     )
     for i in range(n):
         if_body = lm.sym(lm.lit.start, i)
-        if_then = exactly_one(
+        if_then = sympy_exactly_one(
             [lm.sym(lm.lit.link, 0, i, j) for j in range(n) if i != j]
         )
         wcnf.extend(sympy_cnf_pysat(lm.new_id, sympy_if(if_body, if_then)))
