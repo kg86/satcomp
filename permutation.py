@@ -37,7 +37,7 @@ class PermLiteralManager(LiteralManager):
         super().__init__()
 
     def id(self, *opt) -> int:
-        res = super().id(*opt)
+        res = super().new_id(*opt)
         if opt[0] in self.validf:
             self.validf[opt[0]](opt)
         return res

@@ -62,23 +62,18 @@ def sumlits(
 class LiteralManager:
     def __init__(self):
         self.vpool = IDPool()
-        self.syms = dict()
+        self.syms: dict[int, Boolean] = dict()
         self.nvar = defaultdict(int)
         self.true = self.sym("true")
         self.false = self.sym("false")
 
-    # def id(self, *obj) -> int:
-    #     return self.vpool.id(obj)
-    def id(self, *obj) -> int:
-        return self.new_id(*obj)
+    def getid(self, *obj) -> int:
+        assert self.contains(*obj)
+        return self.vpool.obj2id[obj]
+        # return self.vpool.id(opt)
 
-    def getid(self, *opt) -> int:
-        assert self.contains(*opt)
-        return self.vpool.id(opt)
-
-    def contains(self, *opt) -> bool:
-        self.vpool.obj
-        return opt in self.vpool.obj2id
+    def contains(self, *obj) -> bool:
+        return obj in self.vpool.obj2id
 
     def id2sym(self, id: int) -> Boolean:
         if id not in self.syms:
@@ -86,14 +81,17 @@ class LiteralManager:
         return self.syms[id]
 
     def sym(self, *opt) -> Boolean:
-        return self.id2sym(self.id(*opt))
+        return self.id2sym(self.new_id(*opt))
 
     def sym2id(self, x: Boolean) -> int:
         return int(str(x))
 
-    def new_id(self, name: str = "adjlm") -> int:
-        self.nvar[name] += 1
-        return self.id(name, self.nvar[name])
+    def new_id(self, *obj) -> int:
+        if len(obj) == 0:
+            obj = ("adjlm", self.nvar["adjlm"])
+        assert not self.contains(*obj)
+        self.nvar[obj[0]] += 1
+        return self.vpool.id(obj)
 
     def new_sym(self, name: str = "adjlm") -> Boolean:
         return self.id2sym(self.new_id(name))

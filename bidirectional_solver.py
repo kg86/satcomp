@@ -58,38 +58,38 @@ class BiDirLiteralManager(LiteralManager):
         }
         super().__init__()
 
-    def id(self, *opt) -> int:
-        res = super().id(*opt)
-        if opt[0] in self.verifyf:
-            self.verifyf[opt[0]](opt)
+    def new_id(self, *obj) -> int:
+        res = super().new_id(*obj)
+        if len(obj) > 0 and obj[0] in self.verifyf:
+            self.verifyf[obj[0]](obj)
         return res
 
-    def verify_link(self, opt):
-        # opt = (name, depth, form, to)
-        assert len(opt) == 4
-        assert opt[0] == self.lit.link_to
-        assert 0 <= opt[1] < self.max_depth - 1
-        assert 0 <= opt[2], opt[3] < self.n
-        assert opt[2] != opt[3]
-        assert self.text[opt[2]] == self.text[opt[3]]
+    def verify_link(self, obj):
+        # obj = (name, depth, form, to)
+        assert len(obj) == 4
+        assert obj[0] == self.lit.link_to
+        assert 0 <= obj[1] < self.max_depth - 1
+        assert 0 <= obj[2], obj[3] < self.n
+        assert obj[2] != obj[3]
+        assert self.text[obj[2]] == self.text[obj[3]]
 
-    def verify_root(self, opt):
-        # opt = (name, pos)
-        assert len(opt) == 2
-        assert 0 <= opt[1] < self.n
+    def verify_root(self, obj):
+        # obj = (name, pos)
+        assert len(obj) == 2
+        assert 0 <= obj[1] < self.n
 
-    def verify_ref(self, opt):
-        # opt = (name, pos, ref_pos)
-        assert len(opt) == 3
-        assert opt[1] != opt[2]
-        assert 0 <= opt[1], opt[2] < self.n
-        assert self.text[opt[1]] == self.text[opt[2]]
+    def verify_ref(self, obj):
+        # obj = (name, pos, ref_pos)
+        assert len(obj) == 3
+        assert obj[1] != obj[2]
+        assert 0 <= obj[1], obj[2] < self.n
+        assert self.text[obj[1]] == self.text[obj[2]]
 
-    def verify_depth_ref(self, opt):
-        # opt = (name, depth, ref_pos)
-        assert len(opt) == 3
-        assert 0 <= opt[1] < self.max_depth
-        assert 0 <= opt[2] < self.n
+    def verify_depth_ref(self, obj):
+        # obj = (name, depth, ref_pos)
+        assert len(obj) == 3
+        assert 0 <= obj[1] < self.max_depth
+        assert 0 <= obj[2] < self.n
 
 
 def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: list[int]):
@@ -143,11 +143,11 @@ def show_sol(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
             if sol[lm.getid(*key)]:
                 pinfo[i].append(str(key))
         key = (lm.lit.root, i)
-        lid = lm.id(*key)
+        lid = lm.getid(*key)
         if sol[lid]:
             pinfo[i].append(str(key))
         fbeg_key = (lm.lit.fbeg, i)
-        if sol[lm.id(*fbeg_key)]:
+        if sol[lm.getid(*fbeg_key)]:
             pinfo[i].append(str(fbeg_key))
         for key in link_to(i):
             pinfo[i].append(f"{key}")
@@ -163,7 +163,7 @@ def sol2bidirectional(
     n = len(text)
     refs = sol2refs(lm, sol, text)
     for i in range(n):
-        if sol[lm.id(lm.lit.fbeg, i)]:
+        if sol[lm.getid(lm.lit.fbeg, i)]:
             fbegs.append(i)
     fbegs.append(n)
 
@@ -223,16 +223,16 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
     for depth in range(max_depth - 1):
         for i in range(n):
             for j in occ_others(occ1, text, i):
-                lits.append(lm.id(lm.lit.link_to, depth, i, j))
+                lits.append(lm.new_id(lm.lit.link_to, depth, i, j))
     for i in range(n):
-        lits.append(lm.id(lm.lit.fbeg, i))
-        lits.append(lm.id(lm.lit.root, i))
+        lits.append(lm.new_id(lm.lit.fbeg, i))
+        lits.append(lm.new_id(lm.lit.root, i))
     for i in range(n):
         for j in occ_others(occ1, text, i):
-            lits.append(lm.id(lm.lit.ref, i, j))
+            lits.append(lm.new_id(lm.lit.ref, i, j))
     for depth in range(max_depth - 1):
         for i in range(n):
-            lits.append(lm.id(lm.lit.depth_ref, depth, i))
+            lits.append(lm.new_id(lm.lit.depth_ref, depth, i))
     wcnf.append(lits)
 
     # set objective to minimizes the number of factors
@@ -410,11 +410,14 @@ def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> list[list[int
 def bidirectional(text: bytes, exp: BiDirExp = None):
     total_start = time.time()
     lm, wcnf = bidirectional_WCNF(text)
+    for lname in lm.nvar.keys():
+        logger.info(f"# of [{lname}] literals  = {lm.nvar[lname]}")
 
     if exp:
         exp.time_prep = time.time() - total_start
 
-    solver = RC2(wcnf, trim=10, verbose=3)
+    # solver = RC2(wcnf, trim=10, verbose=3)
+    solver = RC2(wcnf)
     sol = solver.compute()
 
     assert sol is not None
@@ -427,9 +430,9 @@ def bidirectional(text: bytes, exp: BiDirExp = None):
             if lit[1]:
                 logger.debug(lit[0])
 
-    show_lits(sol2lits2(lm, sold, lm.lit.link_to))
-    show_lits(sol2lits2(lm, sold, lm.lit.ref))
-    show_lits(sol2lits2(lm, sold, lm.lit.fbeg))
+    # show_lits(sol2lits2(lm, sold, lm.lit.link_to))
+    # show_lits(sol2lits2(lm, sold, lm.lit.ref))
+    # show_lits(sol2lits2(lm, sold, lm.lit.fbeg))
     # show_lits(sol2lits2(lm, sold, lm.lit.root))
     show_sol(lm, sold, text)
     factors = sol2bidirectional(lm, sold, text)
