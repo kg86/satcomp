@@ -38,7 +38,7 @@ class LRLiteralManaer(LiteralManager):
         super().__init__()
 
     def id(self, *opt) -> int:
-        res = super().id(*opt)
+        res = super().new_id(*opt)
         # assertion
         if opt[0] == self.lit_cmatch:
             assert opt[1] > opt[2]
