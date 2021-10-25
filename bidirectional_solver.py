@@ -1,10 +1,12 @@
 # compute the minimum size bidirectional scheme by using SAT solver
+from enum import auto
 import sys
 import argparse
 import os
 from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
 import time
 from dataclasses import dataclass
+from typing import Iterator
 
 from pysat.card import CardEnc, EncType
 from pysat.formula import WCNF
@@ -27,17 +29,39 @@ logger.setLevel(INFO)
 logger.addHandler(handler)
 
 
-@dataclass
-class Literal:
-    """
-    Literals for solver to compute bidirectional scheme
-    """
+# @dataclass
+# class BiDirLiteral:
+#     """
+#     Literals for solver to compute bidirectional scheme
+#     """
 
-    link_to: str = "link_to"
-    root: str = "root"
-    fbeg: str = "factor_begin"
-    ref: str = "ref"
-    depth_ref: str = "depth_ref"
+#     link_to: str = "link_to"
+#     root: str = "root"
+#     fbeg: str = "factor_begin"
+#     ref: str = "ref"
+#     depth_ref: str = "depth_ref"
+
+
+# class BiDirLiteral2(Enum):
+#     true = auto()
+#     false = auto()
+#     auxlit = auto()
+#     link_to = auto()
+#     root = auto()
+#     fbeg = auto()
+#     ref = auto()
+#     depth_ref = auto()
+
+
+class BiDirLiteral(Enum):
+    true = Literal.true
+    false = Literal.false
+    auxlit = Literal.auxlit
+    link_to = auto()
+    root = auto()
+    fbeg = auto()
+    ref = auto()
+    depth_ref = auto()
 
 
 class BiDirLiteralManager(LiteralManager):
@@ -46,20 +70,20 @@ class BiDirLiteralManager(LiteralManager):
     """
 
     def __init__(self, text: bytes, max_depth: int):
-        self.lit = Literal()
         self.text = text
         self.max_depth = max_depth
         self.n = len(self.text)
+        self.lits = BiDirLiteral
         self.verifyf = {
-            self.lit.link_to: self.verify_link,
-            self.lit.root: self.verify_root,
-            self.lit.ref: self.verify_ref,
-            self.lit.depth_ref: self.verify_depth_ref,
+            BiDirLiteral.link_to: self.verify_link,
+            BiDirLiteral.root: self.verify_root,
+            BiDirLiteral.ref: self.verify_ref,
+            BiDirLiteral.depth_ref: self.verify_depth_ref,
         }
-        super().__init__()
+        super().__init__(self.lits)
 
-    def new_id(self, *obj) -> int:
-        res = super().new_id(*obj)
+    def newid(self, *obj) -> int:
+        res = super().newid(*obj)
         if len(obj) > 0 and obj[0] in self.verifyf:
             self.verifyf[obj[0]](obj)
         return res
@@ -67,7 +91,7 @@ class BiDirLiteralManager(LiteralManager):
     def verify_link(self, obj):
         # obj = (name, depth, form, to)
         assert len(obj) == 4
-        assert obj[0] == self.lit.link_to
+        assert obj[0] == self.lits.link_to
         assert 0 <= obj[1] < self.max_depth - 1
         assert 0 <= obj[2], obj[3] < self.n
         assert obj[2] != obj[3]
@@ -114,7 +138,7 @@ def sol2refs(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
         for j in occ[text[i]]:
             if i == j:
                 continue
-            if sol[lm.getid(lm.lit.ref, i, j)]:
+            if sol[lm.getid(lm.lits.ref, i, j)]:
                 refs[i] = j
                 break
     logger.debug(f"refs={refs}")
@@ -132,21 +156,21 @@ def show_sol(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
             for j in occ[text[i]]:
                 if i == j:
                     continue
-                if sol[lm.getid(lm.lit.link_to, depth, i, j)]:
-                    res.append((lm.lit.link_to, depth, i, j))
+                if sol[lm.getid(lm.lits.link_to, depth, i, j)]:
+                    res.append((lm.lits.link_to, depth, i, j))
         return res
 
     for i in range(n):
         pinfo[i].append(chr(text[i]))
         for j in occ_others(occ, text, i):
-            key = (lm.lit.ref, i, j)
+            key = (lm.lits.ref, i, j)
             if sol[lm.getid(*key)]:
                 pinfo[i].append(str(key))
-        key = (lm.lit.root, i)
+        key = (lm.lits.root, i)
         lid = lm.getid(*key)
         if sol[lid]:
             pinfo[i].append(str(key))
-        fbeg_key = (lm.lit.fbeg, i)
+        fbeg_key = (lm.lits.fbeg, i)
         if sol[lm.getid(*fbeg_key)]:
             pinfo[i].append(str(fbeg_key))
         for key in link_to(i):
@@ -163,7 +187,7 @@ def sol2bidirectional(
     n = len(text)
     refs = sol2refs(lm, sol, text)
     for i in range(n):
-        if sol[lm.getid(lm.lit.fbeg, i)]:
+        if sol[lm.getid(lm.lits.fbeg, i)]:
             fbegs.append(i)
     fbegs.append(n)
 
@@ -215,47 +239,49 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
     max_depth = max(len(v) for v in occ1.values())
     lm = BiDirLiteralManager(text, max_depth)
     wcnf = WCNF()
-    wcnf.append([lm.sym2id(lm.true)])
-    wcnf.append([lm.sym2id(lm.false)])
+    wcnf.append([lm.getid(lm.lits.true)])
+    wcnf.append([lm.getid(lm.lits.false)])
+    # wcnf.append([lm.sym2id(lm.true)])
+    # wcnf.append([lm.sym2id(lm.false)])
 
     # register all literals (except auxiliary literals) to literal manager.
     lits = [lm.sym2id(lm.true)]
     for depth in range(max_depth - 1):
         for i in range(n):
             for j in occ_others(occ1, text, i):
-                lits.append(lm.new_id(lm.lit.link_to, depth, i, j))
+                lits.append(lm.newid(lm.lits.link_to, depth, i, j))
     for i in range(n):
-        lits.append(lm.new_id(lm.lit.fbeg, i))
-        lits.append(lm.new_id(lm.lit.root, i))
+        lits.append(lm.newid(lm.lits.fbeg, i))
+        lits.append(lm.newid(lm.lits.root, i))
     for i in range(n):
         for j in occ_others(occ1, text, i):
-            lits.append(lm.new_id(lm.lit.ref, i, j))
+            lits.append(lm.newid(lm.lits.ref, i, j))
     for depth in range(max_depth - 1):
         for i in range(n):
-            lits.append(lm.new_id(lm.lit.depth_ref, depth, i))
+            lits.append(lm.newid(lm.lits.depth_ref, depth, i))
     wcnf.append(lits)
 
     # set objective to minimizes the number of factors
     for i in range(n):
-        fbeg0 = lm.getid(lm.lit.fbeg, i)
+        fbeg0 = lm.getid(lm.lits.fbeg, i)
         wcnf.append([-fbeg0], weight=1)
 
     # if text[i:i+2] occurs once, i+1 is the beginning of a factor
     count = 0
     for i in range(n - 1):
         if len(occ2[text[i : i + 2]]) == 1:
-            fbeg = lm.getid(lm.lit.fbeg, i + 1)
+            fbeg = lm.getid(lm.lits.fbeg, i + 1)
             wcnf.append([fbeg])
             count += 1
     logger.info(f"{count}/{n} occurs only once")
 
     # if i is a root, i+1 is the beginning of a factor
     for i in range(n):
-        root0 = lm.getid(lm.lit.root, i)
-        fbeg0 = lm.getid(lm.lit.fbeg, i)
+        root0 = lm.getid(lm.lits.root, i)
+        fbeg0 = lm.getid(lm.lits.fbeg, i)
         wcnf.append(pysat_if(root0, fbeg0))
         if i + 1 < n:
-            fbeg1 = lm.getid(lm.lit.fbeg, i + 1)
+            fbeg1 = lm.getid(lm.lits.fbeg, i + 1)
             wcnf.append(pysat_if(root0, fbeg1))
 
     # relation between link and ref
@@ -263,10 +289,10 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
     for i in range(n):
         for j in occ_others(occ1, text, i):
             assert 0 <= i, j < n
-            ref_ji0 = lm.getid(lm.lit.ref, j, i)
-            fbeg_j = lm.getid(lm.lit.fbeg, j)
+            ref_ji0 = lm.getid(lm.lits.ref, j, i)
+            fbeg_j = lm.getid(lm.lits.fbeg, j)
             for depth in range(max_depth - 1):
-                link_ij = lm.getid(lm.lit.link_to, depth, i, j)
+                link_ij = lm.getid(lm.lits.link_to, depth, i, j)
                 # if there is link i to j, there is ref j to i.
                 wcnf.append(pysat_if(link_ij, ref_ji0))
             if i == 0 or j == 0 or text[i - 1] != text[j - 1]:
@@ -274,8 +300,8 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
                 # j is the beginning of a factor
                 wcnf.append(pysat_if(ref_ji0, fbeg_j))
             if i > 0 and j > 0 and text[i - 1] == text[j - 1]:
-                ref_ji1 = lm.getid(lm.lit.ref, j - 1, i - 1)
-                fbeg0 = lm.getid(lm.lit.fbeg, j)
+                ref_ji1 = lm.getid(lm.lits.ref, j - 1, i - 1)
+                fbeg0 = lm.getid(lm.lits.fbeg, j)
                 # here, text[i-1:i+1] == text[j-1:j+1]
                 # if ref j-1 does not refer to i-1, j is the beginning of a factor
                 wcnf.append(pysat_if_and_then_or([-ref_ji1, ref_ji0], [fbeg0]))
@@ -290,14 +316,14 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
             logger.debug(f"depth {depth}/{max_depth}")
         for i in range(n):
             for j in occ_others(occ1, text, i):
-                link_ij = lm.getid(lm.lit.link_to, depth, i, j)
-                dref_i = lm.getid(lm.lit.depth_ref, depth - 1, i)
+                link_ij = lm.getid(lm.lits.link_to, depth, i, j)
+                dref_i = lm.getid(lm.lits.depth_ref, depth - 1, i)
                 wcnf.append(pysat_if(link_ij, dref_i))
 
     # roots for each character are only one.
     # this is not necessity, it may cause bad effect.
     for c in occ1.keys():
-        roots = [lm.getid(lm.lit.root, i) for i in occ1[c]]
+        roots = [lm.getid(lm.lits.root, i) for i in occ1[c]]
         wcnf.extend(pysat_equal(lm, 1, roots))
         # wcnf.append(pysat_atleast_one(roots))
 
@@ -305,14 +331,14 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
     # root position does not refer to any positions.
     logger.debug("# of referrences is only one")
     for i in range(n):
-        refs = [lm.getid(lm.lit.ref, i, j) for j in occ1[text[i]] if i != j]
-        root_i = lm.getid(lm.lit.root, i)
+        refs = [lm.getid(lm.lits.ref, i, j) for j in occ1[text[i]] if i != j]
+        root_i = lm.getid(lm.lits.root, i)
         # the number of refferences for each position is at most one.
         wcnf.extend(CardEnc.atmost(refs, bound=1, vpool=lm.vpool))
         # wcnf.extend(pysat_equal(lm, 1, refs + [root_i]))
         for j in occ_others(occ1, text, i):
-            ref_ij = lm.getid(lm.lit.ref, i, j)
-            link_ij = lm.getid(lm.lit.link_to, 0, i, j)
+            ref_ij = lm.getid(lm.lits.ref, i, j)
+            link_ij = lm.getid(lm.lits.link_to, 0, i, j)
             # root position does not refer to any positions.
             wcnf.append(pysat_if(root_i, -ref_ij))
             wcnf.append(pysat_if(-root_i, -link_ij))
@@ -335,30 +361,31 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
             logger.debug(f"depth {depth}/{max_depth}")
         for i in range(n):
             for j in occ_others(occ1, text, i):
-                link_ij = lm.getid(lm.lit.link_to, depth, i, j)
-                dref_j = lm.getid(lm.lit.depth_ref, depth, j)
+                link_ij = lm.getid(lm.lits.link_to, depth, i, j)
+                dref_j = lm.getid(lm.lits.depth_ref, depth, j)
                 # if there exists link to j, dref to j is true
                 wcnf.append(pysat_if(link_ij, dref_j))
             links_to_i = [
-                lm.getid(lm.lit.link_to, depth, j, i) for j in occ1[text[i]] if i != j
+                lm.getid(lm.lits.link_to, depth, j, i) for j in occ1[text[i]] if i != j
             ]
-            dref_i = lm.getid(lm.lit.depth_ref, depth, i)
-            # if dref to i is true, there is (at least one) link to i.
-            wcnf.append(pysat_if_and_then_or([dref_i], links_to_i))
+            if links_to_i:
+                dref_i = lm.getid(lm.lits.depth_ref, depth, i)
+                # if dref to i is true, there is (at least one) link to i.
+                wcnf.append(pysat_if_and_then_or([dref_i], links_to_i))
 
-            # there is at most one link to i at each depth.
-            wcnf.extend(CardEnc.atmost(links_to_i, bound=1, vpool=lm.vpool))
+                # there is at most one link to i at each depth.
+                wcnf.extend(CardEnc.atmost(links_to_i, bound=1, vpool=lm.vpool))
 
-            # if dref to i is false, every link to i is false
-            if_then, clauses = pysat_and(lm.new_id, [-x for x in links_to_i])
-            wcnf.extend(clauses)
-            wcnf.append(pysat_if(-dref_i, if_then))
+                # if dref to i is false, every link to i is false
+                if_then, clauses = pysat_and(lm.newid, [-x for x in links_to_i])
+                wcnf.extend(clauses)
+                wcnf.append(pysat_if(-dref_i, if_then))
     # for each position, there must exist either a root or reference to a position
     for i in range(n):
         dref_i = [
-            lm.getid(lm.lit.depth_ref, depth, i) for depth in range(max_depth - 1)
+            lm.getid(lm.lits.depth_ref, depth, i) for depth in range(max_depth - 1)
         ]
-        root_i = lm.getid(lm.lit.root, i)
+        root_i = lm.getid(lm.lits.root, i)
         wcnf.extend(pysat_equal(lm, 1, dref_i + [root_i]))
 
     logger.info(
@@ -392,17 +419,17 @@ def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> list[list[int
         logger.debug(f"factors[{i}]={f}")
         if f[0] == -1:
             if use[i]:
-                res.append([lm.getid(lm.lit.fbeg, i)])
-                res.append([lm.getid(lm.lit.root, i)])
+                res.append([lm.getid(lm.lits.fbeg, i)])
+                res.append([lm.getid(lm.lits.root, i)])
             i += 1
         else:
             if use[i]:
-                res.append([lm.getid(lm.lit.fbeg, i)])
-                res.append([lm.getid(lm.lit.ref, i, f[0])])
+                res.append([lm.getid(lm.lits.fbeg, i)])
+                res.append([lm.getid(lm.lits.ref, i, f[0])])
             for j in range(1, f[1]):
                 if use[i + j]:
-                    res.append([-lm.getid(lm.lit.fbeg, i + j)])
-                    res.append([lm.getid(lm.lit.ref, i + j, f[0] + j)])
+                    res.append([-lm.getid(lm.lits.fbeg, i + j)])
+                    res.append([lm.getid(lm.lits.ref, i + j, f[0] + j)])
             i += f[1]
     return res
 
@@ -451,6 +478,30 @@ def bidirectional(text: bytes, exp: BiDirExp = None):
     return factors
 
 
+def get_sold(sol):
+    sold = dict()
+    for x in sol:
+        sold[abs(x)] = x > 0
+    return sold
+
+
+def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
+    total_start = time.time()
+    lm, wcnf = bidirectional_WCNF(text)
+    solset = set()
+    overlap = 0
+    with RC2(wcnf) as solver:
+        for sol in solver.enumerate():
+            factors = sol2bidirectional(lm, get_sold(sol), text)
+            key = tuple(factors)
+            if key not in solset:
+                solset.add(key)
+                logger.info(f"overlap solution = {overlap}")
+                yield factors
+            else:
+                overlap += 1
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
     parser.add_argument("--file", type=str, help="input file", default="")
@@ -482,9 +533,16 @@ if __name__ == "__main__":
     exp.bd_factors = factors_sol
     exp.bd_size = len(factors_sol)
     logger.info(f"runtime: {timer()}")
-    # logger.info("solver factors")
     logger.info(bd_info(factors_sol, text))
     print(exp.to_json(ensure_ascii=False))  # type: ignore
-    # assert len(factors_sol) == 4
-
-    # assert len(factors_sol) == len(factors_hdbn)
+    # enumerate
+    # prev = None
+    # for factors_sol in bidirectional_enumerate(text):
+    #     if prev is not None and prev < len(factors_sol):
+    #         break
+    #     prev = len(factors_sol)
+    #     exp.bd_factors = factors_sol
+    #     exp.bd_size = len(factors_sol)
+    #     logger.info(f"runtime: {timer()}")
+    #     logger.info(bd_info(factors_sol, text))
+    #     print(exp.to_json(ensure_ascii=False))  # type: ignore

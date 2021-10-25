@@ -120,11 +120,10 @@ def attractor_of_size(text: bytes, k: int, op: str):
     return res
 
 
-def min_attractor(text: bytes):
+def min_attractor_WCNF(text: bytes, timer: Timer):
     res = dict()
     n = len(text)
     res["text length"] = n
-    timer = Timer()
 
     # run fast
     sa = stralgo.make_sa_MM(text)
@@ -150,7 +149,43 @@ def min_attractor(text: bytes):
         # soft clause
         wcnf.append([-(i + 1)], weight=1)
     timer.record("clauses")
+    return wcnf
+
+
+def min_attractor(text: bytes):
+    # res = dict()
+    # n = len(text)
+    # res["text length"] = n
+    # timer = Timer()
+
+    # # run fast
+    # sa = stralgo.make_sa_MM(text)
+    # isa = stralgo.make_isa(sa)
+    # lcp = stralgo.make_lcpa_kasai(text, sa, isa)
+    # min_substrs = stralgo.minimum_substr_sa(text, sa, isa, lcp)
+    # # timer.record("string indice")
+    # print(f"text length = {len(text)}")
+    # print(f"# of min substrs = {len(min_substrs)}")
+
+    # min_substr_hist(min_substrs)
+    # timer.record("min substrs")
+    # res["# of min substrs"] = len(min_substrs)
+
+    # # run solver
+    # wcnf = WCNF()
+    # for b, l in min_substrs:
+    #     lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
+    #     occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
+    #     # hard clause
+    #     wcnf.append(list(set(occ + i + 1 for occ in occs for i in range(l))))
+    # for i in range(n):
+    #     # soft clause
+    #     wcnf.append([-(i + 1)], weight=1)
+    # timer.record("clauses")
     # rc2 = RC2(wcnf, solver="g3")
+    res = dict()
+    timer = Timer()
+    wcnf = min_attractor_WCNF(text, timer)
     rc2 = RC2(wcnf)
     sol = rc2.compute()
     assert sol is not None
