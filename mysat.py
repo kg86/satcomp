@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections import defaultdict
+from enum import Enum
 from typing import Any, Callable, Tuple
 from numpy.core.numeric import full
 import sympy
@@ -59,18 +60,34 @@ def sumlits(
     return res
 
 
+class Literal(Enum):
+    true = 1
+    false = 2
+    auxlit = 3
+
+
 class LiteralManager:
-    def __init__(self):
+    def __init__(self, lits=Literal):
+        self.lits = lits
+        # self.lits = Literal
         self.vpool = IDPool()
         self.syms: dict[int, Boolean] = dict()
         self.nvar = defaultdict(int)
-        self.true = self.sym("true")
-        self.false = self.sym("false")
+        self.true = self.newsym(self.lits.true)
+        self.false = self.newsym(self.lits.false)
+
+    def newid(self, *obj) -> int:
+        if len(obj) == 0:
+            # obj = ("auxlit", self.nvar["auxlit"])
+            obj = (self.lits.auxlit, self.nvar[self.lits.auxlit])
+        assert obj[0] in self.lits
+        assert not self.contains(*obj)
+        self.nvar[obj[0]] += 1
+        return self.vpool.id(obj)
 
     def getid(self, *obj) -> int:
         assert self.contains(*obj)
         return self.vpool.obj2id[obj]
-        # return self.vpool.id(opt)
 
     def contains(self, *obj) -> bool:
         return obj in self.vpool.obj2id
@@ -80,22 +97,14 @@ class LiteralManager:
             self.syms[id] = Symbol(str(id))
         return self.syms[id]
 
-    def sym(self, *opt) -> Boolean:
-        return self.id2sym(self.new_id(*opt))
-
     def sym2id(self, x: Boolean) -> int:
         return int(str(x))
 
-    def new_id(self, *obj) -> int:
-        if len(obj) == 0:
-            obj = ("adjlm", self.nvar["adjlm"])
-        assert not self.contains(*obj)
-        self.nvar[obj[0]] += 1
-        return self.vpool.id(obj)
+    def getsym(self, *opt) -> Boolean:
+        return self.id2sym(self.getid(*opt))
 
-    def new_sym(self, name: str = "adjlm") -> Boolean:
-        return self.id2sym(self.new_id(name))
-        # return Symbol(str(self.new_id(name)))
+    def newsym(self, *obj) -> Boolean:
+        return self.id2sym(self.newid(*obj))
 
     def id2obj(self, id: int):
         return self.vpool.id2obj[id]
@@ -126,7 +135,7 @@ class LogEncoding:
         self.consts = consts
         self.assumps = assumps
         self.digit = digit
-        self.ds = [Symbol(str(self.lm.new_id("LE"))) for _ in range(self.digit)]
+        self.ds = [Symbol(str(self.lm.newid("LE"))) for _ in range(self.digit)]
 
     def __str__(self):
         return str(list(reversed(self.ds)))
@@ -265,23 +274,23 @@ class LogEncoding:
             zero = And()
             for i in range(self.digit):
                 zero &= sympy_equal(self.ds[i], self.lm.false)
-            nv = self.lm.new_sym("leq")
+            nv = self.lm.newsym("leq")
             self.consts.append(sympy_equal(nv, zero))
             return nv
             # return self.lm.false
 
-        tpre = self.lm.new_sym("leq")
+        tpre = self.lm.newsym("leq")
         self.consts.append(sympy_equal(tpre, leq_(self.ds[0], target.ds[0])))
         for i in range(1, min(self.digit, target.digit)):
             eq = lt(self.ds[i], target.ds[i]) | (
                 sympy_equal(self.ds[i], target.ds[i]) & tpre
             )
-            tpre = self.lm.new_sym("leq")
+            tpre = self.lm.newsym("leq")
             # print("const", sympy_equal(tpre, eq))
             self.consts.append(sympy_equal(tpre, eq))
 
         # digit
-        res = self.lm.new_sym("leq")
+        res = self.lm.newsym("leq")
         if self.digit < target.digit:
             eq = tpre | sympy_atleast_one(target.ds[self.digit :])
             self.consts.append(sympy_equal(res, eq))

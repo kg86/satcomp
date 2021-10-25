@@ -37,7 +37,7 @@ class PermLiteralManager(LiteralManager):
         super().__init__()
 
     def id(self, *opt) -> int:
-        res = super().new_id(*opt)
+        res = super().newid(*opt)
         if opt[0] in self.validf:
             self.validf[opt[0]](opt)
         return res
@@ -95,11 +95,11 @@ def permutation():
         CardEnc.equals(starts, bound=1, encoding=EncType.pairwise, top_id=lm.top() + 1)
     )
     for i in range(n):
-        if_body = lm.sym(lm.lit.start, i)
+        if_body = lm.getsym(lm.lit.start, i)
         if_then = sympy_exactly_one(
-            [lm.sym(lm.lit.link, 0, i, j) for j in range(n) if i != j]
+            [lm.getsym(lm.lit.link, 0, i, j) for j in range(n) if i != j]
         )
-        wcnf.extend(sympy_cnf_pysat(lm.new_id, sympy_if(if_body, if_then)))
+        wcnf.extend(sympy_cnf_pysat(lm.newid, sympy_if(if_body, if_then)))
         wcnf.append(pysat_if(lm.id(lm.lit.start, i), -lm.id(lm.lit.can_link, 0, i)))
 
     for step in range(n - 2):
