@@ -8,10 +8,10 @@ name = "pypi"
 python-sat = "*"
 matplotlib = "*"
 sympy = "*"
-
-[dev-packages]
 dataclasses-json = "*"
 joblib = "*"
+
+[dev-packages]
 
 [requires]
 python_version = "3.9"
