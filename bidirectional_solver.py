@@ -443,8 +443,8 @@ def bidirectional(text: bytes, exp: BiDirExp = None):
     if exp:
         exp.time_prep = time.time() - total_start
 
-    # solver = RC2(wcnf, trim=10, verbose=3)
-    solver = RC2(wcnf)
+    solver = RC2(wcnf, verbose=3)
+    # solver = RC2(wcnf)
     sol = solver.compute()
 
     assert sol is not None
