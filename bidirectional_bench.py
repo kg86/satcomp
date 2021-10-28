@@ -25,13 +25,16 @@ algos = ["solver", "naive"]
 
 def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
     input_file = os.path.abspath(input_file)
-    cmd = f"cd rustr-master && cargo run --bin optimal_bms -- --input_file {input_file}"
+    current_dir = os.path.abspath(".")
+    os.chdir("rustr-master")
+    cmd = ["cargo", "run", "--bin", "optimal_bms", "--", "--input_file", input_file]
+    # cmd = f"cd rustr-master && cargo run --bin optimal_bms -- --input_file {input_file}"
     print(cmd)
     start = time.time()
     out = None
     try:
         out = subprocess.check_output(
-            cmd, shell=True, timeout=timeout, stderr=subprocess.DEVNULL
+            cmd, shell=False, timeout=timeout, stderr=subprocess.DEVNULL
         )
         status = "complete"
     except subprocess.TimeoutExpired:
@@ -39,6 +42,7 @@ def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
         status = "timeout"
     except Exception:
         status = "error"
+    os.chdir(current_dir)
 
     print(f"status: {status}")
     if status == "complete":
@@ -68,15 +72,12 @@ def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
 
 
 def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
-    cmd = f"pipenv run python bidirectional_solver.py  --file {input_file}"
+    cmd = ["pipenv", "run", "python", "bidirectional_solver.py", "--file", input_file]
     print(cmd)
     start = time.time()
     exp = None
     try:
-        out = subprocess.check_output(cmd, shell=True, timeout=timeout)
-        # out = subprocess.check_output(
-        #     cmd, shell=True, stderr=subprocess.DEVNULL, timeout=timeout
-        # )
+        out = subprocess.check_output(cmd, shell=False, timeout=timeout)
         last1 = out.rfind(b"\n")
         last2 = out.rfind(b"\n", 0, last1)
         print(out[last2 + 1 : last1])

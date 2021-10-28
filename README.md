@@ -3,7 +3,6 @@
 This program computes the minimum string attractor by using SAT solver.
 
 ## Install
-
 ```bash
 $ pip install pipenv
 $ pipenv sync
