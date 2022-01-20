@@ -1,7 +1,9 @@
+import argparse
 import datetime
 import subprocess
 import glob
 import os
+import sys
 from dataclasses import dataclass
 import time
 from joblib import Parallel, delayed
@@ -9,8 +11,6 @@ from joblib import Parallel, delayed
 
 from bidirectional import BiDirExp, BiDirType
 
-
-exp_file_tmplate = "exp_timeout={}.txt"
 
 files = (
     glob.glob("data/calgary_pref/*-50")
@@ -28,7 +28,6 @@ def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
     current_dir = os.path.abspath(".")
     os.chdir("rustr-master")
     cmd = ["cargo", "run", "--bin", "optimal_bms", "--", "--input_file", input_file]
-    # cmd = f"cd rustr-master && cargo run --bin optimal_bms -- --input_file {input_file}"
     print(cmd)
     start = time.time()
     out = None
@@ -111,7 +110,7 @@ def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
     return exp
 
 
-def benchmark_program(timeout, algo, file):
+def benchmark_program(timeout, algo, file, out_file):
     """
     runs program with given setting (timeout, algo, file).
     """
@@ -121,14 +120,15 @@ def benchmark_program(timeout, algo, file):
         exp = run_solver(file, timeout)
     else:
         assert False
-    with open(exp_file_tmplate.format(timeout), "a") as f:
+    with open(out_file, "a") as f:
         f.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
 
 
-def benchmark_single(timeout, algos, files):
+def benchmark_single(timeout, algos, files, out_file):
     """
     runs program with single process.
     """
+    f = open(out_file, "w")
     for file in files:
         for algo in algos:
             if algo == "naive":
@@ -137,28 +137,49 @@ def benchmark_single(timeout, algos, files):
                 exp = run_solver(file, timeout)
             else:
                 assert False
-            out.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
+            f.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
 
 
-def benchmark_mul(timeout, algos, files):
+def benchmark_mul(timeout, algos, files, out_file, n_jobs):
     """
     runs programs with multiple processes.
     """
-    exp_file = exp_file_tmplate.format(timeout)
-    if os.path.exists(exp_file):
-        os.remove(exp_file)
-    result = Parallel(n_jobs=4)(
+    if os.path.exists(out_file):
+        os.remove(out_file)
+    result = Parallel(n_jobs=n_jobs)(
         [
-            delayed(benchmark_program)(timeout, algo, file)
+            delayed(benchmark_program)(timeout, algo, file, out_file)
             for file in files
             for algo in algos
         ]
     )
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Benchmark for algorithms computing the smallest bidirectional scheme"
+    )
+    parser.add_argument(
+        "--timeout",
+        type=int,
+        help="timeout (sec). If 0 is set, the proguram does not timeout.",
+        default=60,
+    )
+    parser.add_argument("--output", type=str, help="output file", default="")
+    parser.add_argument("--n_jobs", type=int, help="number of jobs", default=2)
+
+    args = parser.parse_args()
+    if args.output == "" or args.timeout < 0:
+        parser.print_help()
+        sys.exit()
+    if args.timeout == 0:
+        args.timeout = None
+    return args
+
+
 def main():
-    timeout = 60
-    benchmark_mul(timeout, algos, files)
+    args = parse_args()
+    benchmark_mul(args.timeout, algos, files, args.output, args.n_jobs)
     # benchmark_single(timeout, algos, files)
 
 
