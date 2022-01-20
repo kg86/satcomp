@@ -2,7 +2,6 @@
 
 import argparse
 import sys
-import time
 import pprint
 import json
 
@@ -19,8 +18,21 @@ import matplotlib
 
 # prevend appearing gui window
 matplotlib.use("Agg")
+from typing import Optional, Dict
 
 from mytimer import Timer
+
+from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
+
+logger = getLogger(__name__)
+handler = StreamHandler()
+handler.setLevel(DEBUG)
+FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
+formatter = Formatter(FORMAT)
+handler.setFormatter(formatter)
+# logger.setLevel(DEBUG)
+logger.setLevel(INFO)
+logger.addHandler(handler)
 
 
 def min_substr_hist(min_substrs):
@@ -40,12 +52,18 @@ def min_substr_hist(min_substrs):
     fig.savefig("./out/substrs.png")
 
 
-def attractor_of_size(text: bytes, k: int, op: str):
+def attractor_of_size(
+    text: bytes, k: int, op: str, exp: Optional[Dict] = None
+) -> list[int]:
     """
-    verify if there is an attractor of size `k` for `text`.
+    Compute string attractor of the specified size (1-indexed)
+
+    `k`: attractor size
+    `op`: `exact` or `atmost`.
+        `exact` computes string attractor whose size is `k`.
+        `atmost` computes string attractor whose size is at most `k`.
     """
     assert op in ["exact", "atmost"]
-    res = dict()
     n = len(text)
     timer = Timer()
 
@@ -102,22 +120,24 @@ def attractor_of_size(text: bytes, k: int, op: str):
     solver.append_formula(cnf.clauses)
 
     print("\nsolver runs")
+    attractor = []
     if solver.solve():
         sol = solver.get_model()
         assert sol is not None
         attractor = list(filter(lambda x: 0 < x <= n, sol))
-        res["# of attractors"] = len(attractor)
-        res["attractor"] = attractor
         # print(attractor)
         print(f"#attractor = {len(attractor)}")
     timer.record("solver run")
-    res["text length"] = n
-    res["# of string attractors"] = k
-    res["# of min substrs"] = len(min_substrs)
-    res["# of clauses"] = len(cnf.clauses)
-    res["# of variables"] = cnf.nv
-    res["times"] = timer.times
-    return res
+    if exp:
+        exp["# of attractors"] = len(attractor)
+        exp["attractor"] = attractor
+        exp["text length"] = n
+        exp["# of string attractors"] = k
+        exp["# of min substrs"] = len(min_substrs)
+        exp["# of clauses"] = len(cnf.clauses)
+        exp["# of variables"] = cnf.nv
+        exp["times"] = timer.times
+    return attractor
 
 
 def min_attractor_WCNF(text: bytes, timer: Timer):
@@ -152,38 +172,10 @@ def min_attractor_WCNF(text: bytes, timer: Timer):
     return wcnf
 
 
-def min_attractor(text: bytes):
-    # res = dict()
-    # n = len(text)
-    # res["text length"] = n
-    # timer = Timer()
-
-    # # run fast
-    # sa = stralgo.make_sa_MM(text)
-    # isa = stralgo.make_isa(sa)
-    # lcp = stralgo.make_lcpa_kasai(text, sa, isa)
-    # min_substrs = stralgo.minimum_substr_sa(text, sa, isa, lcp)
-    # # timer.record("string indice")
-    # print(f"text length = {len(text)}")
-    # print(f"# of min substrs = {len(min_substrs)}")
-
-    # min_substr_hist(min_substrs)
-    # timer.record("min substrs")
-    # res["# of min substrs"] = len(min_substrs)
-
-    # # run solver
-    # wcnf = WCNF()
-    # for b, l in min_substrs:
-    #     lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
-    #     occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
-    #     # hard clause
-    #     wcnf.append(list(set(occ + i + 1 for occ in occs for i in range(l))))
-    # for i in range(n):
-    #     # soft clause
-    #     wcnf.append([-(i + 1)], weight=1)
-    # timer.record("clauses")
-    # rc2 = RC2(wcnf, solver="g3")
-    res = dict()
+def min_attractor(text: bytes, exp=None) -> list[int]:
+    """
+    Compute minimum string attractor (1-indexed)
+    """
     timer = Timer()
     wcnf = min_attractor_WCNF(text, timer)
     rc2 = RC2(wcnf)
@@ -192,17 +184,19 @@ def min_attractor(text: bytes):
     timer.record("solver run")
 
     attractor = list(filter(lambda x: x > 0, sol))
-    print(f"the size of minimum attractor = {len(attractor)}")
-    print("minimum attractor is", attractor)
-    res["times"] = timer.times
-    res["# of minimum attractors"] = len(attractor)
-    res["minimum attractor"] = attractor
-    return res
+    logger.info(f"the size of minimum attractor = {len(attractor)}")
+    logger.info("minimum attractor is", attractor)
+    if exp:
+        exp["times"] = timer.times
+        exp["# of minimum attractors"] = len(attractor)
+        exp["minimum attractor"] = attractor
+    return attractor
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Compute Minimum String Attractors.")
     parser.add_argument("--file", type=str, help="input file", default="")
+    parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument(
         "--size",
@@ -217,7 +211,7 @@ def parse_args():
     )
     args = parser.parse_args()
     if (
-        args.file == ""
+        (args.file == "" and args.str == "")
         or args.algo not in ["exact", "atmost", "min"]
         or (args.algo in ["exact", "atmost"] and args.size <= 0)
     ):
@@ -229,19 +223,24 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    exp = dict()
 
-    text = open(args.file, "rb").read()
+    if args.str != "":
+        text = args.str
+    else:
+        text = open(args.file, "rb").read()
     if args.algo in ["exact", "atmost"]:
-        res = attractor_of_size(text, args.size, args.algo)
+        attractor = attractor_of_size(text, args.size, args.algo, exp)
     elif args.algo == "min":
-        res = min_attractor(text)
+        attractor = min_attractor(text, exp)
     else:
         assert False
-    res["file name"] = args.file
+    exp["file name"] = args.file
 
     if args.output == "":
-        res["minimum attractor"] = "omitted"
-        pp.pprint(res)
+        # exp["minimum attractor"] = "omitted"
+        # pp.pprint(f"attractor={attractor}")
+        pp.pprint(exp)
     else:
         with open(args.output, "w") as f:
-            json.dump(res, f, ensure_ascii=False)
+            json.dump(exp, f, ensure_ascii=False)

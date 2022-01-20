@@ -434,7 +434,7 @@ def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> list[list[int
     return res
 
 
-def bidirectional(text: bytes, exp: BiDirExp = None):
+def bidirectional(text: bytes, exp: BiDirExp = None) -> BiDirType:
     total_start = time.time()
     lm, wcnf = bidirectional_WCNF(text)
     for lname in lm.nvar.keys():

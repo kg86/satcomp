@@ -1,3 +1,6 @@
+from typing import AnyStr
+
+
 def make_sa_MM(text):
     """
     Make sufix array by Manber and Myers algorithm.
@@ -138,6 +141,15 @@ def num_occ(text, pattern):
     return number of occ of pattern in text.
     """
     return len(occ_pos_naive(text, pattern))
+
+
+def substr(text: AnyStr) -> list[AnyStr]:
+    n = len(text)
+    res = []
+    for i in range(n):
+        for j in range(i, n):
+            res.append(text[i : j + 1])
+    return res
 
 
 def minimum_substr_naive(text):

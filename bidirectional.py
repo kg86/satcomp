@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import NewType
 
+# BiDirType = [[p0, l0], [p1, l1], ...] represents the string T=T[p0:(p0+l0)]T[p1:(p1+l1)]...
 BiDirType = NewType("BiDirType", list[tuple[int, int]])
 
 
