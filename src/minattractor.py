@@ -35,16 +35,15 @@ logger.setLevel(INFO)
 logger.addHandler(handler)
 
 
-def min_substr_hist(min_substrs):
+def min_substr_hist(min_substrs, th):
     """
-    plot histogram of string lengths
+    plot histogram of string lengths less than the threshold
     """
     # histogram
-    th = 20
     nmin_substrs_th1 = [l for b, l in min_substrs if l < th]
     nmin_substrs_th2 = [l for b, l in min_substrs if l >= th]
-    print(f"# of min_substrs whose length < {th} = {len(nmin_substrs_th1)}")
-    print(f"# of min_substrs whose length >= {th} = {len(nmin_substrs_th2)}")
+    logger.info(f"# of min_substrs whose length < {th} = {len(nmin_substrs_th1)}")
+    logger.info(f"# of min_substrs whose length >= {th} = {len(nmin_substrs_th2)}")
     # nmin_substrs = list(map(len, min_substrs))
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
@@ -62,6 +61,7 @@ def attractor_of_size(
     `op`: `exact` or `atmost`.
         `exact` computes string attractor whose size is `k`.
         `atmost` computes string attractor whose size is at most `k`.
+    `exp`: experiment information
     """
     assert op in ["exact", "atmost"]
     n = len(text)
@@ -72,10 +72,10 @@ def attractor_of_size(
     lcp = stralgo.make_lcpa_kasai(text, sa, isa)
     min_substrs = stralgo.minimum_substr_sa(text, sa, isa, lcp)
     timer.record("min substrs")
-    min_substr_hist(min_substrs)
+    # min_substr_hist(min_substrs, 20)
 
-    print(f"text length = {len(text)}")
-    print(f"# of min substrs = {len(min_substrs)}")
+    logger.info(f"text length = {len(text)}")
+    logger.info(f"# of min substrs = {len(min_substrs)}")
 
     # run solver
     cnf = CNF()
@@ -85,7 +85,7 @@ def attractor_of_size(
         cnf.append(list(set(occ + i + 1 for occ in occs for i in range(l))))
     timer.record("clauses")
 
-    print(f"n of clauses={len(cnf.clauses)}, # of vars={cnf.nv}")
+    logger.info(f"n of clauses={len(cnf.clauses)}, # of vars={cnf.nv}")
     exclauses = None
     # add conditions that # of solutions is exact/atmost `k`.
     if op == "atmost":
@@ -113,24 +113,23 @@ def attractor_of_size(
         # atmost = CardEnc.equals(lits, bound=k, top_id=n + 1)
         # atmost = CardEnc.equals(lits, bound=k, top_id=n + 1, encoding=EncType.kmtotalizer)
     assert exclauses is not None
-    print("clauses for atmost", len(exclauses.clauses))
+    logger.info(f"clauses for atmost {len(exclauses.clauses)}")
     cnf.extend(exclauses.clauses)
-    print(f"# of clauses={len(cnf.clauses)}, # of vars={cnf.nv}")
+    logger.info(f"# of clauses={len(cnf.clauses)}, # of vars={cnf.nv}")
     solver = Solver()
     solver.append_formula(cnf.clauses)
 
-    print("\nsolver runs")
+    logger.info("solver runs")
     attractor = []
     if solver.solve():
         sol = solver.get_model()
         assert sol is not None
         attractor = list(filter(lambda x: 0 < x <= n, sol))
-        # print(attractor)
-        print(f"#attractor = {len(attractor)}")
+        logger.info(f"#attractor = {len(attractor)}")
     timer.record("solver run")
     if exp:
         exp["# of attractors"] = len(attractor)
-        exp["attractor"] = attractor
+        # exp["attractor"] = attractor
         exp["text length"] = n
         exp["# of string attractors"] = k
         exp["# of min substrs"] = len(min_substrs)
@@ -140,7 +139,10 @@ def attractor_of_size(
     return attractor
 
 
-def min_attractor_WCNF(text: bytes, timer: Timer):
+def min_attractor_WCNF(text: bytes, timer: Timer) -> WCNF:
+    """
+    Compute the max sat formula for computing minimum string attractor (1-indexed)
+    """
     res = dict()
     n = len(text)
     res["text length"] = n
@@ -150,11 +152,10 @@ def min_attractor_WCNF(text: bytes, timer: Timer):
     isa = stralgo.make_isa(sa)
     lcp = stralgo.make_lcpa_kasai(text, sa, isa)
     min_substrs = stralgo.minimum_substr_sa(text, sa, isa, lcp)
-    # timer.record("string indice")
-    print(f"text length = {len(text)}")
-    print(f"# of min substrs = {len(min_substrs)}")
+    logger.info(f"text length = {len(text)}")
+    logger.info(f"# of min substrs = {len(min_substrs)}")
 
-    min_substr_hist(min_substrs)
+    min_substr_hist(min_substrs, 20)
     timer.record("min substrs")
     res["# of min substrs"] = len(min_substrs)
 
@@ -185,7 +186,7 @@ def min_attractor(text: bytes, exp=None) -> list[int]:
 
     attractor = list(filter(lambda x: x > 0, sol))
     logger.info(f"the size of minimum attractor = {len(attractor)}")
-    logger.info("minimum attractor is", attractor)
+    logger.info(f"minimum attractor is {attractor}")
     if exp:
         exp["times"] = timer.times
         exp["# of minimum attractors"] = len(attractor)
@@ -238,9 +239,7 @@ if __name__ == "__main__":
     exp["file name"] = args.file
 
     if args.output == "":
-        # exp["minimum attractor"] = "omitted"
-        # pp.pprint(f"attractor={attractor}")
-        pp.pprint(exp)
+        pp.pprint(attractor)
     else:
         with open(args.output, "w") as f:
             json.dump(exp, f, ensure_ascii=False)

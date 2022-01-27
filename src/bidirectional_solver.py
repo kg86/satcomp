@@ -266,7 +266,7 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
         fbeg0 = lm.getid(lm.lits.fbeg, i)
         wcnf.append([-fbeg0], weight=1)
 
-    # if text[i:i+2] occurs once, i+1 is the beginning of a factor
+    # if text[i:i+2] occurs only once, i+1 is the beginning of a factor
     count = 0
     for i in range(n - 1):
         if len(occ2[text[i : i + 2]]) == 1:
@@ -285,7 +285,7 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
             wcnf.append(pysat_if(root0, fbeg1))
 
     # relation between link and ref
-    # link i to j implies ref j to i.
+    # i link to j implies j refer to i.
     for i in range(n):
         for j in occ_others(occ1, text, i):
             assert 0 <= i, j < n
@@ -296,7 +296,7 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
                 # if there is link i to j, there is ref j to i.
                 wcnf.append(pysat_if(link_ij, ref_ji0))
             if i == 0 or j == 0 or text[i - 1] != text[j - 1]:
-                # if ref j to i and their previous positions do not match,
+                # if j refer to i and their previous positions do not match,
                 # j is the beginning of a factor
                 wcnf.append(pysat_if(ref_ji0, fbeg_j))
             if i > 0 and j > 0 and text[i - 1] == text[j - 1]:
@@ -435,6 +435,9 @@ def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> list[list[int
 
 
 def bidirectional(text: bytes, exp: BiDirExp = None) -> BiDirType:
+    """
+    compute minimum bidirectional scheme
+    """
     total_start = time.time()
     lm, wcnf = bidirectional_WCNF(text)
     for lname in lm.nvar.keys():
@@ -505,10 +508,11 @@ def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
 def parse_args():
     parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
     parser.add_argument("--file", type=str, help="input file", default="")
+    parser.add_argument("--text", type=str, help="input string", default="")
     # parser.add_argument("--output", type=str, help="output file", default="")
 
     args = parser.parse_args()
-    if args.file == "":
+    if args.file == "" and args.text == "":
         parser.print_help()
         sys.exit()
     return args
@@ -516,7 +520,10 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    text = open(args.file, "rb").read()
+    if args.text != "":
+        text = args.text.encode("utf8")
+    else:
+        text = open(args.file, "rb").read()
     logger.info(text)
 
     timer = Timer()
