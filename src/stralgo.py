@@ -1,6 +1,4 @@
-from typing import AnyStr, Iterable, List, Optional, Tuple
-
-from tqdm import tqdm
+from typing import AnyStr, Tuple
 
 
 def make_sa_MM(text):
@@ -15,12 +13,7 @@ def make_sa_MM(text):
     rank2 = [0 for _ in range(n)]
     sa = list(range(n))
     while d < n:
-
-        def at(i):
-            key1 = rank[i]
-            key2 = rank[i + d] if (i + d) < len(rank) else -1
-            return (key1, key2)
-
+        at = lambda i: (rank[i], rank[i + d] if (i + d) < len(rank) else -1)
         sa.sort(key=at)
         # print_sa(text, sa)
 
@@ -48,7 +41,7 @@ def get_lcp(text, i, j):
 
 def make_isa(sa):
     """
-    Make inverse suffix array.
+    Make inverse suffix array
     """
     n = len(sa)
     isa = [0 for _ in range(n)]
@@ -62,7 +55,7 @@ def make_lcpa_kasai(text, sa, isa=None):
     Make longest common prefix array by Kasai algorithm.
     """
     n = len(text)
-    if isa is None:
+    if isa == None:
         isa = make_isa(sa)
 
     lcp = [0 for _ in range(n)]
@@ -82,15 +75,15 @@ def get_bwt(text, sa):
     for i in range(n):
         res.append(text[sa[i] - 1])
     return res
+    # if isinstance(text, str):
+    #   return ''.join(res)
+    # return res
 
 
-def get_lcprange(
-    lcp: List[int], i: int, least_lcp: Optional[int] = None
-) -> Tuple[int, int]:
+def get_lcprange(lcp, i, least_lcp=None):
     """
     Compute the maximum range lcp[j1:j2] such that
-    least_lcp <= lcp[j] for j in [j1+1:j2]
-    let least_lcp be lcp[i] if it is None.
+    lcp[j] = lcp[i] for j in [j1:j2]
     """
 
     n = len(lcp)
@@ -145,12 +138,12 @@ def occ_pos_naive(text, pattern):
 
 def num_occ(text, pattern):
     """
-    Compute the number of occurrences of the pattern in text.
+    return number of occ of pattern in text.
     """
     return len(occ_pos_naive(text, pattern))
 
 
-def substr(text: AnyStr) -> List[AnyStr]:
+def substr(text: AnyStr) -> list[AnyStr]:
     n = len(text)
     res = []
     for i in range(n):
@@ -159,10 +152,10 @@ def substr(text: AnyStr) -> List[AnyStr]:
     return res
 
 
-def minimum_substr_naive(text) -> List[Tuple[int, int]]:
+def minimum_substr_naive(text) -> list[Tuple[int, int]]:
     """
-    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring.
-    A minimum substring x is a substring that the #occ of x is
+    return set of (b, l) s.t. text[b:b+l] is a minimum substring.
+    a minimum substring x is a substring that the #occ of x is
     different from #occ of x[1:] and also #occ of x[:-1].
     """
     n = len(text)
@@ -177,82 +170,23 @@ def minimum_substr_naive(text) -> List[Tuple[int, int]]:
     return res
 
 
-def minimum_right_substr(text):
-    sa = make_sa_MM(text)
-    isa = make_isa(sa)
-    lcp = make_lcpa_kasai(text, sa, isa)
-    return minimum_right_substr_sa(text, sa, isa, lcp)
-
-
-def minimum_right_substr_sa(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
-    """
-    Compute the set of (b, l) s.t. text[b:b+l] is a minimum right substring
-    A minimum right substring x is a substring that the #occ of x is
-    different from #occ of #occ of x[:-1].
-    """
-    n = len(text)
-    res: List[Tuple[int, int]] = [(sa[0], 1)]
-    already_computed = set()
-    for i in tqdm(range(1, n)):
-        if lcp[i] == 0:
-            if sa[i] + 1 <= n:
-                res.append((sa[i], 1))
-            continue
-        if lcp[i - 1] == lcp[i]:
-            continue
-        lcp_range = get_lcprange(lcp, i)
-        # print(i, lcp_range)
-        if (lcp_range, lcp[i]) in already_computed:
-            continue
-        cur = lcp_range[0]
-        while cur <= lcp_range[1]:
-            # text[sa[cur]:sa[cur]+lcp[i]+1] is a minimum right substring
-            lcp_range_sub = get_lcprange(lcp, cur, lcp[i] + 1)
-            assert lcp_range[0] <= lcp_range_sub[0] <= lcp_range_sub[1] <= lcp_range[1]
-            if sa[cur] + lcp[i] + 1 > n:
-                cur += 1
-                continue
-
-            already_computed.add((lcp_range, lcp[i]))
-            res.append((sa[cur], lcp[i] + 1))
-            assert cur < lcp_range_sub[1] + 1
-            cur = lcp_range_sub[1] + 1
-
-    return res
-
-
 def minimum_substr(text):
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
-    return minimum_substr_linear(text, sa, isa, lcp)
+    return minimum_substr_sa(text, sa, isa, lcp)
 
 
-def minimum_substr_sa(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
+def minimum_substr_sa(text, sa, isa, lcp):
     """
-    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
-    A minimum substring x is a substring that the #occ of x is
-    different from #occ of x[1:] and also #occ of x[:-1].
-    """
-    return minimum_substr_linear(text, sa, isa, lcp)
-
-
-def minimum_substr_square(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
-    """
-    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
-    A minimum substring x is a substring that the #occ of x is
+    return set of (b, l) s.t. text[b:b+l] is a minimum substring
+    a minimum substring x is a substring that the #occ of x is
     different from #occ of x[1:] and also #occ of x[:-1].
     """
     n = len(text)
-    res: List[Tuple[int, int]] = [(sa[0], 1)]
+    res = [(sa[0], 1)]
     already_computed = set()
-    for i in tqdm(range(1, n)):
+    for i in range(1, n):
         if lcp[i] == 0:
             res.append((sa[i], 1))
             continue
@@ -260,8 +194,8 @@ def minimum_substr_square(
             continue
         lcp_range = get_lcprange(lcp, i)
         assert (lcp_range[1] - lcp_range[0] + 1) > 1
-        # for k in range(lcp_range[0], lcp_range[1]):
-        #     assert text[sa[k] : sa[k] + lcp[i]] == text[sa[k + 1] : sa[k + 1] + lcp[i]]
+        for k in range(lcp_range[0], lcp_range[1]):
+            assert text[sa[k] : sa[k] + lcp[i]] == text[sa[k + 1] : sa[k + 1] + lcp[i]]
         if (lcp_range, lcp[i]) in already_computed:
             continue
         cur = lcp_range[0]
@@ -286,83 +220,6 @@ def minimum_substr_square(
             assert cur < lcp_range_sub[1] + 1
             cur = lcp_range_sub[1] + 1
     # print("#res=", len(res))
-    return res
-
-
-def minimum_substr_linear(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
-    """
-    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
-    A minimum substring x is a substring that the #occ of x is
-    different from #occ of x[1:] and also #occ of x[:-1].
-    """
-    n = len(text)
-
-    class Node:
-        """
-        Node of suffix trees.
-        `depth`: the depth of node.
-        [`begin`, `end`]: the interval of the suffix array prefixed by the string of the node.
-        """
-
-        def __init__(self, depth: int, begin: int, end: int):
-            self.depth = depth
-            self.begin = begin
-            self.end = end
-
-        def show(self) -> str:
-            return f"(depth={self.depth}, begin={self.begin}, end={self.end})"
-
-    root = Node(0, 0, -1)
-    leaf = Node(n - sa[0], 0, -1)
-    path = [root, leaf]  # post order traversal
-    parent_c = (
-        []
-    )  # [(u, c, v)]: (u, v) is a pair of parent and child, and c is the first label on the edge
-    for i in range(1, n):
-        child = None
-        while lcp[i] < path[-1].depth:
-            node = path.pop()
-            node.end = i - 1
-            if child:
-                c = text[sa[child.begin] + node.depth]
-                parent_c.append((node, c, child))
-            child = node
-        if lcp[i] > path[-1].depth:
-            assert child is not None
-            # create internal node
-            node = Node(lcp[i], child.begin, -1)
-            path.append(node)
-        if child:
-            c = text[sa[child.begin] + path[-1].depth]
-            parent_c.append((path[-1], c, child))
-        leaf = Node(n - sa[i], i, -1)
-        path.append(leaf)
-    child = None
-    while len(path) > 0:
-        node = path.pop()
-        node.end = n - 1
-        if child:
-            c = text[sa[child.begin] + node.depth]
-            parent_c.append((node, c, child))
-        child = node
-
-    # compute minimum substring
-    res = []
-    for parent, c, child in parent_c:
-        if (
-            parent == root
-            or child.end - child.begin
-            != isa[sa[child.end] + 1] - isa[sa[child.begin] + 1]
-            or (
-                (isa[sa[child.end] + 1] + 1 < n)
-                and lcp[isa[sa[child.end] + 1] + 1] >= parent.depth
-            )
-            or lcp[isa[sa[child.begin] + 1]] >= parent.depth
-        ):
-            res.append((sa[child.begin], parent.depth + 1))
-
     return res
 
 
@@ -411,24 +268,26 @@ def verify_sa(text, sa):
         assert text[sa[i - 1] :] < text[sa[i] :]
 
 
-def gen_binary(n: int) -> Iterable[str]:
-    """
-    Generates all binary strings of length `n`.
-    """
-    if n == 1:
-        yield "a"
-        yield "b"
-    elif n > 1:
-        for suf in gen_binary(n - 1):
-            yield suf + "a"
-            yield suf + "b"
-    else:
-        assert False
+def test():
+    text = open("cantrbry/grammar.lsp", "r").read()
+    print(len(text))
+    sa = make_sa_MM(text)
+    isa = make_isa(sa)
+    lcp = make_lcpa_kasai(text, sa, isa)
+    verify_sa(text, sa)
+    print("valid")
+
+    with open("hoge.sa", "w") as f:
+        for i in range(len(text)):
+            f.write("{} {}\n".format(i, text[sa[i] : sa[i] + lcp[i] + 3]))
 
 
 if __name__ == "__main__":
+    # test()
+    # import sys
+    # sys.exit(0)
     text = "bananabanana$"
-    text = "banana"
+    # text = open('fuga.txt', 'r').read()
     sa = make_sa_MM(text)
     verify_sa(text, sa)
 
@@ -436,20 +295,9 @@ if __name__ == "__main__":
     lcp = make_lcpa_kasai(text, sa, isa)
     print_sa_lcp(text, sa, lcp)
 
+    # print([(text[b:b+l], (b,l)) for b, l in mrepeat])
     print(substr_cover(text, sa, lcp, isa, 3, 1))
-    mstr_naive = sorted([text[b : b + l] for b, l in minimum_substr_naive(text)])
-    mstr_square = sorted(
-        [text[b : b + l] for b, l in minimum_substr_square(text, sa, isa, lcp)]
-    )
-    mstr_linear = sorted(
-        [text[b : b + l] for b, l in minimum_substr_linear(text, sa, isa, lcp)]
-    )
     print("minimum substr naive")
-    print(mstr_naive)
-    print(mstr_square)
-    print(mstr_linear)
-    assert len(mstr_naive) == len(mstr_square)
-    assert len(mstr_naive) == len(mstr_linear)
-    for x, y, z in zip(mstr_naive, mstr_square, mstr_linear):
-        assert x == y
-        assert x == z
+    print([text[b : b + l] for b, l in minimum_substr_naive(text)])
+    # print([text[b:b+l] for b, l in minimum_substr_sa(text, sa, isa, lcp)])
+    print([text[b : b + l] for b, l in minimum_substr_sa(text, sa, isa, lcp)])

@@ -1,12 +1,12 @@
-import datetime
 from dataclasses import dataclass
-from typing import List, NewType, Tuple
-
-from dataclasses_json import dataclass_json
-from pysat.formula import WCNF
+from typing import NewType
 
 # BiDirType = [[p0, l0], [p1, l1], ...] represents the string T=T[p0:(p0+l0)]T[p1:(p1+l1)]...
-BiDirType = NewType("BiDirType", List[Tuple[int, int]])
+BiDirType = NewType("BiDirType", list[tuple[int, int]])
+
+
+from dataclasses_json import dataclass_json
+import datetime
 
 
 @dataclass_json
@@ -19,47 +19,16 @@ class BiDirExp:
     file_len: int
     time_prep: float
     time_total: float
+    bd_size: int
+    bd_factors: BiDirType
     sol_nvars: int
     sol_nhard: int
     sol_nsoft: int
-    sol_navgclause: float
-    sol_ntotalvars: int
-    sol_nmaxclause: int
-    factor_size: int
-    factors: BiDirType
-
-    def fill(self, wcnf: WCNF):
-        self.sol_nvars = wcnf.nv
-        self.sol_nhard = len(wcnf.hard)
-        self.sol_nsoft = len(wcnf.soft)
-        max_clause = max(wcnf.hard, key=lambda item: len(item))
-        self.sol_nmaxclause = len(max_clause)
-
-        var_in_clause_sum = 0
-        for i in range(0, len(wcnf.hard)):
-            var_in_clause_sum += len(wcnf.hard[i])
-        avg_var_in_clause = var_in_clause_sum / len(wcnf.hard)
-        self.sol_ntotalvars = var_in_clause_sum
-        self.sol_navgclause = avg_var_in_clause
 
     @classmethod
     def create(cls):
         return BiDirExp(
-            date=str(datetime.datetime.now()),
-            status="",
-            algo="",
-            file_name="",
-            file_len=0,
-            time_prep=0,
-            time_total=0,
-            sol_nvars=0,
-            sol_nhard=0,
-            sol_nsoft=0,
-            factor_size=0,
-            sol_navgclause=0.0,
-            sol_ntotalvars=0,
-            sol_nmaxclause=0,
-            factors=BiDirType([]),
+            str(datetime.datetime.now()), "", "", "", 0, 0, 0, 0, BiDirType([]), 0, 0, 0
         )
 
 
@@ -70,14 +39,14 @@ def bd_info(bd: BiDirType, text: bytes) -> str:
             f"len={len(bd)}: factors={bd}",
             f"len of text = {len(text)}",
             f"decode={decode(bd)}",
-            f"equals original? {decode(bd) == text}",
+            f"equals original? {decode(bd)==text}",
         ]
     )
 
 
 def decode_len(factors: BiDirType) -> int:
     """
-    Computes the length of decoded string from a given bidirectional scheme.
+    computes the length of decoded string from a given bidirectional scheme.
     """
     res = 0
     for f in factors:
@@ -87,7 +56,7 @@ def decode_len(factors: BiDirType) -> int:
 
 def decode(factors: BiDirType) -> bytes:
     """
-    Computes the decoded string from a given bidirectional scheme.
+    computes the decoded string from a given bidirectional scheme.
     """
     n = decode_len(factors)
     res = [-1 for _ in range(n)]

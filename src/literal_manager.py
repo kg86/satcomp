@@ -1,8 +1,4 @@
-from collections import defaultdict
-
 from pysat.card import IDPool
-from sympy import Symbol
-from sympy.logic.boolalg import Boolean
 
 
 class LiteralManager:
@@ -25,6 +21,7 @@ class LiteralManager:
     def new_var(self, name: str = "adjlm") -> int:
         self.nvar[name] += 1
         return self.id(name, self.nvar[name])
+        # return self.vpool.id((name, self.nvar[name]))
 
     def new_var_sym(self, name: str = "adjlm") -> Boolean:
         return Symbol(str(self.new_var(name)))
