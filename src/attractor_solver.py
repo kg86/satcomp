@@ -125,7 +125,9 @@ def attractor_of_size(
     if solver.solve():
         sol = solver.get_model()
         assert sol is not None
-        attractor = AttractorType(list(filter(lambda x: 0 < x <= n, sol)))
+        attractor = AttractorType(
+            list(x - 1 for x in filter(lambda x: 0 < x <= n, sol))
+        )
         logger.info(f"#attractor = {len(attractor)}")
     # timer.record("solver run")
     if exp:
@@ -195,7 +197,8 @@ def min_attractor(text: bytes, exp: Optional[AttractorExp] = None) -> AttractorT
     assert sol is not None
     # timer.record("solver run")
 
-    attractor = AttractorType(list(filter(lambda x: x > 0, sol)))
+    # attractor = AttractorType(list(filter(lambda x: x > 0, sol)))
+    attractor = AttractorType(list(x - 1 for x in filter(lambda x: x > 0, sol)))
     logger.info(f"the size of minimum attractor = {len(attractor)}")
     logger.info(f"minimum attractor is {attractor}")
     if exp:
