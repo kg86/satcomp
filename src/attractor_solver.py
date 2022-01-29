@@ -1,9 +1,13 @@
 # Compute minimum string attractors by pysat
 
 import argparse
+import os
 import sys
 import pprint
 import json
+import time
+from attractor import AttractorType
+from attractor_bench_format import AttractorExp
 
 pp = pprint.PrettyPrinter(indent=2)
 
@@ -52,8 +56,8 @@ def min_substr_hist(min_substrs, th):
 
 
 def attractor_of_size(
-    text: bytes, k: int, op: str, exp: Optional[Dict] = None
-) -> list[int]:
+    text: bytes, k: int, op: str, exp: Optional[AttractorExp] = None
+) -> AttractorType:
     """
     Compute string attractor of the specified size (1-indexed)
 
@@ -65,25 +69,21 @@ def attractor_of_size(
     """
     assert op in ["exact", "atmost"]
     n = len(text)
-    timer = Timer()
+    total_start = time.time()
 
     sa = stralgo.make_sa_MM(text)
     isa = stralgo.make_isa(sa)
     lcp = stralgo.make_lcpa_kasai(text, sa, isa)
     min_substrs = stralgo.minimum_substr_sa(text, sa, isa, lcp)
-    timer.record("min substrs")
-    # min_substr_hist(min_substrs, 20)
 
     logger.info(f"text length = {len(text)}")
     logger.info(f"# of min substrs = {len(min_substrs)}")
 
-    # run solver
     cnf = CNF()
     for b, l in min_substrs:
         lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
         occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
         cnf.append(list(set(occ + i + 1 for occ in occs for i in range(l))))
-    timer.record("clauses")
 
     logger.info(f"n of clauses={len(cnf.clauses)}, # of vars={cnf.nv}")
     exclauses = None
@@ -121,25 +121,34 @@ def attractor_of_size(
 
     logger.info("solver runs")
     attractor = []
+    attractor = AttractorType([])
     if solver.solve():
         sol = solver.get_model()
         assert sol is not None
-        attractor = list(filter(lambda x: 0 < x <= n, sol))
+        attractor = AttractorType(list(filter(lambda x: 0 < x <= n, sol)))
         logger.info(f"#attractor = {len(attractor)}")
-    timer.record("solver run")
+    # timer.record("solver run")
     if exp:
-        exp["# of attractors"] = len(attractor)
-        # exp["attractor"] = attractor
-        exp["text length"] = n
-        exp["# of string attractors"] = k
-        exp["# of min substrs"] = len(min_substrs)
-        exp["# of clauses"] = len(cnf.clauses)
-        exp["# of variables"] = cnf.nv
-        exp["times"] = timer.times
+        exp.time_total = time.time() - total_start
+        assert isinstance(cnf.nv, int)
+        exp.sol_nvars = int(cnf.nv)
+        exp.sol_nhard = len(cnf.clauses)
+        exp.sol_nsoft = 0
+        exp.attractor = attractor
+        exp.attractor_size = len(attractor)
+    # if exp:
+    #     exp["# of attractors"] = len(attractor)
+    #     # exp["attractor"] = attractor
+    #     exp["text length"] = n
+    #     exp["# of string attractors"] = k
+    #     exp["# of min substrs"] = len(min_substrs)
+    #     exp["# of clauses"] = len(cnf.clauses)
+    #     exp["# of variables"] = cnf.nv
+    #     exp["times"] = timer.times
     return attractor
 
 
-def min_attractor_WCNF(text: bytes, timer: Timer) -> WCNF:
+def min_attractor_WCNF(text: bytes) -> WCNF:
     """
     Compute the max sat formula for computing minimum string attractor (1-indexed)
     """
@@ -156,7 +165,7 @@ def min_attractor_WCNF(text: bytes, timer: Timer) -> WCNF:
     logger.info(f"# of min substrs = {len(min_substrs)}")
 
     min_substr_hist(min_substrs, 20)
-    timer.record("min substrs")
+    # timer.record("min substrs")
     res["# of min substrs"] = len(min_substrs)
 
     # run solver
@@ -169,28 +178,38 @@ def min_attractor_WCNF(text: bytes, timer: Timer) -> WCNF:
     for i in range(n):
         # soft clause
         wcnf.append([-(i + 1)], weight=1)
-    timer.record("clauses")
+    # timer.record("clauses")
     return wcnf
 
 
-def min_attractor(text: bytes, exp=None) -> list[int]:
+def min_attractor(text: bytes, exp: Optional[AttractorExp] = None) -> AttractorType:
     """
     Compute minimum string attractor (1-indexed)
     """
-    timer = Timer()
-    wcnf = min_attractor_WCNF(text, timer)
+    total_start = time.time()
+    # timer = Timer()
+    wcnf = min_attractor_WCNF(text)
     rc2 = RC2(wcnf)
+    time_prep = time.time() - total_start
     sol = rc2.compute()
     assert sol is not None
-    timer.record("solver run")
+    # timer.record("solver run")
 
-    attractor = list(filter(lambda x: x > 0, sol))
+    attractor = AttractorType(list(filter(lambda x: x > 0, sol)))
     logger.info(f"the size of minimum attractor = {len(attractor)}")
     logger.info(f"minimum attractor is {attractor}")
     if exp:
-        exp["times"] = timer.times
-        exp["# of minimum attractors"] = len(attractor)
-        exp["minimum attractor"] = attractor
+        exp.time_total = time.time() - total_start
+        exp.time_prep = time_prep
+        exp.sol_nvars = wcnf.nv
+        exp.sol_nhard = len(wcnf.hard)
+        exp.sol_nsoft = len(wcnf.soft)
+        exp.attractor = attractor
+        exp.attractor_size = len(attractor)
+    # if exp:
+    #     exp["times"] = timer.times
+    #     exp["# of minimum attractors"] = len(attractor)
+    #     exp["minimum attractor"] = attractor
     return attractor
 
 
@@ -224,22 +243,29 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    exp = dict()
 
     if args.str != "":
         text = args.str
     else:
         text = open(args.file, "rb").read()
+
+    exp = AttractorExp.create()
+    exp.algo = "solver"
+    exp.file_name = os.path.basename(args.file)
+    exp.file_len = len(text)
+
     if args.algo in ["exact", "atmost"]:
         attractor = attractor_of_size(text, args.size, args.algo, exp)
     elif args.algo == "min":
         attractor = min_attractor(text, exp)
     else:
         assert False
-    exp["file name"] = args.file
+
+    exp.attractor = attractor
+    exp.attractor_size = len(attractor)
 
     if args.output == "":
-        pp.pprint(attractor)
+        print(exp.to_json(ensure_ascii=False))  # type: ignore
     else:
         with open(args.output, "w") as f:
             json.dump(exp, f, ensure_ascii=False)
