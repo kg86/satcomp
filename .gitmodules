@@ -1,0 +1,3 @@
+[submodule "externals/lzrr"]
+	path = externals/lzrr
+	url = https://github.com/TNishimoto/lzrr.git
