@@ -1,4 +1,4 @@
-from typing import AnyStr, Tuple
+from typing import AnyStr, Iterable, Tuple
 
 
 def make_sa_MM(text):
@@ -280,6 +280,21 @@ def test():
     with open("hoge.sa", "w") as f:
         for i in range(len(text)):
             f.write("{} {}\n".format(i, text[sa[i] : sa[i] + lcp[i] + 3]))
+
+
+def gen_binary(n: int) -> Iterable[str]:
+    """
+    generates all binary strings of length `n`.
+    """
+    if n == 1:
+        yield "a"
+        yield "b"
+    elif n > 1:
+        for suf in gen_binary(n - 1):
+            yield suf + "a"
+            yield suf + "b"
+    else:
+        assert False
 
 
 if __name__ == "__main__":

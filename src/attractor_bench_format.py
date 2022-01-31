@@ -14,11 +14,11 @@ class AttractorExp:
     file_len: int
     time_prep: float
     time_total: float
-    attractor_size: int
-    attractor: AttractorType
     sol_nvars: int
     sol_nhard: int
     sol_nsoft: int
+    attractor_size: int
+    attractor: AttractorType
 
     @classmethod
     def create(cls):
@@ -31,8 +31,8 @@ class AttractorExp:
             0,
             0,
             0,
+            0,
+            0,
+            0,
             AttractorType([]),
-            0,
-            0,
-            0,
         )
