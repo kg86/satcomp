@@ -17,12 +17,17 @@ import os
 dbname = "out/satcomp.db"
 dbtable = "lz_bench"
 
+# pref
 files = (
     glob.glob("data/calgary_pref/*-50")
     + glob.glob("data/calgary_pref/*-100")
     + glob.glob("data/cantrbry_pref/*-50")
     + glob.glob("data/cantrbry_pref/*-100")
 )
+
+# original
+files = glob.glob("data/calgary/*") + glob.glob("data/cantrbry/*")
+
 files = [os.path.abspath(f) for f in files]
 
 algos = ["lz", "lzrr", "lex", "lcp"]

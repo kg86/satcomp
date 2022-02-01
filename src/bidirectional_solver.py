@@ -202,6 +202,9 @@ def sol2bidirectional(
 
 
 def make_occa1(text: bytes) -> dict[int, list[int]]:
+    """
+    occurrences of characters
+    """
     occ = defaultdict(list)
     for i in range(len(text)):
         occ[text[i]].append(i)
@@ -209,6 +212,9 @@ def make_occa1(text: bytes) -> dict[int, list[int]]:
 
 
 def make_occa2(text: bytes) -> dict[bytes, list[int]]:
+    """
+    occurrences of length-2 substrings
+    """
     match2 = defaultdict(list)
     for i in range(len(text) - 1):
         match2[text[i : i + 2]].append(i)
@@ -261,12 +267,12 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
             lits.append(lm.newid(lm.lits.depth_ref, depth, i))
     wcnf.append(lits)
 
-    # set objective to minimizes the number of factors
+    # objective: minimizes the number of factors
     for i in range(n):
         fbeg0 = lm.getid(lm.lits.fbeg, i)
         wcnf.append([-fbeg0], weight=1)
 
-    # if text[i:i+2] occurs only once, i+1 is the beginning of a factor
+    # objective to run fast: if text[i:i+2] occurs only once, i+1 is the beginning of a factor
     count = 0
     for i in range(n - 1):
         if len(occ2[text[i : i + 2]]) == 1:
@@ -275,6 +281,9 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
             count += 1
     logger.info(f"{count}/{n} occurs only once")
 
+    # objective: valid references
+
+    # objective: bridge objectives between beginning factor and valid references
     # if i is a root, i+1 is the beginning of a factor
     for i in range(n):
         root0 = lm.getid(lm.lits.root, i)
