@@ -11,3 +11,10 @@ $ cd open-wbo
 $ make
 $ mv open-wbo ~/.local/bin
 ```
+
+
+## run benchmark
+
+```bash
+$ pipenv run python src/lz_bench.py --timeout=30 --output=out/hoge.csv --n_jobs 8
+```

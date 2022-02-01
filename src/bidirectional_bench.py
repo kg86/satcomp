@@ -3,6 +3,7 @@ import datetime
 import subprocess
 import glob
 import os
+import sqlite3
 import sys
 from dataclasses import dataclass
 import time
@@ -11,6 +12,8 @@ from joblib import Parallel, delayed
 
 from bidirectional import BiDirExp, BiDirType
 
+dbname = "out/satcomp.db"
+dbtable = "bidirectional_bench"
 
 files = (
     glob.glob("data/calgary_pref/*-50")
@@ -20,7 +23,8 @@ files = (
 )
 files = [os.path.abspath(f) for f in files]
 
-algos = ["solver", "naive"]
+# algos = ["solver", "naive"]
+algos = ["solver"]
 
 
 def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
@@ -28,7 +32,7 @@ def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
     current_dir = os.path.abspath(".")
     os.chdir("rustr-master")
     cmd = ["cargo", "run", "--bin", "optimal_bms", "--", "--input_file", input_file]
-    print(cmd)
+    print(" ".join(cmd))
     start = time.time()
     out = None
     try:
@@ -38,7 +42,7 @@ def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
         status = "complete"
     except subprocess.TimeoutExpired:
         print(f"timeout")
-        status = "timeout"
+        status = f"timeout-{timeout}"
     except Exception:
         status = "error"
     os.chdir(current_dir)
@@ -62,16 +66,23 @@ def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
         len(open(input_file, "rb").read()),
         0,
         time_total,
+        0,
+        0,
+        0,
         len(bd),
         bd,
-        0,
-        0,
-        0,
     )
 
 
 def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
-    cmd = ["pipenv", "run", "python", "bidirectional_solver.py", "--file", input_file]
+    cmd = [
+        "pipenv",
+        "run",
+        "python",
+        "src/bidirectional_solver.py",
+        "--file",
+        input_file,
+    ]
     print(cmd)
     start = time.time()
     exp = None
@@ -85,7 +96,7 @@ def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
         time_total = time.time() - start
         status = "complete"
     except subprocess.TimeoutExpired:
-        status = "timeout"
+        status = f"timeout-{timeout}"
     except Exception:
         status = "error"
 
@@ -102,15 +113,15 @@ def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
             0,
             0,
             0,
+            0,
+            0,
+            0,
             BiDirType([]),
-            0,
-            0,
-            0,
         )
     return exp
 
 
-def benchmark_program(timeout, algo, file, out_file):
+def benchmark_program(timeout, algo, file) -> list[str]:
     """
     runs program with given setting (timeout, algo, file).
     """
@@ -120,8 +131,10 @@ def benchmark_program(timeout, algo, file, out_file):
         exp = run_solver(file, timeout)
     else:
         assert False
-    with open(out_file, "a") as f:
-        f.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
+    expd = exp.__dict__
+    return list(map(str, expd.values()))
+    # with open(out_file, "a") as f:
+    #     f.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
 
 
 def benchmark_single(timeout, algos, files, out_file):
@@ -146,13 +159,50 @@ def benchmark_mul(timeout, algos, files, out_file, n_jobs):
     """
     if os.path.exists(out_file):
         os.remove(out_file)
-    result = Parallel(n_jobs=n_jobs)(
+    queries = Parallel(n_jobs=n_jobs)(
         [
-            delayed(benchmark_program)(timeout, algo, file, out_file)
+            delayed(benchmark_program)(timeout, algo, file)
             for file in files
             for algo in algos
         ]
     )
+    con = sqlite3.connect(dbname)
+    cur = con.cursor()
+    expd = BiDirExp.create().__dict__  # asdict dowsn't work, I don't know the reason
+    n = len(expd.keys())
+    cur.executemany(
+        f"INSERT INTO {dbtable} VALUES ({', '.join('?' for _ in range(n))})",
+        queries,  # type: ignore
+    )
+    con.commit()
+
+
+def clear_table(dbtable):
+    """
+    delete table if exists, and create new table.
+    """
+    con = sqlite3.connect(dbname)
+    cur = con.cursor()
+    exp = BiDirExp.create()
+
+    expd = exp.__dict__
+
+    try:
+        cur.execute(f"DROP TABLE {dbtable}")
+    except sqlite3.OperationalError:
+        pass
+    cur.execute(f"CREATE TABLE {dbtable} ({', '.join(key for key in expd.keys())})")
+
+
+def export_csv(dbtable, out_file):
+    """
+    export table to csv.
+    """
+    con = sqlite3.connect(dbname)
+    import pandas as pd
+
+    df = pd.read_sql_query(f"SELECT * FROM {dbtable}", con)
+    df.to_csv(out_file, index=False)
 
 
 def parse_args():
@@ -178,9 +228,10 @@ def parse_args():
 
 
 def main():
+    clear_table(dbtable)
     args = parse_args()
     benchmark_mul(args.timeout, algos, files, args.output, args.n_jobs)
-    # benchmark_single(timeout, algos, files)
+    export_csv(dbtable, args.output)
 
 
 if __name__ == "__main__":

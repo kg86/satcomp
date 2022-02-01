@@ -136,8 +136,8 @@ def attractor_of_size(
         exp.sol_nvars = int(cnf.nv)
         exp.sol_nhard = len(cnf.clauses)
         exp.sol_nsoft = 0
-        exp.attractor = attractor
-        exp.attractor_size = len(attractor)
+        exp.factors = attractor
+        exp.factor_size = len(attractor)
     # if exp:
     #     exp["# of attractors"] = len(attractor)
     #     # exp["attractor"] = attractor
@@ -207,8 +207,8 @@ def min_attractor(text: bytes, exp: Optional[AttractorExp] = None) -> AttractorT
         exp.sol_nvars = wcnf.nv
         exp.sol_nhard = len(wcnf.hard)
         exp.sol_nsoft = len(wcnf.soft)
-        exp.attractor = attractor
-        exp.attractor_size = len(attractor)
+        exp.factors = attractor
+        exp.factor_size = len(attractor)
     # if exp:
     #     exp["times"] = timer.times
     #     exp["# of minimum attractors"] = len(attractor)
@@ -264,8 +264,8 @@ if __name__ == "__main__":
     else:
         assert False
 
-    exp.attractor = attractor
-    exp.attractor_size = len(attractor)
+    exp.factors = attractor
+    exp.factor_size = len(attractor)
 
     if args.output == "":
         print(exp.to_json(ensure_ascii=False))  # type: ignore

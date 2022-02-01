@@ -476,8 +476,8 @@ def bidirectional(text: bytes, exp: BiDirExp = None) -> BiDirType:
         exp.sol_nvars = wcnf.nv
         exp.sol_nhard = len(wcnf.hard)
         exp.sol_nsoft = len(wcnf.soft)
-        exp.bd_factors = factors
-        exp.bd_size = len(factors)
+        exp.factors = factors
+        exp.factor_size = len(factors)
     return factors
 
 
@@ -537,8 +537,8 @@ if __name__ == "__main__":
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
     factors_sol = bidirectional(text, exp)
-    exp.bd_factors = factors_sol
-    exp.bd_size = len(factors_sol)
+    exp.factors = factors_sol
+    exp.factor_size = len(factors_sol)
     logger.info(f"runtime: {timer()}")
     logger.info(bd_info(factors_sol, text))
     print(exp.to_json(ensure_ascii=False))  # type: ignore
