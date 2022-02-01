@@ -19,16 +19,16 @@ class BiDirExp:
     file_len: int
     time_prep: float
     time_total: float
-    bd_size: int
-    bd_factors: BiDirType
     sol_nvars: int
     sol_nhard: int
     sol_nsoft: int
+    factor_size: int
+    factors: BiDirType
 
     @classmethod
     def create(cls):
         return BiDirExp(
-            str(datetime.datetime.now()), "", "", "", 0, 0, 0, 0, BiDirType([]), 0, 0, 0
+            str(datetime.datetime.now()), "", "", "", 0, 0, 0, 0, 0, 0, 0, BiDirType([])
         )
 
 

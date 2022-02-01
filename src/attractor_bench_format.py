@@ -17,8 +17,10 @@ class AttractorExp:
     sol_nvars: int
     sol_nhard: int
     sol_nsoft: int
-    attractor_size: int
-    attractor: AttractorType
+    factor_size: int
+    factors: AttractorType
+    # attractor_size: int
+    # attractor: AttractorType
 
     @classmethod
     def create(cls):

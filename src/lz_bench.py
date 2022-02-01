@@ -3,20 +3,27 @@
 # https://github.com/TNishimoto/lzrr
 
 import argparse
+from dataclasses import asdict, dataclass
 import datetime
-import os
-import sqlite3
-import subprocess
+import glob
 import sys
 import time
-from dataclasses import asdict, dataclass
-from typing import List
-
 from joblib import Parallel, delayed
+import sqlite3
+import subprocess
+import os
+
 
 dbname = "out/satcomp.db"
 dbtable = "lz_bench"
 
+files = (
+    glob.glob("data/calgary_pref/*-50")
+    + glob.glob("data/calgary_pref/*-100")
+    + glob.glob("data/cantrbry_pref/*-50")
+    + glob.glob("data/cantrbry_pref/*-100")
+)
+files = [os.path.abspath(f) for f in files]
 
 algos = ["lz", "lzrr", "lex", "lcp"]
 
@@ -36,9 +43,9 @@ class LZExp:
         return LZExp("", "", "", "", 0, 0, 0)
 
 
-def benchmark_program(timeout, algo, file) -> List[str]:
+def benchmark_program(timeout, algo, file) -> list[str]:
     """
-    Run program with given setting (timeout, algo, file).
+    runs program with given setting (timeout, algo, file).
     """
     base_name = os.path.basename(file)
     out_file = f"out/lz/{base_name}.{algo}"
@@ -82,7 +89,7 @@ def benchmark_program(timeout, algo, file) -> List[str]:
 
 def benchmark_mul(timeout, algos, files, out_file, n_jobs):
     """
-    Run benchmark program with multiple processes
+    run benchmark program with multiple processes
     """
     if os.path.exists(out_file):
         os.remove(out_file)
@@ -106,7 +113,7 @@ def benchmark_mul(timeout, algos, files, out_file, n_jobs):
 
 def clear_table(table_name):
     """
-    Delete table if exists, and create new table.
+    delete table if exists, and create new table.
     """
     con = sqlite3.connect(dbname)
     cur = con.cursor()
@@ -123,7 +130,7 @@ def clear_table(table_name):
 
 def export_csv(table_name, out_file):
     """
-    Store table as csv format in `out_file`.
+    export table to csv.
     """
     con = sqlite3.connect(dbname)
     import pandas as pd
@@ -134,20 +141,19 @@ def export_csv(table_name, out_file):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run benchmark for algorithms computing the smallest bidirectional scheme."
+        description="Benchmark for algorithms computing the smallest bidirectional scheme"
     )
     parser.add_argument(
         "--timeout",
         type=int,
-        help="timeout (sec). If 0 is set, the proguram does not time out.",
+        help="timeout (sec). If 0 is set, the proguram does not timeout.",
         default=60,
     )
     parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument("--n_jobs", type=int, help="number of jobs", default=2)
-    parser.add_argument("--files", nargs="*", help="files", default=[])
 
     args = parser.parse_args()
-    if args.output == "" or args.timeout < 0 or len(args.files) == 0:
+    if args.output == "" or args.timeout < 0:
         parser.print_help()
         sys.exit()
     if args.timeout == 0:
@@ -158,7 +164,7 @@ def parse_args():
 def main():
     clear_table(dbtable)
     args = parse_args()
-    benchmark_mul(args.timeout, algos, args.files, args.output, args.n_jobs)
+    benchmark_mul(args.timeout, algos, files, args.output, args.n_jobs)
     export_csv(dbtable, args.output)
 
 

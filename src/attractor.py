@@ -1,13 +1,13 @@
-from typing import List, NewType
+from typing import NewType, Tuple
 
 import stralgo
 
-AttractorType = NewType("AttractorType", List[int])
+AttractorType = NewType("AttractorType", list[int])
 
 
 def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
     """
-    Verify the attractor.
+    Returns true if the attractor is valid.
     """
 
     # run fast
@@ -15,11 +15,12 @@ def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
     isa = stralgo.make_isa(sa)
     lcp = stralgo.make_lcpa_kasai(text, sa, isa)
     min_substrs = stralgo.minimum_substr_sa(text, sa, isa, lcp)
+    indice = []
     for b, l in min_substrs:
         lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
         occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
         res = any(occ <= x < (occ + l) for occ in occs for x in attractor)
-        if res is False:
+        if res == False:
             return False
     return True
 

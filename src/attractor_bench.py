@@ -10,7 +10,8 @@ import os
 from attractor import AttractorType, verify_attractor
 from attractor_bench_format import AttractorExp
 
-dbname = "attractor_bench.db"
+dbname = "out/satcomp.db"
+dbtable = "attractor_bench"
 
 files = (
     glob.glob("data/calgary_pref/*-50")
@@ -42,12 +43,13 @@ def run_solver(input_file: str, timeout: float = None) -> AttractorExp:
         last2 = out.rfind(b"\n", 0, last1)
         print(out[last2 + 1 : last1])
         exp = AttractorExp.from_json(out[last2 + 1 : last1])  # type: ignore
-        valid = verify_attractor(open(input_file, "rb").read(), exp.attractor)
+        valid = verify_attractor(open(input_file, "rb").read(), exp.factors)
         exp.status = "correct" if valid else "wrong"
         status = "complete"
     except subprocess.TimeoutExpired:
-        status = "timeout"
+        status = f"timeout-{timeout}"
     except Exception:
+        print("Unexpected error:", sys.exc_info()[0])
         status = "error"
 
     print(f"status: {status}")
@@ -86,7 +88,7 @@ def benchmark_program(timeout, algo, file, out_file):
     json = exp.to_dict()  # type: ignore
     n = len(json.values())
     cur.execute(
-        f"INSERT INTO attr_bench VALUES ({', '.join('?' for _ in range(n))})",
+        f"INSERT INTO {dbtable} VALUES ({', '.join('?' for _ in range(n))})",
         tuple(map(str, json.values())),
     )
     con.commit()
@@ -116,8 +118,11 @@ def clear_table():
     exp = AttractorExp.create()
     d = exp.to_dict()  # type: ignore
 
-    cur.execute("DROP TABLE attr_bench")
-    cur.execute(f"CREATE TABLE attr_bench ({', '.join(key for key in d.keys())})")
+    try:
+        cur.execute(f"DROP TABLE {dbtable}")
+    except sqlite3.OperationalError:
+        pass
+    cur.execute(f"CREATE TABLE {dbtable} ({', '.join(key for key in d.keys())})")
 
 
 def export_csv(out_file):
@@ -127,7 +132,7 @@ def export_csv(out_file):
     con = sqlite3.connect(dbname)
     import pandas as pd
 
-    df = pd.read_sql_query("SELECT * FROM attr_bench", con)
+    df = pd.read_sql_query(f"SELECT * FROM {dbtable}", con)
     df.to_csv(out_file, index=False)
 
 

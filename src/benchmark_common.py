@@ -1,9 +1,9 @@
 import csv
 import sqlite3
 
+import lz_bench
 import attractor_bench
 import bidirectional_bench
-import lz_bench
 
 dbname = "out/satcomp.db"
 
@@ -11,6 +11,7 @@ dbname = "out/satcomp.db"
 def comp_bench(out_file: str, target_key: str, target_none: str):
     con = sqlite3.connect(dbname)
     cur = con.cursor()
+    res = dict()
     cur.execute(f"select file_name from {lz_bench.dbtable}")
     header = ["file", "file_len"] + lz_bench.algos + ["attractor", "bidirectional"]
     files = sorted(
@@ -24,38 +25,27 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
         )
     )
     lines = []
-
-    def get_values(keys, table, file):
-        query = f"select {','.join(keys)} from {table} WHERE file_name = '{file}'"
-        res = cur.execute(query).fetchone()
-        if res is None:
-            return ["None" for _ in keys]
-        return res
-
     for file in files:
         line = dict()
         line["file"] = file
         # lz
         for algo in lz_bench.algos:
             status, file_len, factor_size = cur.execute(
-                f"select status, file_len, {target_key} from {lz_bench.dbtable} WHERE file_name = '{file}' and algo='{algo}'"
+                f"select status, file_len, {target_key} from {lz_bench.dbtable} WHERE file_name = '{file}'"
             ).fetchone()
             line["file_len"] = file_len
-            if factor_size == target_none:
-                line[algo] = status
-            else:
-                line[algo] = factor_size
+            line[algo] = factor_size
 
         # attractor
-        status, target = get_values(
-            ["status", target_key], attractor_bench.dbtable, file
-        )
+        status, target = cur.execute(
+            f"select status, {target_key} from {attractor_bench.dbtable} WHERE file_name = '{file}'"
+        ).fetchone()
         line["attractor"] = status if target == target_none else target
 
         # bidirectional
-        status, target = get_values(
-            ["status", target_key], bidirectional_bench.dbtable, file
-        )
+        status, target = cur.execute(
+            f"select status, {target_key} from {bidirectional_bench.dbtable} WHERE file_name = '{file}'"
+        ).fetchone()
         line["bidirectional"] = status if target == target_none else target
 
         lines.append([line[key] for key in header])
