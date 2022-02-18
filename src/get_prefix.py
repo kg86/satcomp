@@ -8,6 +8,7 @@ import os
 def make_dataset():
     dirs = ["data/calgary", "data/cantrbry"]
     prefs = range(50, 500, 50)
+    prefs = [10000]
     for dir in dirs:
         files = glob.glob(dir + "/*")
         for file in files:
@@ -23,5 +24,5 @@ def main(in_file, out_file, pref_len: int):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
-    # make_dataset()
+    # main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    make_dataset()

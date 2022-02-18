@@ -10,7 +10,10 @@ import time
 from joblib import Parallel, delayed
 
 
+import bidirectional
 from bidirectional import BiDirExp, BiDirType
+
+# from bidirectional_solver import bidirectional
 
 dbname = "out/satcomp.db"
 dbtable = "bidirectional_bench"
@@ -18,12 +21,12 @@ dbtable = "bidirectional_bench"
 # pref
 files = (
     glob.glob("data/calgary_pref/*-50")
-    + glob.glob("data/calgary_pref/*-100")
-    + glob.glob("data/cantrbry_pref/*-50")
-    + glob.glob("data/cantrbry_pref/*-100")
+    # + glob.glob("data/calgary_pref/*-100")
+    # + glob.glob("data/cantrbry_pref/*-50")
+    # + glob.glob("data/cantrbry_pref/*-100")
 )
 # original
-files = glob.glob("data/calgary/*") + glob.glob("data/cantrbry/*")
+# files = glob.glob("data/calgary/*") + glob.glob("data/cantrbry/*")
 files = [os.path.abspath(f) for f in files]
 
 # algos = ["solver", "naive"]
@@ -87,7 +90,7 @@ def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
         input_file,
     ]
     print(cmd)
-    start = time.time()
+    # start = time.time()
     exp = None
     try:
         out = subprocess.check_output(cmd, shell=False, timeout=timeout)
@@ -96,7 +99,7 @@ def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
         print(out[last2 + 1 : last1])
         exp = BiDirExp.from_json(out[last2 + 1 : last1])  # type: ignore
         exp.status = "complete"
-        time_total = time.time() - start
+        # time_total = time.time() - start
         status = "complete"
     except subprocess.TimeoutExpired:
         status = f"timeout-{timeout}"
@@ -134,6 +137,13 @@ def benchmark_program(timeout, algo, file) -> list[str]:
         exp = run_solver(file, timeout)
     else:
         assert False
+
+    # verify the result
+    if exp.status == "complete":
+        if bidirectional.decode(exp.factors) == open(file, "rb").read():
+            exp.status = "correct"
+        else:
+            exp.status = "wrong"
     expd = exp.__dict__
     return list(map(str, expd.values()))
     # with open(out_file, "a") as f:
