@@ -57,11 +57,11 @@ class BiDirLiteral(Enum):
     true = Literal.true
     false = Literal.false
     auxlit = Literal.auxlit
-    link_to = auto()
+    depth_ref = auto()
     root = auto()
     fbeg = auto()
     ref = auto()
-    depth_ref = auto()
+    any_ref = auto()
 
 
 class BiDirLiteralManager(LiteralManager):
@@ -75,10 +75,10 @@ class BiDirLiteralManager(LiteralManager):
         self.n = len(self.text)
         self.lits = BiDirLiteral
         self.verifyf = {
-            BiDirLiteral.link_to: self.verify_link,
+            BiDirLiteral.depth_ref: self.verify_link,
             BiDirLiteral.root: self.verify_root,
             BiDirLiteral.ref: self.verify_ref,
-            BiDirLiteral.depth_ref: self.verify_depth_ref,
+            BiDirLiteral.any_ref: self.verify_depth_ref,
         }
         super().__init__(self.lits)
 
@@ -91,7 +91,7 @@ class BiDirLiteralManager(LiteralManager):
     def verify_link(self, obj):
         # obj = (name, depth, form, to)
         assert len(obj) == 4
-        assert obj[0] == self.lits.link_to
+        assert obj[0] == self.lits.depth_ref
         assert 0 <= obj[1] < self.max_depth - 1
         assert 0 <= obj[2], obj[3] < self.n
         assert obj[2] != obj[3]
@@ -150,14 +150,14 @@ def show_sol(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
     occ = make_occa1(text)
     pinfo = defaultdict(list)
 
-    def link_to(i: int) -> list[int]:
+    def refer_to(i: int) -> list[int]:
         res = []
         for depth in range(lm.max_depth - 1):
             for j in occ[text[i]]:
                 if i == j:
                     continue
-                if sol[lm.getid(lm.lits.link_to, depth, i, j)]:
-                    res.append((lm.lits.link_to, depth, i, j))
+                if sol[lm.getid(lm.lits.depth_ref, depth, j, i)]:
+                    res.append((lm.lits.depth_ref, depth, j, i))
         return res
 
     for i in range(n):
@@ -173,7 +173,7 @@ def show_sol(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
         fbeg_key = (lm.lits.fbeg, i)
         if sol[lm.getid(*fbeg_key)]:
             pinfo[i].append(str(fbeg_key))
-        for key in link_to(i):
+        for key in refer_to(i):
             pinfo[i].append(f"{key}")
     for i in range(n):
         logger.debug(f"i={i} " + ", ".join(pinfo[i]))
@@ -223,7 +223,7 @@ def make_occa2(text: bytes) -> dict[bytes, list[int]]:
 
 def occ_others(occ1: dict[int, list[int]], text: bytes, i: int):
     """
-    returns occurrences of text[i] except i.
+    returns occurrences of `text[i]` in `text` except `i`.
     """
     for j in occ1[text[i]]:
         if i != j:
@@ -247,24 +247,27 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
     wcnf = WCNF()
     wcnf.append([lm.getid(lm.lits.true)])
     wcnf.append([lm.getid(lm.lits.false)])
-    # wcnf.append([lm.sym2id(lm.true)])
-    # wcnf.append([lm.sym2id(lm.false)])
 
-    # register all literals (except auxiliary literals) to literal manager.
+    # register all literals (except auxiliary literals) to literal manager
     lits = [lm.sym2id(lm.true)]
     for depth in range(max_depth - 1):
         for i in range(n):
             for j in occ_others(occ1, text, i):
-                lits.append(lm.newid(lm.lits.link_to, depth, i, j))
+                # depth_ref(depth, i, j) is true iff i refers to j at depth
+                lits.append(lm.newid(lm.lits.depth_ref, depth, i, j))
     for i in range(n):
+        # fbeg(i) is true iff a factor begins at i
         lits.append(lm.newid(lm.lits.fbeg, i))
+        # root(i) is true iff a factor at i represents a single character not a reference
         lits.append(lm.newid(lm.lits.root, i))
     for i in range(n):
         for j in occ_others(occ1, text, i):
+            # ref(i, j) is true iff i refers to j
             lits.append(lm.newid(lm.lits.ref, i, j))
     for depth in range(max_depth - 1):
         for i in range(n):
-            lits.append(lm.newid(lm.lits.depth_ref, depth, i))
+            # any_ref(depth, i) is true iff i refers to any position at depth
+            lits.append(lm.newid(lm.lits.any_ref, depth, i))
     wcnf.append(lits)
 
     # objective: minimizes the number of factors
@@ -283,123 +286,110 @@ def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
 
     # objective: valid references
 
-    # objective: bridge objectives between beginning factor and valid references
-    # if i is a root, i+1 is the beginning of a factor
-    for i in range(n):
-        root0 = lm.getid(lm.lits.root, i)
-        fbeg0 = lm.getid(lm.lits.fbeg, i)
-        wcnf.append(pysat_if(root0, fbeg0))
-        if i + 1 < n:
-            fbeg1 = lm.getid(lm.lits.fbeg, i + 1)
-            wcnf.append(pysat_if(root0, fbeg1))
+    # the following is the most heavy process
+    logger.debug("each position, it has only one link or root")
+    for depth in range(max_depth - 1):
+        if depth % 30 == 0:
+            logger.debug(f"depth {depth}/{max_depth}")
+        for i in range(n):
+            for j in occ_others(occ1, text, i):
+                dref_ji = lm.getid(lm.lits.depth_ref, depth, j, i)
+                dref_j = lm.getid(lm.lits.any_ref, depth, j)
+                # tree-1: if j refers to i at depth, j refers to any position at depth
+                # this is the definition of any_ref(depth, j)
+                wcnf.append(pysat_if(dref_ji, dref_j))
+            refi = [
+                lm.getid(lm.lits.depth_ref, depth, i, j)
+                for j in occ1[text[i]]
+                if i != j
+            ]
+            if refi:
+                dref_i = lm.getid(lm.lits.any_ref, depth, i)
+                # tree-2: if i refers to any position at depth, there is a reference from i to j
+                wcnf.append(pysat_if_and_then_or([dref_i], refi))
 
-    # relation between link and ref
-    # i link to j implies j refer to i.
+                # tree-3: the number of references from i is at most one
+                wcnf.extend(CardEnc.atmost(refi, bound=1, vpool=lm.vpool))
+
+                no_refi, clauses = pysat_and(lm.newid, [-x for x in refi])
+                wcnf.extend(clauses)
+                # tree-4: if i does not refer to any position at depth, there is no references from i
+                wcnf.append(pysat_if(-dref_i, no_refi))
+    for i in range(n):
+        dref_i = [lm.getid(lm.lits.any_ref, depth, i) for depth in range(max_depth - 1)]
+        root_i = lm.getid(lm.lits.root, i)
+        # tree-5: each position is a root or has a reference to any position
+        # (use all positions)
+        wcnf.extend(pysat_equal(lm, 1, dref_i + [root_i]))
+    for c in occ1.keys():
+        roots = [lm.getid(lm.lits.root, i) for i in occ1[c]]
+        # a root for each character exists only one.
+        # this is not necessity, it may cause bad effect.
+        wcnf.extend(pysat_equal(lm, 1, roots))
+        # wcnf.append(pysat_atleast_one(roots))
+
+    for depth in range(1, max_depth - 1):
+        if depth % 30 == 0:
+            logger.debug(f"depth {depth}/{max_depth}")
+        for i in range(n):
+            for j in occ_others(occ1, text, i):
+                dref_ji = lm.getid(lm.lits.depth_ref, depth, j, i)
+                dref_i = lm.getid(lm.lits.any_ref, depth - 1, i)
+                # tree-5: if j refers to j at depth, i refers to any position at dpeth-1
+                wcnf.append(pysat_if(dref_ji, dref_i))
+    # ----------- end of valid reference ----
+    # bridge
     for i in range(n):
         for j in occ_others(occ1, text, i):
             assert 0 <= i, j < n
             ref_ji0 = lm.getid(lm.lits.ref, j, i)
             fbeg_j = lm.getid(lm.lits.fbeg, j)
             for depth in range(max_depth - 1):
-                link_ij = lm.getid(lm.lits.link_to, depth, i, j)
-                # if there is link i to j, there is ref j to i.
-                wcnf.append(pysat_if(link_ij, ref_ji0))
+                dref_ji = lm.getid(lm.lits.depth_ref, depth, j, i)
+                # bridge-1: if j refers to i at depth, j refers to i
+                wcnf.append(pysat_if(dref_ji, ref_ji0))
             if i == 0 or j == 0 or text[i - 1] != text[j - 1]:
-                # if j refer to i and their previous positions do not match,
-                # j is the beginning of a factor
+                # bridge-2: since it is impossible refer to i-1 or j-1, factor begins at j.
                 wcnf.append(pysat_if(ref_ji0, fbeg_j))
             if i > 0 and j > 0 and text[i - 1] == text[j - 1]:
                 ref_ji1 = lm.getid(lm.lits.ref, j - 1, i - 1)
                 fbeg0 = lm.getid(lm.lits.fbeg, j)
                 # here, text[i-1:i+1] == text[j-1:j+1]
-                # if ref j-1 does not refer to i-1, j is the beginning of a factor
+                # bridge-3: if j-1 does not refer to i-1 and j refers to i, factor begins at j
                 wcnf.append(pysat_if_and_then_or([-ref_ji1, ref_ji0], [fbeg0]))
-                # if ref j-1 refer to i-1, j is not the beginning of a factor
-                # this is because if not, the result size is not the minimum.
+                # bridge-4: if j-1 and j refer to i-1 and i, respectively, factor does not begin at j
+                # because if not, the result size is not the minimum.
                 wcnf.append(pysat_if_and_then_or([ref_ji1, ref_ji0], [-fbeg0]))
 
-    # if there is a link i to j at depth>1, there must exist a link k to j at depth-1.
-    logger.debug("link is connectted, and it forms tree structure")
-    for depth in range(1, max_depth - 1):
-        if depth % 30 == 0:
-            logger.debug(f"depth {depth}/{max_depth}")
-        for i in range(n):
-            for j in occ_others(occ1, text, i):
-                link_ij = lm.getid(lm.lits.link_to, depth, i, j)
-                dref_i = lm.getid(lm.lits.depth_ref, depth - 1, i)
-                wcnf.append(pysat_if(link_ij, dref_i))
-
-    # roots for each character are only one.
-    # this is not necessity, it may cause bad effect.
-    for c in occ1.keys():
-        roots = [lm.getid(lm.lits.root, i) for i in occ1[c]]
-        wcnf.extend(pysat_equal(lm, 1, roots))
-        # wcnf.append(pysat_atleast_one(roots))
-
-    # the number of refferences for each position is at most one.
-    # root position does not refer to any positions.
     logger.debug("# of referrences is only one")
     for i in range(n):
         refs = [lm.getid(lm.lits.ref, i, j) for j in occ1[text[i]] if i != j]
         root_i = lm.getid(lm.lits.root, i)
-        # the number of refferences for each position is at most one.
+        # the number of rerferences from a position is at most one.
         wcnf.extend(CardEnc.atmost(refs, bound=1, vpool=lm.vpool))
         # wcnf.extend(pysat_equal(lm, 1, refs + [root_i]))
         for j in occ_others(occ1, text, i):
             ref_ij = lm.getid(lm.lits.ref, i, j)
-            link_ij = lm.getid(lm.lits.link_to, 0, i, j)
+            dref_ji = lm.getid(lm.lits.depth_ref, 0, j, i)
             # root position does not refer to any positions.
             wcnf.append(pysat_if(root_i, -ref_ij))
-            wcnf.append(pysat_if(-root_i, -link_ij))
-
-    # this is the most heavy process
-    # the number of links to j is at most one.
-    # define depth ref
-    logger.debug("each position, it has only one link or root")
-    # for i in range(n):
-    #     rooti = lm.getid(lm.lit.root, i)
-    #     links_i = [
-    #         lm.getid(lm.lit.link_to, depth, j, i)
-    #         for depth in range(max_depth - 1)
-    #         for j in occ1[text[i]]
-    #         if i != j
-    #     ]
-    #     wcnf.extend(pysat_equal(lm, 1, links_i + [rooti]))
-    for depth in range(max_depth - 1):
-        if depth % 30 == 0:
-            logger.debug(f"depth {depth}/{max_depth}")
-        for i in range(n):
-            for j in occ_others(occ1, text, i):
-                link_ij = lm.getid(lm.lits.link_to, depth, i, j)
-                dref_j = lm.getid(lm.lits.depth_ref, depth, j)
-                # if there exists link to j, dref to j is true
-                wcnf.append(pysat_if(link_ij, dref_j))
-            links_to_i = [
-                lm.getid(lm.lits.link_to, depth, j, i) for j in occ1[text[i]] if i != j
-            ]
-            if links_to_i:
-                dref_i = lm.getid(lm.lits.depth_ref, depth, i)
-                # if dref to i is true, there is (at least one) link to i.
-                wcnf.append(pysat_if_and_then_or([dref_i], links_to_i))
-
-                # there is at most one link to i at each depth.
-                wcnf.extend(CardEnc.atmost(links_to_i, bound=1, vpool=lm.vpool))
-
-                # if dref to i is false, every link to i is false
-                if_then, clauses = pysat_and(lm.newid, [-x for x in links_to_i])
-                wcnf.extend(clauses)
-                wcnf.append(pysat_if(-dref_i, if_then))
-    # for each position, there must exist either a root or reference to a position
-    for i in range(n):
-        dref_i = [
-            lm.getid(lm.lits.depth_ref, depth, i) for depth in range(max_depth - 1)
-        ]
-        root_i = lm.getid(lm.lits.root, i)
-        wcnf.extend(pysat_equal(lm, 1, dref_i + [root_i]))
+            # any non root position is not refered from any positions
+            wcnf.append(pysat_if(-root_i, -dref_ji))
 
     logger.info(
         f"#literals = {lm.top()}, # hard clauses={len(wcnf.hard)}, # of soft clauses={len(wcnf.soft)}"
     )
+
+    # objective: bridge objectives between beginning factor and valid references
+    for i in range(n):
+        root0 = lm.getid(lm.lits.root, i)
+        fbeg0 = lm.getid(lm.lits.fbeg, i)
+        wcnf.append(pysat_if(root0, fbeg0))
+        if i + 1 < n:
+            fbeg1 = lm.getid(lm.lits.fbeg, i + 1)
+            # if i is root, a factor begins at i
+            wcnf.append(pysat_if(root0, fbeg1))
+
     return lm, wcnf
 
 
@@ -443,7 +433,7 @@ def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> list[list[int
     return res
 
 
-def bidirectional(text: bytes, exp: BiDirExp = None) -> BiDirType:
+def min_bidirectional(text: bytes, exp: BiDirExp = None) -> BiDirType:
     """
     compute minimum bidirectional scheme
     """
@@ -545,7 +535,7 @@ if __name__ == "__main__":
     exp.algo = "solver"
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
-    factors_sol = bidirectional(text, exp)
+    factors_sol = min_bidirectional(text, exp)
     exp.factors = factors_sol
     exp.factor_size = len(factors_sol)
     logger.info(f"runtime: {timer()}")

@@ -21,7 +21,7 @@ files = (
     + glob.glob("data/cantrbry_pref/*-100")
 )
 # original
-files = glob.glob("data/calgary/*") + glob.glob("data/cantrbry/*")
+# files = glob.glob("data/calgary/*") + glob.glob("data/cantrbry/*")
 files = [os.path.abspath(f) for f in files]
 
 algos = ["solver"]
@@ -46,9 +46,8 @@ def run_solver(input_file: str, timeout: float = None) -> AttractorExp:
         last2 = out.rfind(b"\n", 0, last1)
         print(out[last2 + 1 : last1])
         exp = AttractorExp.from_json(out[last2 + 1 : last1])  # type: ignore
-        valid = verify_attractor(open(input_file, "rb").read(), exp.factors)
-        exp.status = "correct" if valid else "wrong"
         status = "complete"
+        exp.status = status
     except subprocess.TimeoutExpired:
         status = f"timeout-{timeout}"
     except Exception:
@@ -83,8 +82,13 @@ def benchmark_program(timeout, algo, file, out_file):
         exp = run_solver(file, timeout)
     else:
         assert False
-    with open(out_file, "a") as f:
-        f.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
+    # with open(out_file, "a") as f:
+    #     f.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
+
+    # verify the result
+    if exp.status == "complete":
+        valid = verify_attractor(open(file, "rb").read(), exp.factors)
+        exp.status = "correct" if valid else "wrong"
 
     con = sqlite3.connect(dbname)
     cur = con.cursor()
