@@ -25,27 +25,35 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
         )
     )
     lines = []
+
+    def get_values(keys, table, file):
+        query = f"select {','.join(keys)} from {table} WHERE file_name = '{file}'"
+        res = cur.execute(query).fetchone()
+        if res == None:
+            return ["None" for _ in keys]
+        return res
+
     for file in files:
         line = dict()
         line["file"] = file
         # lz
         for algo in lz_bench.algos:
             status, file_len, factor_size = cur.execute(
-                f"select status, file_len, {target_key} from {lz_bench.dbtable} WHERE file_name = '{file}'"
+                f"select status, file_len, {target_key} from {lz_bench.dbtable} WHERE file_name = '{file}' and algo='{algo}'"
             ).fetchone()
             line["file_len"] = file_len
             line[algo] = factor_size
 
         # attractor
-        status, target = cur.execute(
-            f"select status, {target_key} from {attractor_bench.dbtable} WHERE file_name = '{file}'"
-        ).fetchone()
+        status, target = get_values(
+            ["status", target_key], attractor_bench.dbtable, file
+        )
         line["attractor"] = status if target == target_none else target
 
         # bidirectional
-        status, target = cur.execute(
-            f"select status, {target_key} from {bidirectional_bench.dbtable} WHERE file_name = '{file}'"
-        ).fetchone()
+        status, target = get_values(
+            ["status", target_key], bidirectional_bench.dbtable, file
+        )
         line["bidirectional"] = status if target == target_none else target
 
         lines.append([line[key] for key in header])

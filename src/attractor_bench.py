@@ -2,6 +2,7 @@ import argparse
 import datetime
 import glob
 import sys
+from typing import Optional
 from joblib import Parallel, delayed
 import sqlite3
 import subprocess
@@ -27,7 +28,7 @@ files = [os.path.abspath(f) for f in files]
 algos = ["solver"]
 
 
-def run_solver(input_file: str, timeout: float = None) -> AttractorExp:
+def run_solver(input_file: str, timeout: Optional[float] = None) -> AttractorExp:
     cmd = [
         "pipenv",
         "run",
@@ -155,9 +156,10 @@ def parse_args():
     )
     parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument("--n_jobs", type=int, help="number of jobs", default=2)
+    parser.add_argument("--files", nargs="*", help="files", default=[])
 
     args = parser.parse_args()
-    if args.output == "" or args.timeout < 0:
+    if args.output == "" or args.timeout < 0 or len(args.files) == 0:
         parser.print_help()
         sys.exit()
     if args.timeout == 0:
@@ -168,7 +170,7 @@ def parse_args():
 def main():
     clear_table()
     args = parse_args()
-    benchmark_mul(args.timeout, algos, files, args.output, args.n_jobs)
+    benchmark_mul(args.timeout, algos, args.files, args.output, args.n_jobs)
     export_csv(args.output)
 
 

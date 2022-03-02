@@ -7,33 +7,21 @@ import sqlite3
 import sys
 from dataclasses import dataclass
 import time
+from typing import Optional
 from joblib import Parallel, delayed
 
 
 import bidirectional
 from bidirectional import BiDirExp, BiDirType
 
-# from bidirectional_solver import bidirectional
 
 dbname = "out/satcomp.db"
 dbtable = "bidirectional_bench"
 
-# pref
-files = (
-    glob.glob("data/calgary_pref/*-50")
-    # + glob.glob("data/calgary_pref/*-100")
-    # + glob.glob("data/cantrbry_pref/*-50")
-    # + glob.glob("data/cantrbry_pref/*-100")
-)
-# original
-# files = glob.glob("data/calgary/*") + glob.glob("data/cantrbry/*")
-files = [os.path.abspath(f) for f in files]
-
-# algos = ["solver", "naive"]
 algos = ["solver"]
 
 
-def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
+def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     input_file = os.path.abspath(input_file)
     current_dir = os.path.abspath(".")
     os.chdir("rustr-master")
@@ -80,7 +68,7 @@ def run_naive(input_file: str, timeout: float = None) -> BiDirExp:
     )
 
 
-def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
+def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     cmd = [
         "pipenv",
         "run",
@@ -99,7 +87,6 @@ def run_solver(input_file: str, timeout: float = None) -> BiDirExp:
         print(out[last2 + 1 : last1])
         exp = BiDirExp.from_json(out[last2 + 1 : last1])  # type: ignore
         exp.status = "complete"
-        # time_total = time.time() - start
         status = "complete"
     except subprocess.TimeoutExpired:
         status = f"timeout-{timeout}"
@@ -146,8 +133,6 @@ def benchmark_program(timeout, algo, file) -> list[str]:
             exp.status = "wrong"
     expd = exp.__dict__
     return list(map(str, expd.values()))
-    # with open(out_file, "a") as f:
-    #     f.write(exp.to_json(ensure_ascii=False) + "\n")  # type: ignore
 
 
 def benchmark_single(timeout, algos, files, out_file):
@@ -230,9 +215,10 @@ def parse_args():
     )
     parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument("--n_jobs", type=int, help="number of jobs", default=2)
+    parser.add_argument("--files", nargs="*", help="files", default=[])
 
     args = parser.parse_args()
-    if args.output == "" or args.timeout < 0:
+    if args.output == "" or args.timeout < 0 or len(args.files) == 0:
         parser.print_help()
         sys.exit()
     if args.timeout == 0:
@@ -243,7 +229,7 @@ def parse_args():
 def main():
     clear_table(dbtable)
     args = parse_args()
-    benchmark_mul(args.timeout, algos, files, args.output, args.n_jobs)
+    benchmark_mul(args.timeout, algos, args.files, args.output, args.n_jobs)
     export_csv(dbtable, args.output)
 
 

@@ -39,7 +39,7 @@ def main(fname: str, vtype: str):
                             line.append("{:.4f}".format(float(elm)))
                         else:
                             line.append(elm)
-                    except Exception:
+                    except:
                         line.append(elm)
 
             res.append(" & ".join(line))
@@ -76,28 +76,8 @@ def size_table(fname):
     print(table_template.format(table_format, table_body))
 
 
-def covert(elm):
-    trans = elm
-    try:
-        trans = int(elm)
-        return f"\\num{{{trans}}}"
-    except Exception:
-        try:
-            trans = "{:.4f}".format(float(elm))
-            return f"\\num{{{trans}}}"
-        except Exception:
-            return elm
-
-
-def naive(fname):
-    with open(fname) as csvfile:
-        reader = csv.reader(csvfile)
-        _ = next(reader)
-        for row in reader:
-            line = [covert(elm) for elm in row]
-            print(" & ".join(line), r"\\")
-
-
 if __name__ == "__main__":
     fname = sys.argv[1]
-    naive(fname)
+    vtype = sys.argv[2]
+    # size_table(fname)
+    main(fname, vtype)
