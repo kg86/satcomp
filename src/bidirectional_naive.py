@@ -1,3 +1,4 @@
+from typing import Optional
 from bidirectional import BiDirType, bd_info
 import subprocess
 import argparse
@@ -5,7 +6,7 @@ import sys
 import os
 
 
-def bidirectional_naive(input_file: str, timeout: float = None) -> BiDirType:
+def bidirectional_naive(input_file: str, timeout: Optional[float] = None) -> BiDirType:
     input_file = os.path.abspath(input_file)
     cmd = f"cd rustr-master && cargo run --bin optimal_bms -- --input_file {input_file}"
     print(cmd)

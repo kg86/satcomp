@@ -6,7 +6,7 @@ import os
 from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
 import time
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Iterator, Optional
 
 from pysat.card import CardEnc, EncType
 from pysat.formula import WCNF
@@ -433,7 +433,7 @@ def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> list[list[int
     return res
 
 
-def min_bidirectional(text: bytes, exp: BiDirExp = None) -> BiDirType:
+def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
     """
     compute minimum bidirectional scheme
     """
