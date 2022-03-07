@@ -8,6 +8,7 @@ import datetime
 import glob
 import sys
 import time
+from typing import List
 from joblib import Parallel, delayed
 import sqlite3
 import subprocess
@@ -48,7 +49,7 @@ class LZExp:
         return LZExp("", "", "", "", 0, 0, 0)
 
 
-def benchmark_program(timeout, algo, file) -> list[str]:
+def benchmark_program(timeout, algo, file) -> List[str]:
     """
     runs program with given setting (timeout, algo, file).
     """

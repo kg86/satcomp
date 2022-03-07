@@ -1,8 +1,8 @@
-from typing import NewType, Tuple
+from typing import List, NewType, Tuple
 
 import stralgo
 
-AttractorType = NewType("AttractorType", list[int])
+AttractorType = NewType("AttractorType", List[int])
 
 
 def verify_attractor(text: bytes, attractor: AttractorType) -> bool:

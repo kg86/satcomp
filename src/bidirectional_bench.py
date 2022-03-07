@@ -7,7 +7,7 @@ import sqlite3
 import sys
 from dataclasses import dataclass
 import time
-from typing import Optional
+from typing import List, Optional
 from joblib import Parallel, delayed
 
 
@@ -114,7 +114,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     return exp
 
 
-def benchmark_program(timeout, algo, file) -> list[str]:
+def benchmark_program(timeout, algo, file) -> List[str]:
     """
     runs program with given setting (timeout, algo, file).
     """

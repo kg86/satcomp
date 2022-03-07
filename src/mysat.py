@@ -11,7 +11,7 @@ from sympy.logic.boolalg import (
     Boolean,
     is_cnf,
 )
-from sympy import Symbol, Or, And, Not, Xor
+from sympy import Basic, Symbol, Or, And, Not, Xor
 from pysat.card import IDPool
 
 debug = False
@@ -161,7 +161,7 @@ def defcnf(new_var, x: Boolean, y: Boolean) -> list[list[int]]:
     return sympy_cnf_pysat(new_var, Equivalent(x, y))  # type: ignore
 
 
-def literal_sympy_to_pysat(x: Boolean):
+def literal_sympy_to_pysat(x: Boolean | Basic):
     """
     Convert sympy literal to pysat literal.
     sympy literal must be represented by integer
@@ -204,7 +204,7 @@ def sympy_cnf_pysat(new_var, x: Boolean | Any) -> list[list[int]]:
     """
     new_formula = []
 
-    def rec(eq: Boolean) -> int:
+    def rec(eq: Boolean | Basic) -> int:
         if isinstance(eq, Symbol) or isinstance(eq, Not):
             return literal_sympy_to_pysat(eq)
         elif isinstance(eq, And):

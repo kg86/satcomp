@@ -1,3 +1,4 @@
+from typing import List
 from typing_extensions import Self
 from sympy.logic.boolalg import (
     BooleanFalse,
@@ -11,7 +12,7 @@ from sympy.logic.boolalg import (
     is_nnf,
     ITE,
 )
-from sympy import Symbol, Or, And, Not, Xor
+from sympy import Basic, Symbol, Or, And, Not, Xor
 
 from mysat import (
     LiteralManager,
@@ -44,7 +45,7 @@ def msb(x: int) -> int:
 
 class LogEncoding:
     def __init__(
-        self, lm: LiteralManager, consts: list[Boolean], assumps: list[int], digit: int
+        self, lm: LiteralManager, consts: List[Boolean], assumps: List[int], digit: int
     ):
         self.lm = lm
         self.consts = consts
@@ -65,7 +66,7 @@ class LogEncoding:
         """
         Add constraint that self represents the number `num`.
         """
-        assert num < 2 ** self.digit
+        assert num < 2**self.digit
         for i in range(self.digit):
             if num % 2 == 0:
                 self.consts.append(~self.ds[i])
@@ -91,7 +92,7 @@ class LogEncoding:
 
     @classmethod
     def const(
-        cls, lm: LiteralManager, consts: list[Boolean], assumps: list[int], x: int
+        cls, lm: LiteralManager, consts: List[Boolean], assumps: List[int], x: int
     ) -> Self:
         res = LogEncoding(lm, consts, assumps, msb(x))
         for i in range(res.digit):

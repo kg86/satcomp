@@ -4,6 +4,7 @@
 import sys
 import argparse
 from logging import getLogger, DEBUG, INFO, StreamHandler
+from typing import Dict, List
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -51,7 +52,7 @@ class LRLiteralManaer(LiteralManager):
         return res
 
 
-def left_most_characters(text: bytes) -> dict[int, int]:
+def left_most_characters(text: bytes) -> Dict[int, int]:
     res = dict()
     for i, c in enumerate(text):
         if c not in res:
@@ -59,7 +60,7 @@ def left_most_characters(text: bytes) -> dict[int, int]:
     return res
 
 
-def occ_chars(text: bytes) -> dict[int, list[int]]:
+def occ_chars(text: bytes) -> Dict[int, List[int]]:
     res = dict()
     for i, c in enumerate(text):
         if c not in res:
@@ -68,12 +69,12 @@ def occ_chars(text: bytes) -> dict[int, list[int]]:
     return res
 
 
-def lit_by_id(sol: list[int], id: int):
+def lit_by_id(sol: List[int], id: int):
     """returns boolean assignment of id"""
     return sol[id - 1] > 0
 
 
-def get_lref(lm: LRLiteralManaer, sol: list[int], i: int):
+def get_lref(lm: LRLiteralManaer, sol: List[int], i: int):
     res = []
     for j in range(i + 1):
         if lm.contains(lm.lit_lref, i, j):
@@ -84,7 +85,7 @@ def get_lref(lm: LRLiteralManaer, sol: list[int], i: int):
     return res
 
 
-def sol2factors(lm: LRLiteralManaer, sol: list[int], text_len):
+def sol2factors(lm: LRLiteralManaer, sol: List[int], text_len):
     """
     returns a list contains beginning positions of factors.
     The result also contains the position 0 and text length.
@@ -99,7 +100,7 @@ def sol2factors(lm: LRLiteralManaer, sol: list[int], text_len):
     return res
 
 
-def sol2lz77(lm: LRLiteralManaer, sol: list[int], text: bytes) -> lz77.LZType:
+def sol2lz77(lm: LRLiteralManaer, sol: List[int], text: bytes) -> lz77.LZType:
     """returns LZ77"""
     res = lz77.LZType([])
     factors = sol2factors(lm, sol, len(text))
@@ -118,7 +119,7 @@ def sol2lz77(lm: LRLiteralManaer, sol: list[int], text: bytes) -> lz77.LZType:
     return res
 
 
-def sol2lz772(lm: LRLiteralManaer, sol: list[int], text: bytes) -> lz77.LZType:
+def sol2lz772(lm: LRLiteralManaer, sol: List[int], text: bytes) -> lz77.LZType:
     """returns LZ77"""
     res = lz77.LZType([])
     factors = sol2factors(lm, sol, len(text))
@@ -163,7 +164,7 @@ def sol2lz772(lm: LRLiteralManaer, sol: list[int], text: bytes) -> lz77.LZType:
 
 
 def sol2lz773(
-    lm: LRLiteralManaer, sol: list[int], text: bytes, lmc, match_left
+    lm: LRLiteralManaer, sol: List[int], text: bytes, lmc, match_left
 ) -> lz77.LZType:
     """returns LZ77"""
     res = lz77.LZType([])
@@ -197,7 +198,7 @@ def sol2lz773(
     return res
 
 
-def assert_sol_continuous(sol: list[int]) -> None:
+def assert_sol_continuous(sol: List[int]) -> None:
     for i in range(1, len(sol)):
         assert abs(sol[i]) - abs(sol[i - 1])
 
