@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from typing import NewType
+from typing import List, NewType, Tuple
 
 # BiDirType = [[p0, l0], [p1, l1], ...] represents the string T=T[p0:(p0+l0)]T[p1:(p1+l1)]...
-BiDirType = NewType("BiDirType", list[tuple[int, int]])
+BiDirType = NewType("BiDirType", List[Tuple[int, int]])
 
 
 from dataclasses_json import dataclass_json

@@ -1,4 +1,4 @@
-from typing import AnyStr, Iterable, Tuple
+from typing import AnyStr, Iterable, List, Tuple
 
 
 def make_sa_MM(text):
@@ -143,7 +143,7 @@ def num_occ(text, pattern):
     return len(occ_pos_naive(text, pattern))
 
 
-def substr(text: AnyStr) -> list[AnyStr]:
+def substr(text: AnyStr) -> List[AnyStr]:
     n = len(text)
     res = []
     for i in range(n):
@@ -152,7 +152,7 @@ def substr(text: AnyStr) -> list[AnyStr]:
     return res
 
 
-def minimum_substr_naive(text) -> list[Tuple[int, int]]:
+def minimum_substr_naive(text) -> List[Tuple[int, int]]:
     """
     return set of (b, l) s.t. text[b:b+l] is a minimum substring.
     a minimum substring x is a substring that the #occ of x is

@@ -6,7 +6,7 @@ import os
 from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
 import time
 from dataclasses import dataclass
-from typing import Iterator, Optional
+from typing import Dict, Iterator, List, Optional
 
 from pysat.card import CardEnc, EncType
 from pysat.formula import WCNF
@@ -116,11 +116,11 @@ class BiDirLiteralManager(LiteralManager):
         assert 0 <= obj[2] < self.n
 
 
-def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: list[int]):
+def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]):
     return CardEnc.equals(lits, bound=bound, encoding=EncType.pairwise, vpool=lm.vpool)
 
 
-def sol2lits2(lm: BiDirLiteralManager, sol: dict[int, bool], lit_name: str) -> list:
+def sol2lits2(lm: BiDirLiteralManager, sol: Dict[int, bool], lit_name: str) -> list:
     res = []
     for id, obj in lm.vpool.id2obj.items():
         assert isinstance(id, int)
@@ -130,7 +130,7 @@ def sol2lits2(lm: BiDirLiteralManager, sol: dict[int, bool], lit_name: str) -> l
     return res
 
 
-def sol2refs(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
+def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
     n = len(text)
     occ = make_occa1(text)
     refs = dict()
@@ -145,12 +145,12 @@ def sol2refs(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
     return refs
 
 
-def show_sol(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
+def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
     n = len(text)
     occ = make_occa1(text)
     pinfo = defaultdict(list)
 
-    def refer_to(i: int) -> list[int]:
+    def refer_to(i: int) -> List[int]:
         res = []
         for depth in range(lm.max_depth - 1):
             for j in occ[text[i]]:
@@ -180,7 +180,7 @@ def show_sol(lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes):
 
 
 def sol2bidirectional(
-    lm: BiDirLiteralManager, sol: dict[int, bool], text: bytes
+    lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes
 ) -> BiDirType:
     res = BiDirType([])
     fbegs = []
@@ -201,7 +201,7 @@ def sol2bidirectional(
     return res
 
 
-def make_occa1(text: bytes) -> dict[int, list[int]]:
+def make_occa1(text: bytes) -> Dict[int, List[int]]:
     """
     occurrences of characters
     """
@@ -211,7 +211,7 @@ def make_occa1(text: bytes) -> dict[int, list[int]]:
     return occ
 
 
-def make_occa2(text: bytes) -> dict[bytes, list[int]]:
+def make_occa2(text: bytes) -> Dict[bytes, List[int]]:
     """
     occurrences of length-2 substrings
     """
@@ -221,7 +221,7 @@ def make_occa2(text: bytes) -> dict[bytes, list[int]]:
     return match2
 
 
-def occ_others(occ1: dict[int, list[int]], text: bytes, i: int):
+def occ_others(occ1: Dict[int, List[int]], text: bytes, i: int):
     """
     returns occurrences of `text[i]` in `text` except `i`.
     """
@@ -230,7 +230,7 @@ def occ_others(occ1: dict[int, list[int]], text: bytes, i: int):
             yield j
 
 
-def bidirectional_WCNF(text: bytes) -> tuple[BiDirLiteralManager, WCNF]:
+def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     """
     returns weighted CNF to formulate the minimum size bidirectional scheme.
     """
@@ -405,7 +405,7 @@ def encode(text: bytes) -> BiDirType:
     return factors
 
 
-def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> list[list[int]]:
+def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> List[List[int]]:
     """
     returns assumption of given bidirectional scheme.
     """
