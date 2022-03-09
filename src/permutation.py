@@ -4,6 +4,7 @@ from collections import namedtuple
 import sys
 import argparse
 from logging import getLogger, DEBUG, INFO, StreamHandler
+from typing import List
 
 from left_refference import LRLiteralManaer
 
@@ -50,11 +51,11 @@ def pairs(n: int):
                 yield (i, j)
 
 
-def lit_by_id(sol: list[int], id: int):
+def lit_by_id(sol: List[int], id: int):
     return sol[id - 1] > 0
 
 
-def show_sol(lm: PermLiteralManager, sol: list[int], n: int):
+def show_sol(lm: PermLiteralManager, sol: List[int], n: int):
     for i in range(n):
         lid = lm.id(lm.lit.start, i)
         if lit_by_id(sol, lid):

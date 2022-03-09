@@ -2,13 +2,13 @@
 # if factors[i][0] == -1, it represents the character factors[i][1]
 # otherwise, it represents the previous appeared substring text[factors[i][0]:factors[i][0]+factors[i][1]]
 
-from typing import NewType
+from typing import List, NewType, Tuple
 
 from sympy.logic.boolalg import Boolean
 
 import stralgo
 
-LZType = NewType("LZType", list[tuple[int, int]])
+LZType = NewType("LZType", List[Tuple[int, int]])
 
 
 def encode(text: bytes) -> LZType:
@@ -52,7 +52,7 @@ def encode(text: bytes) -> LZType:
     return res
 
 
-def factor_strs(factors: LZType) -> list[bytes]:
+def factor_strs(factors: LZType) -> List[bytes]:
     return decode_(factors)[0]
     # text = []
     # res = []
@@ -69,7 +69,7 @@ def factor_strs(factors: LZType) -> list[bytes]:
     # return res
 
 
-def decode_(factors: LZType) -> tuple[list[bytes], bytes]:
+def decode_(factors: LZType) -> Tuple[List[bytes], bytes]:
     text = []
     res = []
     for factor in factors:
