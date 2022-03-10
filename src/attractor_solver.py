@@ -166,7 +166,7 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
     logger.info(f"text length = {len(text)}")
     logger.info(f"# of min substrs = {len(min_substrs)}")
 
-    min_substr_hist(min_substrs, 20)
+    # min_substr_hist(min_substrs, 20)
     # timer.record("min substrs")
     res["# of min substrs"] = len(min_substrs)
 
