@@ -38,7 +38,7 @@ class LZExp:
 
 def benchmark_program(timeout, algo, file) -> List[str]:
     """
-    Runs program with given setting (timeout, algo, file).
+    Run program with given setting (timeout, algo, file).
     """
     base_name = os.path.basename(file)
     out_file = f"out/lz/{base_name}.{algo}"
