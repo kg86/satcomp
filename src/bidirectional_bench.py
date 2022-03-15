@@ -75,7 +75,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
         "--file",
         input_file,
     ]
-    print(cmd)
+    print(" ".join(cmd))
     # start = time.time()
     exp = None
     try:
