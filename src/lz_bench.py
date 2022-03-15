@@ -5,7 +5,6 @@
 import argparse
 from dataclasses import asdict, dataclass
 import datetime
-import glob
 import sys
 import time
 from typing import List
@@ -18,18 +17,6 @@ import os
 dbname = "out/satcomp.db"
 dbtable = "lz_bench"
 
-# pref
-files = (
-    glob.glob("data/calgary_pref/*-50")
-    + glob.glob("data/calgary_pref/*-100")
-    + glob.glob("data/cantrbry_pref/*-50")
-    + glob.glob("data/cantrbry_pref/*-100")
-)
-
-# original
-files = glob.glob("data/calgary/*") + glob.glob("data/cantrbry/*")
-
-files = [os.path.abspath(f) for f in files]
 
 algos = ["lz", "lzrr", "lex", "lcp"]
 
@@ -51,7 +38,7 @@ class LZExp:
 
 def benchmark_program(timeout, algo, file) -> List[str]:
     """
-    runs program with given setting (timeout, algo, file).
+    Runs program with given setting (timeout, algo, file).
     """
     base_name = os.path.basename(file)
     out_file = f"out/lz/{base_name}.{algo}"
@@ -95,7 +82,7 @@ def benchmark_program(timeout, algo, file) -> List[str]:
 
 def benchmark_mul(timeout, algos, files, out_file, n_jobs):
     """
-    run benchmark program with multiple processes
+    Run benchmark program with multiple processes
     """
     if os.path.exists(out_file):
         os.remove(out_file)
@@ -119,7 +106,7 @@ def benchmark_mul(timeout, algos, files, out_file, n_jobs):
 
 def clear_table(table_name):
     """
-    delete table if exists, and create new table.
+    Delete table if exists, and create new table.
     """
     con = sqlite3.connect(dbname)
     cur = con.cursor()
@@ -136,7 +123,7 @@ def clear_table(table_name):
 
 def export_csv(table_name, out_file):
     """
-    export table to csv.
+    Store table as csv format in `out_file`.
     """
     con = sqlite3.connect(dbname)
     import pandas as pd
@@ -147,12 +134,12 @@ def export_csv(table_name, out_file):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Benchmark for algorithms computing the smallest bidirectional scheme"
+        description="Run benchmark for algorithms computing the smallest bidirectional scheme."
     )
     parser.add_argument(
         "--timeout",
         type=int,
-        help="timeout (sec). If 0 is set, the proguram does not timeout.",
+        help="timeout (sec). If 0 is set, the proguram does not time out.",
         default=60,
     )
     parser.add_argument("--output", type=str, help="output file", default="")

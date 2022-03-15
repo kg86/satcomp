@@ -7,7 +7,7 @@ AttractorType = NewType("AttractorType", List[int])
 
 def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
     """
-    Returns true if the attractor is valid.
+    Verify the attractor.
     """
 
     # run fast
@@ -15,7 +15,6 @@ def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
     isa = stralgo.make_isa(sa)
     lcp = stralgo.make_lcpa_kasai(text, sa, isa)
     min_substrs = stralgo.minimum_substr_sa(text, sa, isa, lcp)
-    indice = []
     for b, l in min_substrs:
         lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
         occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]

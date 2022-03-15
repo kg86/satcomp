@@ -3,15 +3,13 @@
 import argparse
 import os
 import sys
-import pprint
 import json
 import time
 from attractor import AttractorType
 from attractor_bench_format import AttractorExp
 
-pp = pprint.PrettyPrinter(indent=2)
-
-import stralgo
+from typing import Optional, Dict
+from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
 
 from pysat.formula import CNF, WCNF
 from pysat.examples.rc2 import RC2
@@ -22,11 +20,8 @@ import matplotlib
 
 # prevend appearing gui window
 matplotlib.use("Agg")
-from typing import Optional, Dict
+import stralgo
 
-from mytimer import Timer
-
-from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -34,21 +29,18 @@ handler.setLevel(DEBUG)
 FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
 formatter = Formatter(FORMAT)
 handler.setFormatter(formatter)
-# logger.setLevel(DEBUG)
-logger.setLevel(INFO)
 logger.addHandler(handler)
 
 
 def min_substr_hist(min_substrs, th):
     """
-    plot histogram of string lengths less than the threshold
+    Plot histogram of string lengths less than the threshold.
     """
     # histogram
     nmin_substrs_th1 = [l for b, l in min_substrs if l < th]
     nmin_substrs_th2 = [l for b, l in min_substrs if l >= th]
     logger.info(f"# of min_substrs whose length < {th} = {len(nmin_substrs_th1)}")
     logger.info(f"# of min_substrs whose length >= {th} = {len(nmin_substrs_th2)}")
-    # nmin_substrs = list(map(len, min_substrs))
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     ax.hist(nmin_substrs_th1, bins=50)
@@ -59,7 +51,8 @@ def attractor_of_size(
     text: bytes, k: int, op: str, exp: Optional[AttractorExp] = None
 ) -> AttractorType:
     """
-    Compute string attractor of the specified size (1-indexed)
+    Compute string attractor of the specified size.
+    If such attractor does not exist, return an empty list.
 
     `k`: attractor size
     `op`: `exact` or `atmost`.
@@ -129,7 +122,6 @@ def attractor_of_size(
             list(x - 1 for x in filter(lambda x: 0 < x <= n, sol))
         )
         logger.info(f"#attractor = {len(attractor)}")
-    # timer.record("solver run")
     if exp:
         exp.time_total = time.time() - total_start
         assert isinstance(cnf.nv, int)
@@ -138,27 +130,15 @@ def attractor_of_size(
         exp.sol_nsoft = 0
         exp.factors = attractor
         exp.factor_size = len(attractor)
-    # if exp:
-    #     exp["# of attractors"] = len(attractor)
-    #     # exp["attractor"] = attractor
-    #     exp["text length"] = n
-    #     exp["# of string attractors"] = k
-    #     exp["# of min substrs"] = len(min_substrs)
-    #     exp["# of clauses"] = len(cnf.clauses)
-    #     exp["# of variables"] = cnf.nv
-    #     exp["times"] = timer.times
     return attractor
 
 
 def min_attractor_WCNF(text: bytes) -> WCNF:
     """
-    Compute the max sat formula for computing minimum string attractor (1-indexed)
+    Compute the max sat formula for computing the minimum string attractor.
     """
-    res = dict()
     n = len(text)
-    res["text length"] = n
 
-    # run fast
     sa = stralgo.make_sa_MM(text)
     isa = stralgo.make_isa(sa)
     lcp = stralgo.make_lcpa_kasai(text, sa, isa)
@@ -166,38 +146,29 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
     logger.info(f"text length = {len(text)}")
     logger.info(f"# of min substrs = {len(min_substrs)}")
 
-    # min_substr_hist(min_substrs, 20)
-    # timer.record("min substrs")
-    res["# of min substrs"] = len(min_substrs)
-
-    # run solver
     wcnf = WCNF()
     for b, l in min_substrs:
         lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
         occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
-        # hard clause
+        # hard clauses
         wcnf.append(list(set(occ + i + 1 for occ in occs for i in range(l))))
     for i in range(n):
-        # soft clause
+        # soft clauses
         wcnf.append([-(i + 1)], weight=1)
-    # timer.record("clauses")
     return wcnf
 
 
 def min_attractor(text: bytes, exp: Optional[AttractorExp] = None) -> AttractorType:
     """
-    Compute minimum string attractor (1-indexed)
+    Compute the minimum string attractor.
     """
     total_start = time.time()
-    # timer = Timer()
     wcnf = min_attractor_WCNF(text)
     rc2 = RC2(wcnf)
     time_prep = time.time() - total_start
     sol = rc2.compute()
     assert sol is not None
-    # timer.record("solver run")
 
-    # attractor = AttractorType(list(filter(lambda x: x > 0, sol)))
     attractor = AttractorType(list(x - 1 for x in filter(lambda x: x > 0, sol)))
     logger.info(f"the size of minimum attractor = {len(attractor)}")
     logger.info(f"minimum attractor is {attractor}")
@@ -209,10 +180,6 @@ def min_attractor(text: bytes, exp: Optional[AttractorExp] = None) -> AttractorT
         exp.sol_nsoft = len(wcnf.soft)
         exp.factors = attractor
         exp.factor_size = len(attractor)
-    # if exp:
-    #     exp["times"] = timer.times
-    #     exp["# of minimum attractors"] = len(attractor)
-    #     exp["minimum attractor"] = attractor
     return attractor
 
 
@@ -232,11 +199,18 @@ def parse_args():
         type=str,
         help="[min: find a minimum string attractor, exact/atmost: find a string attractor whose size is exact/atmost SIZE]",
     )
+    parser.add_argument(
+        "--log_level",
+        type=str,
+        help="log level, DEBUG/INFO/CRITICAL",
+        default="CRITICAL",
+    )
     args = parser.parse_args()
     if (
         (args.file == "" and args.str == "")
         or args.algo not in ["exact", "atmost", "min"]
         or (args.algo in ["exact", "atmost"] and args.size <= 0)
+        or (args.log_level not in ["DEBUG", "INFO", "CRITICAL"])
     ):
         parser.print_help()
         sys.exit()
@@ -251,6 +225,13 @@ if __name__ == "__main__":
         text = args.str
     else:
         text = open(args.file, "rb").read()
+
+    if args.log_level == "DEBUG":
+        logger.setLevel(DEBUG)
+    elif args.log_level == "INFO":
+        logger.setLevel(INFO)
+    elif args.log_level == "CRITICAL":
+        logger.setLevel(CRITICAL)
 
     exp = AttractorExp.create()
     exp.algo = "solver"
