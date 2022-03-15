@@ -140,6 +140,7 @@ def parse_args():
         help="timeout (sec). If 0 is set, the program does not time out",
         default=60,
     )
+    parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument("--n_jobs", type=int, help="number of jobs", default=2)
     parser.add_argument("--files", nargs="*", help="files", default=[])
 
