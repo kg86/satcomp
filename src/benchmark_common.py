@@ -42,7 +42,10 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
                 f"select status, file_len, {target_key} from {lz_bench.dbtable} WHERE file_name = '{file}' and algo='{algo}'"
             ).fetchone()
             line["file_len"] = file_len
-            line[algo] = factor_size
+            if factor_size == target_none:
+                line[algo] = status
+            else:
+                line[algo] = factor_size
 
         # attractor
         status, target = get_values(
