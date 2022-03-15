@@ -25,7 +25,6 @@ class LiteralManager:
     def new_var(self, name: str = "adjlm") -> int:
         self.nvar[name] += 1
         return self.id(name, self.nvar[name])
-        # return self.vpool.id((name, self.nvar[name]))
 
     def new_var_sym(self, name: str = "adjlm") -> Boolean:
         return Symbol(str(self.new_var(name)))

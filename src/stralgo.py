@@ -41,7 +41,7 @@ def get_lcp(text, i, j):
 
 def make_isa(sa):
     """
-    Make inverse suffix array
+    Make inverse suffix array.
     """
     n = len(sa)
     isa = [0 for _ in range(n)]
@@ -75,15 +75,12 @@ def get_bwt(text, sa):
     for i in range(n):
         res.append(text[sa[i] - 1])
     return res
-    # if isinstance(text, str):
-    #   return ''.join(res)
-    # return res
 
 
 def get_lcprange(lcp, i, least_lcp=None):
     """
     Compute the maximum range lcp[j1:j2] such that
-    lcp[j] = lcp[i] for j in [j1:j2]
+    lcp[j] = lcp[i] for j in [j1:j2].
     """
 
     n = len(lcp)
@@ -138,7 +135,7 @@ def occ_pos_naive(text, pattern):
 
 def num_occ(text, pattern):
     """
-    return number of occ of pattern in text.
+    Compute the number of occurrences of the pattern in text.
     """
     return len(occ_pos_naive(text, pattern))
 
@@ -154,8 +151,8 @@ def substr(text: AnyStr) -> List[AnyStr]:
 
 def minimum_substr_naive(text) -> List[Tuple[int, int]]:
     """
-    return set of (b, l) s.t. text[b:b+l] is a minimum substring.
-    a minimum substring x is a substring that the #occ of x is
+    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring.
+    A minimum substring x is a substring that the #occ of x is
     different from #occ of x[1:] and also #occ of x[:-1].
     """
     n = len(text)
@@ -177,14 +174,16 @@ def minimum_substr(text):
     return minimum_substr_sa(text, sa, isa, lcp)
 
 
-def minimum_substr_sa(text, sa, isa, lcp):
+def minimum_substr_sa(
+    text, sa: List[int], isa: List[int], lcp: List[int]
+) -> List[Tuple[int, int]]:
     """
-    return set of (b, l) s.t. text[b:b+l] is a minimum substring
-    a minimum substring x is a substring that the #occ of x is
+    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
+    A minimum substring x is a substring that the #occ of x is
     different from #occ of x[1:] and also #occ of x[:-1].
     """
     n = len(text)
-    res = [(sa[0], 1)]
+    res: List[Tuple[int, int]] = [(sa[0], 1)]
     already_computed = set()
     for i in range(1, n):
         if lcp[i] == 0:
@@ -284,7 +283,7 @@ def test():
 
 def gen_binary(n: int) -> Iterable[str]:
     """
-    generates all binary strings of length `n`.
+    Generates all binary strings of length `n`.
     """
     if n == 1:
         yield "a"

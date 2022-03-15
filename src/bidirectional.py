@@ -46,7 +46,7 @@ def bd_info(bd: BiDirType, text: bytes) -> str:
 
 def decode_len(factors: BiDirType) -> int:
     """
-    computes the length of decoded string from a given bidirectional scheme.
+    Computes the length of decoded string from a given bidirectional scheme.
     """
     res = 0
     for f in factors:
@@ -56,7 +56,7 @@ def decode_len(factors: BiDirType) -> int:
 
 def decode(factors: BiDirType) -> bytes:
     """
-    computes the decoded string from a given bidirectional scheme.
+    Computes the decoded string from a given bidirectional scheme.
     """
     n = decode_len(factors)
     res = [-1 for _ in range(n)]

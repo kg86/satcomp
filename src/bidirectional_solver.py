@@ -1,11 +1,11 @@
-# compute the minimum size bidirectional scheme by using SAT solver
+# compute the smallest bidirectional macro scheme by using SAT solver
 from enum import auto
+import json
 import sys
 import argparse
 import os
-from logging import getLogger, DEBUG, INFO, StreamHandler, Formatter
+from logging import getLogger, DEBUG, INFO, CRITICAL, StreamHandler, Formatter
 import time
-from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional
 
 from pysat.card import CardEnc, EncType
@@ -24,33 +24,7 @@ handler.setLevel(DEBUG)
 FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
 formatter = Formatter(FORMAT)
 handler.setFormatter(formatter)
-# logger.setLevel(DEBUG)
-logger.setLevel(INFO)
 logger.addHandler(handler)
-
-
-# @dataclass
-# class BiDirLiteral:
-#     """
-#     Literals for solver to compute bidirectional scheme
-#     """
-
-#     link_to: str = "link_to"
-#     root: str = "root"
-#     fbeg: str = "factor_begin"
-#     ref: str = "ref"
-#     depth_ref: str = "depth_ref"
-
-
-# class BiDirLiteral2(Enum):
-#     true = auto()
-#     false = auto()
-#     auxlit = auto()
-#     link_to = auto()
-#     root = auto()
-#     fbeg = auto()
-#     ref = auto()
-#     depth_ref = auto()
 
 
 class BiDirLiteral(Enum):
@@ -66,7 +40,7 @@ class BiDirLiteral(Enum):
 
 class BiDirLiteralManager(LiteralManager):
     """
-    Manage literals to be used for solvers
+    Manage literals used for solvers.
     """
 
     def __init__(self, text: bytes, max_depth: int):
@@ -88,7 +62,7 @@ class BiDirLiteralManager(LiteralManager):
             self.verifyf[obj[0]](obj)
         return res
 
-    def verify_link(self, obj):
+    def verify_link(self, obj: Tuple[str, int, int, int]):
         # obj = (name, depth, form, to)
         assert len(obj) == 4
         assert obj[0] == self.lits.depth_ref
@@ -97,19 +71,19 @@ class BiDirLiteralManager(LiteralManager):
         assert obj[2] != obj[3]
         assert self.text[obj[2]] == self.text[obj[3]]
 
-    def verify_root(self, obj):
+    def verify_root(self, obj: Tuple[str, int]):
         # obj = (name, pos)
         assert len(obj) == 2
         assert 0 <= obj[1] < self.n
 
-    def verify_ref(self, obj):
+    def verify_ref(self, obj: Tuple[str, int, int]):
         # obj = (name, pos, ref_pos)
         assert len(obj) == 3
         assert obj[1] != obj[2]
         assert 0 <= obj[1], obj[2] < self.n
         assert self.text[obj[1]] == self.text[obj[2]]
 
-    def verify_depth_ref(self, obj):
+    def verify_depth_ref(self, obj: Tuple[str, int, int]):
         # obj = (name, depth, ref_pos)
         assert len(obj) == 3
         assert 0 <= obj[1] < self.max_depth
@@ -120,7 +94,11 @@ def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]):
     return CardEnc.equals(lits, bound=bound, encoding=EncType.pairwise, vpool=lm.vpool)
 
 
-def sol2lits2(lm: BiDirLiteralManager, sol: Dict[int, bool], lit_name: str) -> list:
+def sol2lits(lm: BiDirLiteralManager, sol: Dict[int, bool], lit_name: str) -> list:
+    """
+    Transform the result of the sat solver to literals of name `lit_name`.
+    Returns the list whose element is formed of (literal, True or False)
+    """
     res = []
     for id, obj in lm.vpool.id2obj.items():
         assert isinstance(id, int)
@@ -131,6 +109,9 @@ def sol2lits2(lm: BiDirLiteralManager, sol: Dict[int, bool], lit_name: str) -> l
 
 
 def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
+    """
+    Reference dictionary refs[i] = j s.t. position i refers to position j.
+    """
     n = len(text)
     occ = make_occa1(text)
     refs = dict()
@@ -146,6 +127,9 @@ def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
 
 
 def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
+    """
+    Show the result of SAT solver.
+    """
     n = len(text)
     occ = make_occa1(text)
     pinfo = defaultdict(list)
@@ -182,6 +166,9 @@ def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
 def sol2bidirectional(
     lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes
 ) -> BiDirType:
+    """
+    Compute bidirectional macro schemes from the result of SAT solver.
+    """
     res = BiDirType([])
     fbegs = []
     n = len(text)
@@ -232,7 +219,7 @@ def occ_others(occ1: Dict[int, List[int]], text: bytes, i: int):
 
 def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     """
-    returns weighted CNF to formulate the minimum size bidirectional scheme.
+    Compute the max sat formula for computing the smallest bidirectional macro schemes.
     """
     n = len(text)
     lz77fs = lz77.encode(text)
@@ -393,49 +380,9 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     return lm, wcnf
 
 
-def encode(text: bytes) -> BiDirType:
-    lm, wcnf = bidirectional_WCNF(text)
-    solver = RC2(wcnf)
-    sol = solver.compute()
-    assert sol is not None
-    sold = dict()
-    for x in sol:
-        sold[abs(x)] = x > 0
-    factors = sol2bidirectional(lm, sold, text)
-    return factors
-
-
-def bd_assumptions(lm: BiDirLiteralManager, factors: BiDirType) -> List[List[int]]:
-    """
-    returns assumption of given bidirectional scheme.
-    """
-    i = 0
-    res = []
-    use = [True for _ in range(len(text))]
-    for j in range(len(text)):
-        use[j] = False
-    for f in factors:
-        logger.debug(f"factors[{i}]={f}")
-        if f[0] == -1:
-            if use[i]:
-                res.append([lm.getid(lm.lits.fbeg, i)])
-                res.append([lm.getid(lm.lits.root, i)])
-            i += 1
-        else:
-            if use[i]:
-                res.append([lm.getid(lm.lits.fbeg, i)])
-                res.append([lm.getid(lm.lits.ref, i, f[0])])
-            for j in range(1, f[1]):
-                if use[i + j]:
-                    res.append([-lm.getid(lm.lits.fbeg, i + j)])
-                    res.append([lm.getid(lm.lits.ref, i + j, f[0] + j)])
-            i += f[1]
-    return res
-
-
 def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
     """
-    compute minimum bidirectional scheme
+    Compute the smallest bidirectional macro schemes.
     """
     total_start = time.time()
     lm, wcnf = bidirectional_WCNF(text)
@@ -445,8 +392,8 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
     if exp:
         exp.time_prep = time.time() - total_start
 
-    solver = RC2(wcnf, verbose=3)
-    # solver = RC2(wcnf)
+    # solver = RC2(wcnf, verbose=3)
+    solver = RC2(wcnf)
     sol = solver.compute()
 
     assert sol is not None
@@ -459,10 +406,7 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
             if lit[1]:
                 logger.debug(lit[0])
 
-    # show_lits(sol2lits2(lm, sold, lm.lit.link_to))
     # show_lits(sol2lits2(lm, sold, lm.lit.ref))
-    # show_lits(sol2lits2(lm, sold, lm.lit.fbeg))
-    # show_lits(sol2lits2(lm, sold, lm.lit.root))
     show_sol(lm, sold, text)
     factors = sol2bidirectional(lm, sold, text)
 
@@ -480,7 +424,10 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
     return factors
 
 
-def get_sold(sol):
+def get_sold(sol: List[int]):
+    """
+    Compute dictionary res[literal_id] = True or False.
+    """
     sold = dict()
     for x in sol:
         sold[abs(x)] = x > 0
@@ -488,7 +435,6 @@ def get_sold(sol):
 
 
 def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
-    total_start = time.time()
     lm, wcnf = bidirectional_WCNF(text)
     solset = set()
     overlap = 0
@@ -508,10 +454,18 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--text", type=str, help="input string", default="")
-    # parser.add_argument("--output", type=str, help="output file", default="")
+    parser.add_argument("--output", type=str, help="output file", default="")
+    parser.add_argument(
+        "--log_level",
+        type=str,
+        help="log level, DEBUG/INFO/CRITICAL",
+        default="CRITICAL",
+    )
 
     args = parser.parse_args()
-    if args.file == "" and args.text == "":
+    if (args.file == "" and args.text == "") or (
+        args.log_level not in ["DEBUG", "INFO", "CRITICAL"]
+    ):
         parser.print_help()
         sys.exit()
     return args
@@ -523,14 +477,18 @@ if __name__ == "__main__":
         text = args.text.encode("utf8")
     else:
         text = open(args.file, "rb").read()
+
+    if args.log_level == "DEBUG":
+        logger.setLevel(DEBUG)
+    elif args.log_level == "INFO":
+        logger.setLevel(INFO)
+    elif args.log_level == "CRITICAL":
+        logger.setLevel(CRITICAL)
+
     logger.info(text)
 
     timer = Timer()
 
-    # text = b"ababab"
-    # text = b"abbbaaabb"
-    # text = b"abbbaaabb"
-    # exp = BiDirExp()
     exp = BiDirExp.create()
     exp.algo = "solver"
     exp.file_name = os.path.basename(args.file)
@@ -538,17 +496,9 @@ if __name__ == "__main__":
     factors_sol = min_bidirectional(text, exp)
     exp.factors = factors_sol
     exp.factor_size = len(factors_sol)
-    logger.info(f"runtime: {timer()}")
-    logger.info(bd_info(factors_sol, text))
-    print(exp.to_json(ensure_ascii=False))  # type: ignore
-    # enumerate
-    # prev = None
-    # for factors_sol in bidirectional_enumerate(text):
-    #     if prev is not None and prev < len(factors_sol):
-    #         break
-    #     prev = len(factors_sol)
-    #     exp.bd_factors = factors_sol
-    #     exp.bd_size = len(factors_sol)
-    #     logger.info(f"runtime: {timer()}")
-    #     logger.info(bd_info(factors_sol, text))
-    #     print(exp.to_json(ensure_ascii=False))  # type: ignore
+
+    if args.output == "":
+        print(exp.to_json(ensure_ascii=False))  # type: ignore
+    else:
+        with open(args.output, "w") as f:
+            json.dump(exp, f, ensure_ascii=False)

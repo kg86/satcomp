@@ -29,8 +29,3 @@ def make_dataset():
 
 if __name__ == "__main__":
     make_dataset()
-    # res = ["" for _ in range(10)]
-    # res[0] = char0
-    # for i in range(1, len(res)):
-    #     res[i] = pds(res[i - 1])
-    #     print(res[i])

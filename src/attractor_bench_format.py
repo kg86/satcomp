@@ -19,8 +19,6 @@ class AttractorExp:
     sol_nsoft: int
     factor_size: int
     factors: AttractorType
-    # attractor_size: int
-    # attractor: AttractorType
 
     @classmethod
     def create(cls):

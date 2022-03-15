@@ -1,11 +1,9 @@
 import argparse
 import datetime
 import subprocess
-import glob
 import os
 import sqlite3
 import sys
-from dataclasses import dataclass
 import time
 from typing import List, Optional
 from joblib import Parallel, delayed
@@ -116,7 +114,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
 
 def benchmark_program(timeout, algo, file) -> List[str]:
     """
-    runs program with given setting (timeout, algo, file).
+    Run program with given setting (timeout, algo, file).
     """
     if algo == "naive":
         exp = run_naive(file, timeout)
@@ -137,7 +135,7 @@ def benchmark_program(timeout, algo, file) -> List[str]:
 
 def benchmark_single(timeout, algos, files, out_file):
     """
-    runs program with single process.
+    Run program with single process.
     """
     f = open(out_file, "w")
     for file in files:
@@ -153,7 +151,7 @@ def benchmark_single(timeout, algos, files, out_file):
 
 def benchmark_mul(timeout, algos, files, out_file, n_jobs):
     """
-    runs programs with multiple processes.
+    Run programs with multiple processes.
     """
     if os.path.exists(out_file):
         os.remove(out_file)
@@ -177,7 +175,7 @@ def benchmark_mul(timeout, algos, files, out_file, n_jobs):
 
 def clear_table(dbtable):
     """
-    delete table if exists, and create new table.
+    Delete table if exists, and create new table.
     """
     con = sqlite3.connect(dbname)
     cur = con.cursor()
@@ -194,7 +192,7 @@ def clear_table(dbtable):
 
 def export_csv(dbtable, out_file):
     """
-    export table to csv.
+    Export table as csv format.
     """
     con = sqlite3.connect(dbname)
     import pandas as pd
@@ -205,12 +203,12 @@ def export_csv(dbtable, out_file):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Benchmark for algorithms computing the smallest bidirectional scheme"
+        description="Run benchmark for algorithms computing the smallest bidirectional scheme."
     )
     parser.add_argument(
         "--timeout",
         type=int,
-        help="timeout (sec). If 0 is set, the proguram does not timeout.",
+        help="timeout (sec). If 0 is set, the proguram does not time out.",
         default=60,
     )
     parser.add_argument("--output", type=str, help="output file", default="")

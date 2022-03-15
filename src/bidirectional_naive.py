@@ -20,9 +20,10 @@ def bidirectional_naive(input_file: str, timeout: Optional[float] = None) -> BiD
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
+    parser = argparse.ArgumentParser(
+        description="Compute the smallest bidirectional macro scheme."
+    )
     parser.add_argument("--file", type=str, help="input file", default="")
-    # parser.add_argument("--output", type=str, help="output file", default="")
 
     args = parser.parse_args()
     if args.file == "":
