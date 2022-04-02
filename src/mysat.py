@@ -12,9 +12,12 @@ from sympy.logic.boolalg import (
     is_cnf,
 )
 from sympy import Basic, Symbol, Or, And, Not, Xor
-from pysat.card import IDPool
+from pysat.card import IDPool, CardEnc
 
 debug = False
+
+# ClauseType = NewType("ClauseType", List[int])
+# CNFType = NewType("ClauseType", List[Clause])
 
 
 class Literal(Enum):
@@ -76,6 +79,20 @@ class LiteralManager:
         return self.vpool.top
 
 
+# def pysat_or(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
+#     nvar = new_var()
+#     new_clauses = []
+#     # nvar <=> or(xs)
+#     # (nvar => or(xs)) and (or(xs) => nvar)
+#     # ((not nvar) OR or(xs)) and ((not or(xs)) OR nvar)
+#     # ((not nvar) OR or(xs)) and ((and(not x)) OR nvar)
+#     # ((not nvar) OR or(xs)) and (and (not x OR nvar))
+#     new_clauses.append([-nvar] + xs)
+#     for x in xs:
+#         new_clauses.append([nvar,-x])
+#     nvar, new_clauses
+
+
 def pysat_or(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
     nvar = new_var()
     new_clauses = []
@@ -96,8 +113,70 @@ def pysat_and(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list
     return nvar, new_clauses
 
 
+def pysat_atmost(
+    lm: LiteralManager, xs: list[int], bound: int
+) -> Tuple[int, list[list[int]]]:
+    """
+    Create a literal and clauses such that the number of true literals in `xs` is at most `bound`.
+    """
+
+    atmost_clauses = CardEnc.atmost(xs, bound=bound, vpool=lm.vpool)
+
+    xs = []
+    new_clauses = []
+    for clause in atmost_clauses:
+        nvar, clauses = pysat_or(lm.newid, clause)
+        new_clauses.extend(clauses)
+        xs.append(nvar)
+    nvar, clauses = pysat_and(lm.newid, xs)
+    new_clauses.extend(clauses)
+    return nvar, new_clauses
+
+
 def pysat_atleast_one(xs: list[int]) -> list[int]:
     return xs
+
+
+# def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[int]]]:
+#     new_clauses = pysat_atleast_one(xs)
+#     nvar, clauses = pysat_atmost(lm, xs, bound=1)
+#     new_clauses.extend(clauses)
+#     return pysat_and(lm.newid, new_clauses)
+
+
+def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[int]]]:
+    ex1_clauses = CardEnc.atmost(xs, bound=1, vpool=lm.vpool)
+    # _, ex1_clauses = pysat_atmost(lm, xs, bound=1)
+    # res_clauses = []
+    ex1_clauses.append(pysat_atleast_one(xs))
+    # print('ex1', ex1_clauses)
+    for clause in ex1_clauses:
+        if 51 in clause:
+            print("before name cnf")
+    res_var, res_clauses = pysat_name_cnf(lm, ex1_clauses)
+    # res_clauses.extend(ex1_clauses)
+    for clause in res_clauses:
+        if 51 in clause:
+            print("after name cnf")
+
+    if res_var == 51:
+        print("i am 51")
+    return res_var, res_clauses
+    # return pysat_name_cnf(lm, ex1_clauses)
+
+
+def pysat_name_cnf(
+    lm: LiteralManager, xs: list[list[int]]
+) -> Tuple[int, list[list[int]]]:
+    res_clauses = []
+    ex1_vars = []
+    for clause in xs:
+        nvar, or_clauses = pysat_or(lm.newid, clause)
+        ex1_vars.append(nvar)
+        res_clauses.extend(or_clauses)
+    res_var, clauses = pysat_and(lm.newid, ex1_vars)
+    res_clauses.extend(clauses)
+    return res_var, res_clauses
 
 
 def pysat_if_and_then_or(xs: list[int], ys: list[int]) -> list[int]:

@@ -1,5 +1,4 @@
 import argparse
-from dis import _HaveCodeOrStringType
 import os
 import sys
 import json
@@ -9,7 +8,7 @@ from enum import auto
 from attractor import AttractorType
 from attractor_bench_format import AttractorExp
 
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
 
 from pysat.formula import CNF, WCNF
@@ -47,9 +46,8 @@ class SLPLiteralManager(LiteralManager):
     Manage literals used for solvers.
     """
 
-    def __init__(self, text: bytes, max_depth: int):
+    def __init__(self, text: bytes):
         self.text = text
-        self.max_depth = max_depth
         self.n = len(self.text)
         self.lits = SLPLiteral
         self.verifyf = {
@@ -74,7 +72,14 @@ class SLPLiteralManager(LiteralManager):
         # obj = (name, beg, end)
         assert len(obj) == 3
         assert obj[0] == self.lits.leaf
-        assert 0 <= obj[1] < obj[2] < self.n
+        assert 0 <= obj[1] < obj[2] <= self.n
+
+
+def has(xs) -> bool:
+    for clause in xs.hard:
+        if 51 in clause:
+            return True
+    return False
 
 
 def smallest_grammar_WCNF(text: bytes) -> WCNF:
@@ -83,10 +88,11 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
     """
     n = len(text)
     logger.info(f"text length = {len(text)}")
+    wcnf = WCNF()
 
     # substrs = substr(text)
     #
-    lm = SLPLiteralManager(text, max_depth)
+    lm = SLPLiteralManager(text)
     wcnf.append([lm.getid(lm.lits.true)])
     wcnf.append([-lm.getid(lm.lits.false)])
 
@@ -94,74 +100,128 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
     # lits = [lm.sym2id(lm.true)]
     lits = []
 
-    wcnf = WCNF()
     for i in range(0, n):
         for j in range(i + 1, n + 1):
-            lits.append(lm.newid(lm.node, i, j))
-            lits.append(lm.newid(lm.leaf, i, j))
+            lits.append(lm.newid(lm.lits.node, i, j))
+            lits.append(lm.newid(lm.lits.leaf, i, j))
 
     # hard clauses
     wcnf.append(
-        [lm.getid(lm.node, 0, n)]
+        [lm.getid(lm.lits.node, 0, n)]
     )  # whole string is always the root node of POSLP
     if n > 1:
         wcnf.append(
-            [lm.getid(lm.leaf, 0, n)]
+            [-lm.getid(lm.lits.leaf, 0, n)]
         )  # whole string is always the root node of POSLP
     else:
         wcnf.append(
-            [-lm.getid(lm.leaf, 0, n)]
+            [lm.getid(lm.lits.leaf, 0, n)]
         )  # whole string is always the root node of POSLP
 
-    # each node is a leaf, or has children
-    # if node(i,j) = true then there is at most one i <= k < j such that both node(i,k+1) and node(k+1,j) are true,
-    # and for all other i <= k' < j, k \neq k', node(i,k'+1) and node(k'+1,j) are false
-    # -----
-    # if node(i,j) = true then case1 = true,
-    # case1: there is at most one case2s is true
-    # case2: both node(i,k) and node(k,j) are true for i < k <= j such that
-    # and for all other i <= k' < j, k \neq k', node(i,k'+1) and node(k'+1,j) are false
-    # if case2 = true then case3 = true
-    # case3: case4 = false
-    # case4: (or node(i, k'+1), node(k'+1, j) for i <= k' < j, k \neq k')
+    wcnf.append([lm.getid(lm.lits.leaf, 0, 3)])
+    # node(i,j) : true iff [i,j] is node of SOSLP
+    # leaf(i,j) : true iff [i,j] is leaf of SOSLP
+    #
+    # 1. if leaf(i, j) = true then node(i, j) = true
+    # 2. if leaf(i, j) = true then node(i',j') = false for all proper subintervals of [i,j]
+    # 3. if node(i, j) = true and j-i = 1 then leaf(i,j) = true
+    # 4. if node(i, j) = true and j-i > 1 and leaf(i, j) = false then for exactly one k, (node(i,k) and node(k,j)) is true
+
     for i in range(0, n):
         for j in range(i + 1, n + 1):
-            nid = lm.getid(lm.node, i, j)
-            # pysat_if(nid, case1)
-            # case2 list
+            print(f"i={i}, j={j}")
+            assert 0 <= i < j <= n
+            node_ij = lm.getid(lm.lits.node, i, j)
+            leaf_ij = lm.getid(lm.lits.leaf, i, j)
 
-            #
+            # 1. if leaf(i, j) = true then node(i, j) = true
+            wcnf.append(pysat_if(leaf_ij, node_ij))
+            print(has(wcnf))
 
-            case2_list = []
-            for k in range(i + 1, j):
-                case2, clauses = pysat_and(
-                    lm.newid, [lm.getid(lm.node, i, k), lm.getid(lm.node, k, j)]
-                )
-                wcnf.extend(clauses)
-                case2_list.append(case2)
-            case1, clauses = pysat_and(
-                CardEnc.atmost(case2_list, bound=1, vpool=lm.vpool)
-            )
-            wcnf.extend(clauses)
-
-            # case2_list.append([case2_var(k), lm.getid(lm.node,i,k),-lm.getid(lm.node,k,j)])
-            # case2_list.append([case2_var(k),-lm.getid(lm.node,i,k),lm.getid(lm.node,k,j)])
-
-            for k in range(i + 1, j):
-                # def. case2
-
-                for k2 in range(i + 1, j):
-                    if k == k2:
+            # 2. if leaf(i, j) = true then node(i',j') = false for all proper subintervals of [i,j]
+            subintervals = []
+            for iprime in range(i, j):
+                for jprime in range(iprime + 1, j + 1):
+                    if iprime == i and jprime == j:
                         continue
-                pass
-            refi_left = [lm.getid(lm.node, i, k) for k in range(i + 1, j)]
-            refi_right = [lm.getid(lm.node, k, j) for k in range(i + 1, j)]
-            wcnf.extend(CardEnc.atmost(refi_left, bound=1, vpool=lm.vpool))
-            wcnf.extend(CardEnc.atmost(refi_right, bound=1, vpool=lm.vpool))
+                    subintervals.append(lm.getid(lm.lits.node, iprime, jprime))
+            or_subintervals, clauses = pysat_or(lm.newid, subintervals)
+            wcnf.extend(clauses)
+            wcnf.append(pysat_if(leaf_ij, -or_subintervals))
+            print(has(wcnf))
 
+            if j - i == 1:
+                # 3. if node(i, j) = true and j-i = 1 then leaf(i,j) = true
+                wcnf.append(pysat_if(node_ij, leaf_ij))
+                pass
+            else:
+                # 4. if node(i, j) = true and j-i > 1 and leaf(i, j) = false then for exactly one k, (node(i,k) and node(k,j)) is true
+                children_candidates = []
+                for k in range(i + 1, j):
+                    candidate, clauses = pysat_and(
+                        lm.newid,
+                        [lm.getid(lm.lits.node, i, k), lm.getid(lm.lits.node, k, j)],
+                    )
+                    wcnf.extend(clauses)
+                    children_candidates.append(candidate)
+                print(has(wcnf))
+                has_children, clauses = pysat_exactlyone(lm, children_candidates)
+                wcnf.extend(clauses)
+                print(3, has(wcnf))
+                wcnf.append(pysat_if(has_children, -leaf_ij))
+                print(4, has(wcnf))
+                if_cond, clauses = pysat_and(lm.newid, [node_ij, -leaf_ij])
+                wcnf.extend(clauses)
+                print(5, has(wcnf))
+                wcnf.append(pysat_if(if_cond, has_children))
+            print(has(wcnf))
+
+    # each node is a leaf, or has children
+    # 展開する→exactly one
+    # 展開しない→すべての[i, k], [k, j] for i< k<jがfalse
+    # if node(i,j) = true then there is at most one i < k < j such that both node(i,k) and node(k,j) are true,
+    # and for all other i <= k' < j, k \neq k', (node(i,k') and node(k',j)) is false
+    # -----
+    # if node(i,j) = true then case1 = true,
+    # case1 = true iff there is at most one case2s is true
+    # case2: both node(i,k) and node(k,j) are true for i < k < j such that
+    # and for all other i < k' < j, k \neq k', node(i,k') and node(k',j) are false
+    # if case2 = true then case3 = true
+    # case3: case4 = false
+    # case4: (or node(i, k'), node(k', j) for i <= k' < j, k \neq k')
+    # ---
+    # for i in range(0, n):
+    #     for j in range(i + 1, n + 1):
+    #         assert 0 <= i < j <= n
+    #         nid = lm.getid(lm.lits.node, i, j)
+    #         children_candidates = []
+    #         for k in range(i + 1, j):
+    #             candidate, clauses = pysat_and(
+    #                 lm.newid,
+    #                 [lm.getid(lm.lits.node, i, k), lm.getid(lm.lits.node, k, j)],
+    #             )
+    #             wcnf.extend(clauses)
+    #             children_candidates.append(candidate)
+    #         has_children, clauses = pysat_exactlyone(lm, children_candidates)
+    #         wcnf.extend(clauses)
+    #         is_leaf = lm.getid(lm.lits.leaf, i, j)
+    #         wcnf.extend(pysat_iff(has_children, -is_leaf))
+    #         # wcnf.append(pysat_if(nid, has_children))
+
+    #         subnodes = []
+    #         for k in range(i + 1, j):
+    #             subnodes.append(lm.getid(lm.lits.node, i, k))
+    #             subnodes.append(lm.getid(lm.lits.node, k, j))
+    #         exist_subnode, clauses = pysat_name_cnf(lm, [pysat_atleast_one(subnodes)])
+    #         wcnf.extend(clauses)
+    #         if_body, clauses = pysat_name_cnf([pysat_if(is_leaf, -exist_subnode)])
+    #         wcnf.extend(clauses)
+    #         wcnf.append(pysat_if(nid, if_body))
+
+    # if is_leaf
     # soft clauses
-    wcnf.append([-(i + 1)], weight=1)
-    return wcnf
+    # wcnf.append([-(i + 1)], weight=1)
+    return lm, wcnf
 
 
 def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
@@ -169,24 +229,38 @@ def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
     Compute the smallest grammar.
     """
     total_start = time.time()
-    wcnf = smallest_grammar_WCNF(text)
+    lm, wcnf = smallest_grammar_WCNF(text)
     rc2 = RC2(wcnf)
     time_prep = time.time() - total_start
     sol = rc2.compute()
     assert sol is not None
 
-    attractor = AttractorType(list(x - 1 for x in filter(lambda x: x > 0, sol)))
-    logger.info(f"the size of smallest SLP = {len(attractor)}")
-    logger.info(f"smallest SLP is {attractor}")
-    if exp:
-        exp.time_total = time.time() - total_start
-        exp.time_prep = time_prep
-        exp.sol_nvars = wcnf.nv
-        exp.sol_nhard = len(wcnf.hard)
-        exp.sol_nsoft = len(wcnf.soft)
-        exp.factors = attractor
-        exp.factor_size = len(attractor)
-    return attractor
+    n = len(text)
+    solset = set(sol)
+    for i in range(n):
+        for j in range(i + 1, n + 1):
+            node_ij = lm.getid(lm.lits.node, i, j)
+            if node_ij in sol:
+                print(lm.id2str(node_ij))
+
+    # for node_str in [
+    #     lm.id2str(x)
+    #     for x in filter(
+    #         lambda x: x > 0 and lm.contains(x) and lm.id2obj(x)[0] == lm.lits.node, sol
+    #     )
+    # ]:
+    #     print(node_str)
+    # logger.info(f"the size of smallest SLP = {len(attractor)}")
+    # logger.info(f"smallest SLP is {attractor}")
+    # if exp:
+    #     exp.time_total = time.time() - total_start
+    #     exp.time_prep = time_prep
+    #     exp.sol_nvars = wcnf.nv
+    #     exp.sol_nhard = len(wcnf.hard)
+    #     exp.sol_nsoft = len(wcnf.soft)
+    #     exp.factors = attractor
+    #     exp.factor_size = len(attractor)
+    return []
 
 
 def parse_args():
@@ -208,10 +282,11 @@ def parse_args():
     )
     args = parser.parse_args()
     if (
-        (args.file == "" and args.str == "")
-        or args.algo not in ["exact", "atmost", "min"]
-        or (args.algo in ["exact", "atmost"] and args.size <= 0)
-        or (args.log_level not in ["DEBUG", "INFO", "CRITICAL"])
+        args.file == ""
+        and args.str == ""
+        # or args.algo not in ["exact", "atmost", "min"]
+        # or (args.algo in ["exact", "atmost"] and args.size <= 0)
+        # or (args.log_level not in ["DEBUG", "INFO", "CRITICAL"])
     ):
         parser.print_help()
         sys.exit()
