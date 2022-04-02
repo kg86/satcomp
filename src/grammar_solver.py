@@ -38,7 +38,8 @@ class SLPLiteral(Enum):
     false = Literal.false
     auxlit = Literal.auxlit
     node = auto()  # (i,j) is/not node (including leaf) of POSLP
-    leaf = auto()  # (i,j) is/not leaf of POSLP (if true, node (i,j) must be true)
+    leaf = auto()  # true iff (i,j) is a leaf of POSLP
+    internal = auto()  # true iff (i,j) is an internal node of POSLP
 
 
 class SLPLiteralManager(LiteralManager):
@@ -53,6 +54,7 @@ class SLPLiteralManager(LiteralManager):
         self.verifyf = {
             SLPLiteral.node: self.verify_node,
             SLPLiteral.leaf: self.verify_leaf,
+            SLPLiteral.internal: self.verify_internal,
         }
         super().__init__(self.lits)
 
@@ -68,10 +70,16 @@ class SLPLiteralManager(LiteralManager):
         assert obj[0] == self.lits.node
         assert 0 <= obj[1] < obj[2] <= self.n
 
-    def verify_leaf(self, obj: Tuple[str, int]):
+    def verify_leaf(self, obj: Tuple[str, int, int]):
         # obj = (name, beg, end)
         assert len(obj) == 3
         assert obj[0] == self.lits.leaf
+        assert 0 <= obj[1] < obj[2] <= self.n
+
+    def verify_internal(self, obj: Tuple[str, int, int]):
+        # obj = (name, beg, end)
+        assert len(obj) == 3
+        assert obj[0] == self.lits.internal
         assert 0 <= obj[1] < obj[2] <= self.n
 
 
@@ -104,6 +112,7 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
         for j in range(i + 1, n + 1):
             lits.append(lm.newid(lm.lits.node, i, j))
             lits.append(lm.newid(lm.lits.leaf, i, j))
+            lits.append(lm.newid(lm.lits.internal, i, j))
 
     # hard clauses
     wcnf.append(
@@ -119,9 +128,9 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
         )  # whole string is always the root node of POSLP
 
     # wcnf.append([lm.getid(lm.lits.leaf, 0, 3)])
-    # node(i,j) : true iff [i,j] is node of SOSLP
-    # leaf(i,j) : true iff [i,j] is leaf of SOSLP
-    #
+    # node(i, j) : true iff [i,j] is node of SOSLP
+    # leaf(i, j) : true iff [i,j] is leaf of SOSLP
+    # internal(i, j) : true iff [i,j] is internal node of SOSLP
     # 1. if leaf(i, j) = true then node(i, j) = true
     # 2. if leaf(i, j) = true then node(i',j') = false for all proper subintervals of [i,j]
     # 3. if node(i, j) = true and j-i = 1 then leaf(i,j) = true
@@ -133,9 +142,19 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
             assert 0 <= i < j <= n
             node_ij = lm.getid(lm.lits.node, i, j)
             leaf_ij = lm.getid(lm.lits.leaf, i, j)
-
-            # 1. if leaf(i, j) = true then node(i, j) = true
+            internal_ij = lm.getid(lm.lits.internal, i, j)
+            # 1. if (leaf(i, j) = true or internal(i,j)) then node(i, j) = true
             wcnf.append(pysat_if(leaf_ij, node_ij))
+            wcnf.append(pysat_if(internal_ij, node_ij))
+
+            both_leaf_and_internal, clauses = pysat_and(
+                lm.newid, [leaf_ij, internal_ij]
+            )
+            wcnf.extend(clauses)
+            wcnf.append([-both_leaf_and_internal])
+
+            wcnf.append([-node_ij, leaf_ij, internal_ij])
+
             # print(has(wcnf))
 
             # 2. if leaf(i, j) = true then node(i',j') = false for all proper subintervals of [i,j]
@@ -184,31 +203,22 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
             continue
         occs = stralgo.occ_pos_naive(text, substr)
         m = len(substr)
-        same_isleaf = [lm.getid(lm.lits.leaf, i, i + m) for i in occs]
-        same_isinternal = []
-        for i in occs:
-            nvar, clauses = pysat_and(
-                lm.newid,
-                [lm.getid(lm.lits.node, i, i + m), -lm.getid(lm.lits.leaf, i, i + m)],
-            )
-            wcnf.extend(clauses)
-            same_isinternal.append(nvar)
-
-        exists_leaf, clauses = pysat_or(lm.newid, same_isleaf)
+        leaves_of_same = [lm.getid(lm.lits.leaf, i, i + m) for i in occs]
+        internals_of_same = [lm.getid(lm.lits.internal, i, i + m) for i in occs]
+        exists_leaf, clauses = pysat_or(lm.newid, leaves_of_same)
         wcnf.extend(clauses)
 
         exists_internal_node, clauses = pysat_name_cnf(
-            lm, [pysat_atleast_one(same_isinternal)]
+            lm, [pysat_atleast_one(internals_of_same)]
         )
         wcnf.extend(clauses)
         wcnf.append(pysat_if(exists_leaf, exists_internal_node))
 
+    # soft clause: minimize number of internal nodes
     for i in range(n):
         for j in range(i + 1, n + 1):
-            # if j - i == 1:
-            #     continue
-            leaf_ij = lm.getid(lm.lits.leaf, i, j)
-            wcnf.append([-leaf_ij], weight=1)
+            internal_ij = lm.getid(lm.lits.internal, i, j)
+            wcnf.append([-internal_ij], weight=1)
 
     return lm, wcnf
 
@@ -232,28 +242,16 @@ def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
         for j in range(i + 1, n + 1):
             node_ij = lm.getid(lm.lits.node, i, j)
             leaf_ij = lm.getid(lm.lits.leaf, i, j)
+            internal_ij = lm.getid(lm.lits.internal, i, j)
             if node_ij in sol:
                 if leaf_ij not in sol:
                     internal_nodes.append(node_ij)
-                print(lm.id2str(node_ij), f"isleaf={leaf_ij in sol}")
+                print(
+                    lm.id2str(node_ij),
+                    f"isleaf={leaf_ij in sol}",
+                    f"isinternal={internal_ij in sol}",
+                )
                 result.append(lm.id2obj(node_ij))
-
-    # for node_str in [
-    #     lm.id2str(x)
-    #     for x in filter(
-    #         lambda x: x > 0 and lm.contains(x) and lm.id2obj(x)[0] == lm.lits.node, sol
-    #     )
-    # ]:
-    #     print(node_str)
-    # logger.info(f"the size of smallest SLP = {len(attractor)}")
-    # logger.info(f"smallest SLP is {attractor}")
-    def grammar_size(factors) -> int:
-        res = len(set(text))
-        for factor in factors:
-            if factor[2] - factor[1] > 1:
-                res += 1
-        return res
-
     print(result)
     if exp:
         exp.time_total = time.time() - total_start
