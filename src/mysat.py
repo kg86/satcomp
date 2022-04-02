@@ -149,18 +149,9 @@ def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[
     # _, ex1_clauses = pysat_atmost(lm, xs, bound=1)
     # res_clauses = []
     ex1_clauses.append(pysat_atleast_one(xs))
-    # print('ex1', ex1_clauses)
-    for clause in ex1_clauses:
-        if 51 in clause:
-            print("before name cnf")
     res_var, res_clauses = pysat_name_cnf(lm, ex1_clauses)
     # res_clauses.extend(ex1_clauses)
-    for clause in res_clauses:
-        if 51 in clause:
-            print("after name cnf")
 
-    if res_var == 51:
-        print("i am 51")
     return res_var, res_clauses
     # return pysat_name_cnf(lm, ex1_clauses)
 

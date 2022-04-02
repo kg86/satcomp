@@ -118,7 +118,7 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
             [lm.getid(lm.lits.leaf, 0, n)]
         )  # whole string is always the root node of POSLP
 
-    wcnf.append([lm.getid(lm.lits.leaf, 0, 3)])
+    # wcnf.append([lm.getid(lm.lits.leaf, 0, 3)])
     # node(i,j) : true iff [i,j] is node of SOSLP
     # leaf(i,j) : true iff [i,j] is leaf of SOSLP
     #
@@ -129,14 +129,14 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
 
     for i in range(0, n):
         for j in range(i + 1, n + 1):
-            print(f"i={i}, j={j}")
+            # print(f"i={i}, j={j}")
             assert 0 <= i < j <= n
             node_ij = lm.getid(lm.lits.node, i, j)
             leaf_ij = lm.getid(lm.lits.leaf, i, j)
 
             # 1. if leaf(i, j) = true then node(i, j) = true
             wcnf.append(pysat_if(leaf_ij, node_ij))
-            print(has(wcnf))
+            # print(has(wcnf))
 
             # 2. if leaf(i, j) = true then node(i',j') = false for all proper subintervals of [i,j]
             subintervals = []
@@ -148,7 +148,7 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
             or_subintervals, clauses = pysat_or(lm.newid, subintervals)
             wcnf.extend(clauses)
             wcnf.append(pysat_if(leaf_ij, -or_subintervals))
-            print(has(wcnf))
+            # print(has(wcnf))
 
             if j - i == 1:
                 # 3. if node(i, j) = true and j-i = 1 then leaf(i,j) = true
@@ -164,63 +164,52 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
                     )
                     wcnf.extend(clauses)
                     children_candidates.append(candidate)
-                print(has(wcnf))
+                # print(has(wcnf))
                 has_children, clauses = pysat_exactlyone(lm, children_candidates)
                 wcnf.extend(clauses)
-                print(3, has(wcnf))
+                # print(3, has(wcnf))
                 wcnf.append(pysat_if(has_children, -leaf_ij))
-                print(4, has(wcnf))
+                # print(4, has(wcnf))
                 if_cond, clauses = pysat_and(lm.newid, [node_ij, -leaf_ij])
                 wcnf.extend(clauses)
-                print(5, has(wcnf))
+                # print(5, has(wcnf))
                 wcnf.append(pysat_if(if_cond, has_children))
-            print(has(wcnf))
+            # print(has(wcnf))
 
-    # each node is a leaf, or has children
-    # 展開する→exactly one
-    # 展開しない→すべての[i, k], [k, j] for i< k<jがfalse
-    # if node(i,j) = true then there is at most one i < k < j such that both node(i,k) and node(k,j) are true,
-    # and for all other i <= k' < j, k \neq k', (node(i,k') and node(k',j)) is false
-    # -----
-    # if node(i,j) = true then case1 = true,
-    # case1 = true iff there is at most one case2s is true
-    # case2: both node(i,k) and node(k,j) are true for i < k < j such that
-    # and for all other i < k' < j, k \neq k', node(i,k') and node(k',j) are false
-    # if case2 = true then case3 = true
-    # case3: case4 = false
-    # case4: (or node(i, k'), node(k', j) for i <= k' < j, k \neq k')
-    # ---
-    # for i in range(0, n):
-    #     for j in range(i + 1, n + 1):
-    #         assert 0 <= i < j <= n
-    #         nid = lm.getid(lm.lits.node, i, j)
-    #         children_candidates = []
-    #         for k in range(i + 1, j):
-    #             candidate, clauses = pysat_and(
-    #                 lm.newid,
-    #                 [lm.getid(lm.lits.node, i, k), lm.getid(lm.lits.node, k, j)],
-    #             )
-    #             wcnf.extend(clauses)
-    #             children_candidates.append(candidate)
-    #         has_children, clauses = pysat_exactlyone(lm, children_candidates)
-    #         wcnf.extend(clauses)
-    #         is_leaf = lm.getid(lm.lits.leaf, i, j)
-    #         wcnf.extend(pysat_iff(has_children, -is_leaf))
-    #         # wcnf.append(pysat_if(nid, has_children))
+    # (assume j - i > 1)
+    # for each distinct substring, if there is a leaf(i,j) with that substring, then there must exists
+    # a node(i',j') such that leaf(i',j') = false
+    for substr in set(stralgo.substr(text)):
+        if len(substr) < 2:
+            continue
+        occs = stralgo.occ_pos_naive(text, substr)
+        m = len(substr)
+        same_isleaf = [lm.getid(lm.lits.leaf, i, i + m) for i in occs]
+        same_isinternal = []
+        for i in occs:
+            nvar, clauses = pysat_and(
+                lm.newid,
+                [lm.getid(lm.lits.node, i, i + m), -lm.getid(lm.lits.leaf, i, i + m)],
+            )
+            wcnf.extend(clauses)
+            same_isinternal.append(nvar)
 
-    #         subnodes = []
-    #         for k in range(i + 1, j):
-    #             subnodes.append(lm.getid(lm.lits.node, i, k))
-    #             subnodes.append(lm.getid(lm.lits.node, k, j))
-    #         exist_subnode, clauses = pysat_name_cnf(lm, [pysat_atleast_one(subnodes)])
-    #         wcnf.extend(clauses)
-    #         if_body, clauses = pysat_name_cnf([pysat_if(is_leaf, -exist_subnode)])
-    #         wcnf.extend(clauses)
-    #         wcnf.append(pysat_if(nid, if_body))
+        exists_leaf, clauses = pysat_or(lm.newid, same_isleaf)
+        wcnf.extend(clauses)
 
-    # if is_leaf
-    # soft clauses
-    # wcnf.append([-(i + 1)], weight=1)
+        exists_internal_node, clauses = pysat_name_cnf(
+            lm, [pysat_atleast_one(same_isinternal)]
+        )
+        wcnf.extend(clauses)
+        wcnf.append(pysat_if(exists_leaf, exists_internal_node))
+
+    for i in range(n):
+        for j in range(i + 1, n + 1):
+            # if j - i == 1:
+            #     continue
+            leaf_ij = lm.getid(lm.lits.leaf, i, j)
+            wcnf.append([-leaf_ij], weight=1)
+
     return lm, wcnf
 
 
@@ -235,13 +224,19 @@ def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
     sol = rc2.compute()
     assert sol is not None
 
+    result = []
     n = len(text)
     solset = set(sol)
+    internal_nodes = []
     for i in range(n):
         for j in range(i + 1, n + 1):
             node_ij = lm.getid(lm.lits.node, i, j)
+            leaf_ij = lm.getid(lm.lits.leaf, i, j)
             if node_ij in sol:
-                print(lm.id2str(node_ij))
+                if leaf_ij not in sol:
+                    internal_nodes.append(node_ij)
+                print(lm.id2str(node_ij), f"isleaf={leaf_ij in sol}")
+                result.append(lm.id2obj(node_ij))
 
     # for node_str in [
     #     lm.id2str(x)
@@ -252,15 +247,23 @@ def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
     #     print(node_str)
     # logger.info(f"the size of smallest SLP = {len(attractor)}")
     # logger.info(f"smallest SLP is {attractor}")
-    # if exp:
-    #     exp.time_total = time.time() - total_start
-    #     exp.time_prep = time_prep
-    #     exp.sol_nvars = wcnf.nv
-    #     exp.sol_nhard = len(wcnf.hard)
-    #     exp.sol_nsoft = len(wcnf.soft)
-    #     exp.factors = attractor
-    #     exp.factor_size = len(attractor)
-    return []
+    def grammar_size(factors) -> int:
+        res = len(set(text))
+        for factor in factors:
+            if factor[2] - factor[1] > 1:
+                res += 1
+        return res
+
+    print(result)
+    if exp:
+        exp.time_total = time.time() - total_start
+        exp.time_prep = time_prep
+        exp.sol_nvars = wcnf.nv
+        exp.sol_nhard = len(wcnf.hard)
+        exp.sol_nsoft = len(wcnf.soft)
+        exp.factors = result
+        exp.factor_size = len(internal_nodes) + len(set(text))
+    return result
 
 
 def parse_args():
@@ -316,8 +319,8 @@ if __name__ == "__main__":
 
     slp = smallest_grammar(text, exp)
 
-    exp.factors = slp
-    exp.factor_size = len(slp)
+    # exp.factors = slp
+    # exp.factor_size = len(slp)
 
     if args.output == "":
         print(exp.to_json(ensure_ascii=False))  # type: ignore
