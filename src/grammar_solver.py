@@ -129,9 +129,9 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
     # internal(i, j) : true iff [i,j] is internal node of SOSLP
     # 1. if (leaf(i, j) = true or internal(i,j) = true) then node(i, j) = true
     # 2. if leaf(i, j) = true then node(i',j') = false for all proper subintervals of [i,j]
-    # 3. if node(i, j) = true and j-i = 1 then leaf(i,j) = true
-    # 4. if node(i, j) = true and j-i > 1 and leaf(i, j) = false then for exactly one k, (node(i,k) and node(k,j)) is true
-
+    # 3. if j - i = 1 then internal(i,j) = false
+    # 4. if j - i > 1 and internal(i, j) = true then for exactly one k, (node(i,k) and node(k,j)) is true
+    # 5. for each distinct substring, if leaf(i,j)  then there must exists internal(i',j') (i' < i) with same substring
     for i in range(0, n):
         for j in range(i + 1, n + 1):
             # print(f"i={i}, j={j}")
@@ -157,17 +157,20 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
                     if iprime == i and jprime == j:
                         continue
                     subintervals.append(lm.getid(lm.lits.node, iprime, jprime))
+            # for k in range(i + 1, j):
+            #    subintervals.append(lm.getid(lm.lits.node, i, k))
+            #    subintervals.append(lm.getid(lm.lits.node, k, j))
             or_subintervals, clauses = pysat_or(lm.newid, subintervals)
             wcnf.extend(clauses)
             wcnf.append(pysat_if(leaf_ij, -or_subintervals))
             # print(has(wcnf))
 
             if j - i == 1:
-                # 3. if node(i, j) = true and j-i = 1 then leaf(i,j) = true
-                wcnf.append(pysat_if(node_ij, leaf_ij))
-                pass
+                # 3. if j - i = 1 then internal(i,j) = false
+                wcnf.append([-internal_ij])
+                # wcnf.append(pysat_if(node_ij, leaf_ij))
             else:
-                # 4. if node(i, j) = true and j-i > 1 and leaf(i, j) = false then for exactly one k, (node(i,k) and node(k,j)) is true
+                # 4. if j - i > 1 and internal(i, j) = true then for exactly one k, (node(i,k) and node(k,j)) is true
                 children_candidates = []
                 for k in range(i + 1, j):
                     candidate, clauses = pysat_and(
@@ -181,23 +184,25 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
                 wcnf.append(pysat_if(internal_ij, has_children))
 
     # (assume j - i > 1)
-    # for each distinct substring, if there is a leaf(i,j) with that substring, then there must exists
-    # a node(i',j') such that leaf(i',j') = false
+    # 5. for each distinct substring, if leaf(i,j) then there must exists internal(i',j') (i' < i) with same substring
     for substr in set(stralgo.substr(text)):
         if len(substr) < 2:
             continue
         occs = stralgo.occ_pos_naive(text, substr)
+        occs.sort()
         m = len(substr)
-        leaves_of_same = [lm.getid(lm.lits.leaf, i, i + m) for i in occs]
-        internals_of_same = [lm.getid(lm.lits.internal, i, i + m) for i in occs]
-        exists_leaf, clauses = pysat_or(lm.newid, leaves_of_same)
-        wcnf.extend(clauses)
-
-        exists_internal_node, clauses = pysat_name_cnf(
-            lm, [pysat_atleast_one(internals_of_same)]
-        )
-        wcnf.extend(clauses)
-        wcnf.append(pysat_if(exists_leaf, exists_internal_node))
+        # the first occurrence cannot be a leaf
+        wcnf.append([-lm.getid(lm.lits.leaf, occs[0], occs[0] + m)])
+        # if a non-first occurrence is a leaf, then there must exist a previous occurrence that is internal
+        for occindex in range(1, len(occs)):
+            leaf_ij = lm.getid(lm.lits.leaf, occs[occindex], occs[occindex] + m)
+            prevoccs = occs[:occindex]
+            internals_of_prev = [lm.getid(lm.lits.internal, i, i + m) for i in prevoccs]
+            exists_prev_internal, clauses = pysat_name_cnf(
+                lm, [pysat_atleast_one(internals_of_prev)]
+            )
+            wcnf.extend(clauses)
+            wcnf.append(pysat_if(leaf_ij, exists_prev_internal))
 
     # soft clause: minimize number of internal nodes
     for i in range(n):
@@ -228,13 +233,13 @@ def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
             node_ij = lm.getid(lm.lits.node, i, j)
             leaf_ij = lm.getid(lm.lits.leaf, i, j)
             internal_ij = lm.getid(lm.lits.internal, i, j)
-            if node_ij in sol:
-                if leaf_ij not in sol:
+            if node_ij in solset:
+                if leaf_ij not in solset:
                     internal_nodes.append(node_ij)
                 print(
                     lm.id2str(node_ij),
-                    f"isleaf={leaf_ij in sol}",
-                    f"isinternal={internal_ij in sol}",
+                    f"isleaf={leaf_ij in solset}",
+                    f"isinternal={internal_ij in solset}",
                 )
                 result.append(lm.id2obj(node_ij))
     print(result)
