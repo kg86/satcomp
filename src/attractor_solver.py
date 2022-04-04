@@ -158,12 +158,14 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
     return wcnf
 
 
-def min_attractor(text: bytes, exp: Optional[AttractorExp] = None) -> AttractorType:
+def min_attractor(text: bytes, exp: Optional[AttractorExp] = None, contain_list : [int] = []) -> AttractorType:
     """
     Compute the minimum string attractor.
     """
     total_start = time.time()
     wcnf = min_attractor_WCNF(text)
+    for i in contain_list:
+        wcnf.append([i])
     rc2 = RC2(wcnf)
     time_prep = time.time() - total_start
     sol = rc2.compute()
@@ -188,6 +190,7 @@ def parse_args():
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
+    parser.add_argument("--contains", nargs="+", type=int, help="list of text positions that must be included in the string attractor, starting with index 1", default=[])
     parser.add_argument(
         "--size",
         type=int,
@@ -221,6 +224,8 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
+
+
     if args.str != "":
         text = args.str
     else:
@@ -241,7 +246,7 @@ if __name__ == "__main__":
     if args.algo in ["exact", "atmost"]:
         attractor = attractor_of_size(text, args.size, args.algo, exp)
     elif args.algo == "min":
-        attractor = min_attractor(text, exp)
+        attractor = min_attractor(text, exp, args.contains)
     else:
         assert False
 
