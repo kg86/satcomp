@@ -23,6 +23,7 @@ matplotlib.use("Agg")
 import stralgo
 from mysat import *
 
+from repair import repair
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -97,6 +98,8 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
     n = len(text)
     logger.info(f"text length = {len(text)}")
     wcnf = WCNF()
+
+
 
     lm = SLPLiteralManager(text)
     wcnf.append([lm.getid(lm.lits.true)])
@@ -210,8 +213,16 @@ def smallest_grammar_WCNF(text: bytes) -> WCNF:
             internal_ij = lm.getid(lm.lits.internal, i, j)
             wcnf.append([-internal_ij], weight=1)
 
-    return lm, wcnf
+    internals=[]
+    for i in range(n):
+        for j in range(i + 1, n + 1):
+            internals.append(lm.getid(lm.lits.internal, i, j))
 
+    repair_size = repair(text)
+    xm, _ = pysat_atmost(lm, internals, repair_size)
+    wcnf.append([xm])
+
+    return lm, wcnf
 
 def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
     """
