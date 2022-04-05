@@ -50,7 +50,7 @@ def repair(text: bytes) -> int:
                 inttext.pop(i+1)
         last_nonterminal += 1
     # print(len(inttext) + last_nonterminal - FIRST_NONTERMINAL)
-    return len(inttext) + last_nonterminal - FIRST_NONTERMINAL
+    return 1 + len(inttext) + last_nonterminal - FIRST_NONTERMINAL
 
 
 def parse_args():
@@ -71,4 +71,5 @@ if __name__ == "__main__":
         text = args.str
     else:
         text = open(args.file, "rb").read()
-    repair(text)
+    print(repair(text))
+
