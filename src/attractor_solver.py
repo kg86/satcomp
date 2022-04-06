@@ -125,11 +125,9 @@ def attractor_of_size(
     if exp:
         exp.time_total = time.time() - total_start
         assert isinstance(cnf.nv, int)
-        exp.sol_nvars = int(cnf.nv)
-        exp.sol_nhard = len(cnf.clauses)
-        exp.sol_nsoft = 0
         exp.factors = attractor
         exp.factor_size = len(attractor)
+        exp.fill(wcnf)
     return attractor
 
 
@@ -179,11 +177,9 @@ def min_attractor(
     if exp:
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
-        exp.sol_nvars = wcnf.nv
-        exp.sol_nhard = len(wcnf.hard)
-        exp.sol_nsoft = len(wcnf.soft)
         exp.factors = attractor
         exp.factor_size = len(attractor)
+        exp.fill(wcnf)
     return attractor
 
 
