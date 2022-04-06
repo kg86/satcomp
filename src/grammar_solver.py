@@ -257,11 +257,9 @@ def smallest_grammar(text: bytes, exp: Optional[AttractorExp] = None):
     if exp:
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
-        exp.sol_nvars = wcnf.nv
-        exp.sol_nhard = len(wcnf.hard)
-        exp.sol_nsoft = len(wcnf.soft)
         exp.factors = result
         exp.factor_size = len(internal_nodes) + len(set(text))
+        exp.fill(wcnf)
     return result
 
 

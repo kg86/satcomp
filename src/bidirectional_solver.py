@@ -416,11 +416,9 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
     assert decode(factors) == text
     if exp:
         exp.time_total = time.time() - total_start
-        exp.sol_nvars = wcnf.nv
-        exp.sol_nhard = len(wcnf.hard)
-        exp.sol_nsoft = len(wcnf.soft)
         exp.factors = factors
         exp.factor_size = len(factors)
+        exp.fill(wcnf)
     return factors
 
 
