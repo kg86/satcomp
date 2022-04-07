@@ -224,46 +224,25 @@ def postorder_cmp(x, y):
         assert False
 
 
-# construct a list of disjoint intervals that represents text[root_i,root_j)
-def build_slp_aux(text: bytes, root, nodes, slp):
-    root_i = root[0]
-    root_j = root[1]
-    print(f"root_i,root_j = {root_i},{root_j}")
-    ##########################################################
-
-    ##########################################################
-    res = []
-    while len(nodes) > 0 and nodes[-1][0] >= root_i:
-        print(f"nodes[-1] = {nodes[-1]}")
-        res.append(nodes[-1])
-        c, nodes = build_slp_aux(text, nodes[-1], nodes[:-1], slp)
-        slp[root] = c
-    res.reverse()
-    ##########################################################
-    return res, nodes
+#
+def build_slp_aux(text: bytes, root_i, root_j, nodes):
+    pass
 
 
-def recover_slp(text: bytes, pstartl, refs_by_referrer, slp):
+def recover_slp(text: bytes, pstartl, refs):
     n = len(text)
-    alph = set(text)
-    p = {}
-    for c in alph:
-        p[c] = text.find(c, 0)
-    referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
-    leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]
-    for i in range(len(pstartl) - 1):
-        if pstartl[i + 1] - pstartl[i] == 1:
-            firstocc = p[text[i]]
-            leaves.append((i, i + 1, -1 if i == firstocc else firstocc))
-    internal = [(occ, occ + l, -1) for (occ, l) in referred]
+    referred = set((i, l) for (j, i, l) in refs)
+    leaves = [(pstartl[i], pstartl[i + 1]) for i in range(len(pstartl) - 1)]
+    internal = [(occ, occ + l) for (occ, l) in referred]
     nodes = leaves + internal
     nodes.sort(key=functools.cmp_to_key(postorder_cmp))
-    # nodes.append((0, n))
+    nodes.append((0, n))
     print(f"leaves: {leaves}")
     print(f"internal: {internal}")
     print(f"nodes: {nodes}")
-    lst, rem = build_slp_aux(text, (0, n, -1), nodes, slp)
-    print(f"lst={lst}, rem={rem}")
+    for i in range(1, len(nodes)):
+        (prev_i, prev_j) = nodes[i - 1]
+        (cur_i, cur_j) = nodes[i]
 
 
 def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
@@ -280,6 +259,10 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
 
     result = []
     n = len(text)
+
+    # print(f"sol={sol}")
+    # print(f"solset={solset}")
+    # print(result)
 
     posl = []
     for i in range(0, n + 1):
@@ -302,15 +285,14 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
             phrasel.append((occ, l))
     print(f"phrases: {phrasel}")
 
-    refs = {}
+    refs = set()
     for (j, l) in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             if lm.getid(lm.lits.ref, j, i, l) in sol:
-                refs[j, l] = i
+                refs.add((j, i, l))
     print(f"refs = {refs}")
-    slp = {}
-    recover_slp(text, posl, refs, slp)
-    print(f"slp = {slp}")
+    slp = recover_slp(text, posl, refs)
+
     slpsize = len(posl) - 2 + len(set(text))
     print(f"smallest slp size = {slpsize}")
 
