@@ -253,7 +253,7 @@ def binarize_slp(root, slp):
     elif numc > 0:
         leftc = children[0]
         for i in range(1, len(children)):
-            n = (root[0], children[i][1], -1) if i < len(children) - 1 else root
+            n = (root[0], children[i][1], None) if i < len(children) - 1 else root
             slp[n] = [leftc, children[i]]
             leftc = n
         for c in children:
@@ -263,20 +263,19 @@ def binarize_slp(root, slp):
 
 def slp2str(root, slp):
     print(f"root={root}")
-    res = ""
+    res: bytes = []
     (i, j, ref) = root
-    if isinstance(ref, str):
-        assert j - i == 1
-        res += ref
+    if j - i == 1:
+        res.append(ref)
     else:
         children = slp[root]
-        if ref == -1:
+        if ref == None:
             assert len(children) == 2
             res += slp2str(children[0], slp)
             res += slp2str(children[1], slp)
         else:
             assert len(children) == 0
-            n = (ref, ref + j - i, -1)
+            n = (ref, ref + j - i, None)
             res += slp2str(n, slp)
     return res
 
@@ -289,10 +288,10 @@ def recover_slp(text: bytes, pstartl, refs_by_referrer):
     for i in range(len(pstartl) - 1):
         if pstartl[i + 1] - pstartl[i] == 1:
             leaves.append((pstartl[i], pstartl[i + 1], text[pstartl[i]]))
-    internal = [(occ, occ + l, -1) for (occ, l) in referred]
+    internal = [(occ, occ + l, None) for (occ, l) in referred]
     nodes = leaves + internal
     nodes.sort(key=functools.cmp_to_key(postorder_cmp))
-    nodes.append((0, n, -1))
+    nodes.append((0, n, None))
     print(f"leaves: {leaves}")
     print(f"internal: {internal}")
     print(f"nodes: {nodes}")
@@ -350,7 +349,7 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
     print(f"refs = {refs}")
     root, slp = recover_slp(text, posl, refs)
     print(f"slp = {slp}")
-    check = slp2str(root, slp)
+    check = bytes(slp2str(root, slp))
     print(f"check = {check}")
     assert check == text
     slpsize = len(posl) - 2 + len(set(text))
@@ -402,17 +401,16 @@ if __name__ == "__main__":
     args = parse_args()
 
     if args.str != "":
-        text = args.str
+        text = bytes(args.str, "utf-8")
     else:
         text = open(args.file, "rb").read()
-
     if args.log_level == "DEBUG":
         logger.setLevel(DEBUG)
     elif args.log_level == "INFO":
         logger.setLevel(INFO)
     elif args.log_level == "CRITICAL":
         logger.setLevel(CRITICAL)
-
+    print(f"type(text)={type(text)}")
     exp = AttractorExp.create()
     exp.algo = "solver"
     exp.file_name = os.path.basename(args.file)
