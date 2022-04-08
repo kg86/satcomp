@@ -134,7 +134,7 @@ def smallest_SLP_WCNF(text: bytes) -> WCNF:
 
     # // for 1 <= l <= lpf(i):
     # phrase(i,l) = true <=> pstart[i] = pstart[i+l] = true, pstart[i+1..i+l) = false
-    print("compute 1")
+    # print("compute 1")
     for (i, l) in phrases:
         plst = [-lm.getid(lm.lits.pstart, i + j) for j in range(1, l)] + [
             lm.getid(lm.lits.pstart, i),
@@ -144,8 +144,8 @@ def smallest_SLP_WCNF(text: bytes) -> WCNF:
         wcnf.extend(clauses)
         # print(f"2. phrase: {i},{l}, plst={plst2}, range_iff_startp={range_iff_startp}")
         wcnf.extend(pysat_iff(lm.getid(lm.lits.phrase, i, l), range_iff_startp))
-    print("done")
-    print("compute 2")
+    # print("done")
+    # print("compute 2")
     # if phrase(j,l) = true there must be exactly one i < j such that ref(j,i,l) is true
     for (j, l) in refs_by_referrer.keys():
         unique_source, clauses = pysat_exactlyone(
@@ -156,10 +156,10 @@ def smallest_SLP_WCNF(text: bytes) -> WCNF:
 
     # if referred(i,l) = true, then for all other referred(k,l) with k < j and T[i:i+l) = T[k:k+l) must be false
     # not implemented as this is not a requirement
-    print("done")
-    print("compute 3")
+    # print("done")
+    # print("compute 3")
     # referred(i,l) = true if there is some j > i such that ref(j,i,l) = true
-    referred = refs_by_referred.keys()
+    referred = list(refs_by_referred.keys())
     for (i, l) in refs_by_referred.keys():
         ref_sources, clauses = pysat_name_cnf(
             lm, [[lm.getid(lm.lits.ref, j, i, l) for j in refs_by_referred[i, l]]]
@@ -167,8 +167,8 @@ def smallest_SLP_WCNF(text: bytes) -> WCNF:
         wcnf.extend(clauses)
         wcnf.append([-ref_sources, lm.newid(lm.lits.referred, i, l)])
 
-    print("done")
-    print("compute 4")
+    # print("done")
+    # print("compute 4")
 
     # # if (occ,l) is a referred interval, it cannot be a phrase, but pstart[occ] and pstart[occ+l] must be true
     # # phrase(occ,l) is only defined if l <= lpf[occ]
@@ -184,19 +184,25 @@ def smallest_SLP_WCNF(text: bytes) -> WCNF:
         wcnf.append(
             [-lm.getid(lm.lits.referred, occ, l), lm.getid(lm.lits.pstart, occ + l)]
         )
-    print("done")
-    print("compute 5")
+    # print("done")
+    # print("compute 5")
 
     # crossing intervals cannot be referred to at the same time.
+    referred_by_bp = [[] for _ in range(n)]
+    for (occ, l) in referred:
+        referred_by_bp[occ].append(l)
+    for lst in referred_by_bp:
+        lst.sort(reverse=True)
+    # print(f"referred_by_bp={referred_by_bp}")
     for (occ1, l1) in referred:
-        for (occ2, l2) in referred:
-            if occ1 < occ2 and occ2 < occ1 + l1 and occ1 + l1 < occ2 + l2:
-                id1 = lm.getid(lm.lits.referred, occ1, l1)
-                id2 = lm.getid(lm.lits.referred, occ2, l2)
-                # print(f"({occ1},{l1}) XX ({occ2},{l2})")
-                wcnf.append([-id1, -id2])
+        for occ2 in range(occ1 + 1, occ1 + l1):
+            for l2 in referred_by_bp[occ2]:
+                if occ1 < occ2 and occ2 < occ1 + l1 and occ1 + l1 < occ2 + l2:
+                    id1 = lm.getid(lm.lits.referred, occ1, l1)
+                    id2 = lm.getid(lm.lits.referred, occ2, l2)
+                    wcnf.append([-id1, -id2])
 
-    print("done")
+    # print("done")
 
     # soft clauses: minimize of phrases
     for i in range(0, n):
@@ -231,10 +237,10 @@ def build_slp_aux(nodes, slp):
     root = nodes.pop()
     root_i = root[0]
     root_j = root[1]
-    print(f"root_i,root_j = {root_i},{root_j}")
+    # print(f"root_i,root_j = {root_i},{root_j}")
     children = []
     while len(nodes) > 0 and nodes[-1][0] >= root_i:
-        print(f"nodes[-1] = {nodes[-1]}")
+        # print(f"nodes[-1] = {nodes[-1]}")
         c = build_slp_aux(nodes, slp)
         children.append(c)
     children.reverse()
@@ -262,8 +268,8 @@ def binarize_slp(root, slp):
 
 
 def slp2str(root, slp):
-    print(f"root={root}")
-    res: bytes = []
+    # print(f"root={root}")
+    res = []
     (i, j, ref) = root
     if j - i == 1:
         res.append(ref)
@@ -292,9 +298,9 @@ def recover_slp(text: bytes, pstartl, refs_by_referrer):
     nodes = leaves + internal
     nodes.sort(key=functools.cmp_to_key(postorder_cmp))
     nodes.append((0, n, None))
-    print(f"leaves: {leaves}")
-    print(f"internal: {internal}")
-    print(f"nodes: {nodes}")
+    # print(f"leaves: {leaves}")
+    # print(f"internal: {internal}")
+    # print(f"nodes: {nodes}")
     slp = {}
     root = build_slp_aux(nodes, slp)
     binarize_slp(root, slp)
@@ -324,14 +330,11 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
     for i in range(0, n + 1):
         x = lm.getid(lm.lits.pstart, i)
         if x in sol:
-            # posl.append(f"{i}")
             posl.append(i)
-        # elif -x in solset:
-        # posl.append(f"-{i}")
-    print(f"phrase start positions: {posl}")
-    print(
-        f"phrase start positions id: {[lm.getid(lm.lits.pstart, i) for i in range(0, n+1)]}"
-    )
+    # print(f"phrase start positions: {posl}")
+    # print(
+    #     f"phrase start positions id: {[lm.getid(lm.lits.pstart, i) for i in range(0, n+1)]}"
+    # )
 
     phrasel = []
     # print(f"*phrases={phrases}")
@@ -339,18 +342,18 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
         x = lm.getid(lm.lits.phrase, occ, l)
         if x in sol:
             phrasel.append((occ, l))
-    print(f"phrases: {phrasel}")
+    # print(f"phrases: {phrasel}")
 
     refs = set()
     for (j, l) in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             if lm.getid(lm.lits.ref, j, i, l) in sol:
-                refs.add((j, i, l))
-    print(f"refs = {refs}")
+                refs[j, l] = i
+    # print(f"refs = {refs}")
     root, slp = recover_slp(text, posl, refs)
-    print(f"slp = {slp}")
+    # print(f"slp = {slp}")
     check = bytes(slp2str(root, slp))
-    print(f"check = {check}")
+    # print(f"check = {check}")
     assert check == text
     slpsize = len(posl) - 2 + len(set(text))
     print(f"smallest slp size = {slpsize}")
@@ -361,7 +364,7 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
         exp.sol_nvars = wcnf.nv
         exp.sol_nhard = len(wcnf.hard)
         exp.sol_nsoft = len(wcnf.soft)
-        exp.factors = result
+        # exp.factors = result
         exp.factor_size = 0  # len(internal_nodes) + len(set(text))
     return result
 
@@ -410,7 +413,7 @@ if __name__ == "__main__":
         logger.setLevel(INFO)
     elif args.log_level == "CRITICAL":
         logger.setLevel(CRITICAL)
-    print(f"type(text)={type(text)}")
+
     exp = AttractorExp.create()
     exp.algo = "solver"
     exp.file_name = os.path.basename(args.file)
