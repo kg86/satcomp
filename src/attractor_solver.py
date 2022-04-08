@@ -8,7 +8,7 @@ import time
 from attractor import AttractorType
 from attractor_bench_format import AttractorExp
 
-from typing import Optional, Dict
+from typing import List, Optional, Dict
 from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
 
 from pysat.formula import CNF, WCNF
@@ -158,7 +158,9 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
     return wcnf
 
 
-def min_attractor(text: bytes, exp: Optional[AttractorExp] = None, contain_list : [int] = []) -> AttractorType:
+def min_attractor(
+    text: bytes, exp: Optional[AttractorExp] = None, contain_list: List[int] = []
+) -> AttractorType:
     """
     Compute the minimum string attractor.
     """
@@ -190,7 +192,13 @@ def parse_args():
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
-    parser.add_argument("--contains", nargs="+", type=int, help="list of text positions that must be included in the string attractor, starting with index 1", default=[])
+    parser.add_argument(
+        "--contains",
+        nargs="+",
+        type=int,
+        help="list of text positions that must be included in the string attractor, starting with index 1",
+        default=[],
+    )
     parser.add_argument(
         "--size",
         type=int,
@@ -223,8 +231,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-
-
 
     if args.str != "":
         text = args.str
