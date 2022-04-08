@@ -224,46 +224,82 @@ def postorder_cmp(x, y):
         assert False
 
 
-# construct a list of disjoint intervals that represents text[root_i,root_j)
-def build_slp_aux(text: bytes, root, nodes, slp):
+# given a list of nodes that in postorder of subtree rooted at root,
+# find the direct children of [root_i,root_j) and add it to slp
+# slp[j,l,i] is a list of nodes that are direct children of [i,j)
+def build_slp_aux(nodes, slp):
+    root = nodes.pop()
     root_i = root[0]
     root_j = root[1]
     print(f"root_i,root_j = {root_i},{root_j}")
-    ##########################################################
-
-    ##########################################################
-    res = []
+    children = []
     while len(nodes) > 0 and nodes[-1][0] >= root_i:
         print(f"nodes[-1] = {nodes[-1]}")
-        res.append(nodes[-1])
-        c, nodes = build_slp_aux(text, nodes[-1], nodes[:-1], slp)
-        slp[root] = c
-    res.reverse()
+        c = build_slp_aux(nodes, slp)
+        children.append(c)
+    children.reverse()
+    slp[root] = children
     ##########################################################
-    return res, nodes
+    return root
 
 
-def recover_slp(text: bytes, pstartl, refs_by_referrer, slp):
+# turn multi-ary tree into binary tree
+def binarize_slp(root, slp):
+    children = slp[root]
+    numc = len(children)
+    assert numc == 0 or numc >= 2
+    if numc == 2:
+        slp[root] = [binarize_slp(children[0], slp), binarize_slp(children[1], slp)]
+    elif numc > 0:
+        leftc = children[0]
+        for i in range(1, len(children)):
+            n = (root[0], children[i][1], -1) if i < len(children) - 1 else root
+            slp[n] = [leftc, children[i]]
+            leftc = n
+        for c in children:
+            binarize_slp(c, slp)
+    return root
+
+
+def slp2str(root, slp):
+    print(f"root={root}")
+    res = ""
+    (i, j, ref) = root
+    if isinstance(ref, str):
+        assert j - i == 1
+        res += ref
+    else:
+        children = slp[root]
+        if ref == -1:
+            assert len(children) == 2
+            res += slp2str(children[0], slp)
+            res += slp2str(children[1], slp)
+        else:
+            assert len(children) == 0
+            n = (ref, ref + j - i, -1)
+            res += slp2str(n, slp)
+    return res
+
+
+def recover_slp(text: bytes, pstartl, refs_by_referrer):
     n = len(text)
     alph = set(text)
-    p = {}
-    for c in alph:
-        p[c] = text.find(c, 0)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
     leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]
     for i in range(len(pstartl) - 1):
         if pstartl[i + 1] - pstartl[i] == 1:
-            firstocc = p[text[i]]
-            leaves.append((i, i + 1, -1 if i == firstocc else firstocc))
+            leaves.append((pstartl[i], pstartl[i + 1], text[pstartl[i]]))
     internal = [(occ, occ + l, -1) for (occ, l) in referred]
     nodes = leaves + internal
     nodes.sort(key=functools.cmp_to_key(postorder_cmp))
-    # nodes.append((0, n))
+    nodes.append((0, n, -1))
     print(f"leaves: {leaves}")
     print(f"internal: {internal}")
     print(f"nodes: {nodes}")
-    lst, rem = build_slp_aux(text, (0, n, -1), nodes, slp)
-    print(f"lst={lst}, rem={rem}")
+    slp = {}
+    root = build_slp_aux(nodes, slp)
+    binarize_slp(root, slp)
+    return (root, slp)
 
 
 def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
@@ -308,9 +344,11 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
             if lm.getid(lm.lits.ref, j, i, l) in sol:
                 refs[j, l] = i
     print(f"refs = {refs}")
-    slp = {}
-    recover_slp(text, posl, refs, slp)
+    root, slp = recover_slp(text, posl, refs)
     print(f"slp = {slp}")
+    check = slp2str(root, slp)
+    print(f"check = {check}")
+    assert check == text
     slpsize = len(posl) - 2 + len(set(text))
     print(f"smallest slp size = {slpsize}")
 
