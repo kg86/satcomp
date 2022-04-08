@@ -15,6 +15,7 @@ numpy = "*"
 
 [dev-packages]
 black = "*"
+pyright = "*"
 
 [requires]
 python_version = "3.9.12"
