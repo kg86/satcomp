@@ -75,7 +75,7 @@ def compute_lpf(text: bytes):  # non-self-referencing lpf
     return lpf
 
 
-def smallest_SLP_WCNF(text: bytes) -> WCNF:
+def smallest_SLP_WCNF(text: bytes):
     """
     Compute the max sat formula for computing the smallest SLP
     """
@@ -318,7 +318,9 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
     print(f"WCNF constructed")
     rc2 = RC2(wcnf)
     time_prep = time.time() - total_start
-    sol = set(rc2.compute())
+    sol_ = rc2.compute()
+    assert sol_ is not None
+    sol = set(sol_)
     # assert sol is not None
 
     result = []
