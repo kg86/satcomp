@@ -66,9 +66,11 @@ def compute_lpf(text: bytes):  # non-self-referencing lpf
     for i in range(0, n):
         lpf.append(0)
         for j in range(0, i):
-            for l in range(1, i - j + 1):
-                if text[i : i + l] == text[j : j + l] and l > lpf[i]:
-                    lpf[i] = l
+            l = 0
+            while j + l < i and i + l < n and text[i + l] == text[j + l]:
+                l += 1
+            if l > lpf[i]:
+                lpf[i] = l
     # print(f"{lpf}")
     return lpf
 
