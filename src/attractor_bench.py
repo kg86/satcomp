@@ -48,20 +48,23 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> AttractorExp
     print(f"status: {status}")
     if status != "complete":
         exp = AttractorExp(
-            str(datetime.datetime.now()),
-            status,
-            "solver",
-            os.path.basename(input_file),
-            len(open(input_file, "rb").read()),
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            AttractorType([]),
-        )
-    assert isinstance(exp, AttractorExp)
+                date =                  str(datetime.datetime.now()),
+                status =                status,
+                algo =                  "solver",
+                file_name =             os.path.basename(input_file),
+                file_len =              len(open(input_file, "rb").read()),
+                time_prep =             0,
+                time_total =            0,
+                sol_nvars =             0,
+                sol_nhard =             0,
+                sol_nsoft =             0,
+                factor_size =           0,
+                sol_navgclause = 0,
+                sol_ntotalvars = 0,
+                sol_nmaxclause = 0,
+                factors =               AttractorType([]),
+                )
+        assert isinstance(exp, AttractorExp)
     return exp
 
 

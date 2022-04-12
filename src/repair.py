@@ -3,8 +3,10 @@ import os
 import sys
 import json
 import time
+from typing import Tuple, List
 
-def mostfreq(inttext : [int]) -> (int,int):
+
+def mostfreq(inttext : List[int]) -> Tuple[Tuple[int, int], int]:
     frequencies = dict()
     parity = 0
     for i in range(0, len(inttext)-1):
@@ -45,7 +47,11 @@ def repair(text: bytes) -> int:
         for i in range(0, len(inttext)-1):
             if i >= len(inttext)-1:
                 break
-            if inttext[i] == chosen_pair[0] and inttext[i+1] == chosen_pair[1]:
+            charA = inttext[i]
+            charB = inttext[i+1]
+            pairA = chosen_pair[0] 
+            pairB = chosen_pair[1]
+            if charA == pairA and charB == pairB:
                 inttext[i] = last_nonterminal
                 inttext.pop(i+1)
         last_nonterminal += 1
