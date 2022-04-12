@@ -203,7 +203,8 @@ def smallest_SLP_WCNF(text: bytes):
                     id1 = lm.getid(lm.lits.referred, occ1, l1)
                     id2 = lm.getid(lm.lits.referred, occ2, l2)
                     wcnf.append([-id1, -id2])
-
+                else:
+                    break
     # print("done")
 
     # soft clauses: minimize of phrases
