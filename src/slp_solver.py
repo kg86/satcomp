@@ -357,9 +357,7 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
     # print(f"refs = {refs}")
     root, slp = recover_slp(text, posl, refs)
     # print(f"slp = {slp}")
-    check = bytes(slp2str(root, slp))
-    # print(f"check = {check}")
-    assert check == text
+
     slpsize = len(posl) - 2 + len(set(text))
     print(f"smallest slp size = {slpsize}")
 
@@ -367,8 +365,13 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
         # exp.factors = result
-        exp.factor_size = 0  # len(internal_nodes) + len(set(text))
+        exp.factor_size = slpsize  # len(internal_nodes) + len(set(text))
         exp.fill(wcnf)
+
+    check = bytes(slp2str(root, slp))
+    # print(f"check = {check}")
+    assert check == text
+
     return result
 
 
