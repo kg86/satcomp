@@ -18,7 +18,7 @@ class AttractorExp:
     sol_nvars: int
     sol_nhard: int
     sol_nsoft: int
-    sol_navgclause: int
+    sol_navgclause: float
     sol_ntotalvars: int
     sol_nmaxclause: int
     factor_size: int
@@ -52,7 +52,7 @@ class AttractorExp:
      sol_nhard =             0,
      sol_nsoft =             0,
      factor_size =           0,
-     sol_navgclause = 0,
+     sol_navgclause = 0.0,
      sol_ntotalvars = 0,
      sol_nmaxclause = 0,
      factors =               AttractorType([]),

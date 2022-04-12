@@ -127,7 +127,6 @@ def attractor_of_size(
         assert isinstance(cnf.nv, int)
         exp.factors = attractor
         exp.factor_size = len(attractor)
-        exp.fill(wcnf)
     return attractor
 
 
