@@ -1,10 +1,14 @@
 import argparse
+import argparse
+import os
 import sys
+import json
 import time
-from itertools import combinations
 
 # Program by Jeffrey Shallit, Dec 12 2020
 # https://oeis.org/A339391
+
+from itertools import product, combinations
 
 
 def blocks_ranges(w):
