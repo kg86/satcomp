@@ -310,7 +310,7 @@ if __name__ == "__main__":
         logger.setLevel(CRITICAL)
 
     exp = AttractorExp.create()
-    exp.algo = "solver"
+    exp.algo = "grammar-sat"
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
 
