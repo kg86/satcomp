@@ -488,7 +488,7 @@ if __name__ == "__main__":
     timer = Timer()
 
     exp = BiDirExp.create()
-    exp.algo = "solver"
+    exp.algo = "bidirectional-sat"
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
     factors_sol = min_bidirectional(text, exp)
