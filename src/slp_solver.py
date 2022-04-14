@@ -160,14 +160,15 @@ def smallest_SLP_WCNF(text: bytes):
     # not implemented as this is not a requirement
     # print("done")
     # print("compute 3")
-    # referred(i,l) = true if there is some j > i such that ref(j,i,l) = true
+    # referred(i,l) = true iff there is some j > i such that ref(j,i,l) = true
     referred = list(refs_by_referred.keys())
     for (i, l) in refs_by_referred.keys():
         ref_sources, clauses = pysat_name_cnf(
             lm, [[lm.getid(lm.lits.ref, j, i, l) for j in refs_by_referred[i, l]]]
         )
         wcnf.extend(clauses)
-        wcnf.append([-ref_sources, lm.newid(lm.lits.referred, i, l)])
+        referredid = lm.newid(lm.lits.referred, i, l)
+        wcnf.extend(pysat_iff(ref_sources, referredid))
 
     # print("done")
     # print("compute 4")
