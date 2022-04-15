@@ -40,7 +40,7 @@ class SLPLiteral(Enum):
     auxlit = Literal.auxlit
     phrase = auto()  # (i,l) (representing T[i:i+l)) is phrase of grammar parsing
     pstart = auto()  # i is a starting position of a phrase of grammar parsing
-    ref = auto()  # (i,j,l): phrase (i,i+l) references T[j,j+l)  (T[j,j+l] <- T[i,i+l])
+    ref = auto()  # (j,i,l): phrase (j,j+l) references T[i,i+l)  (T[i,i+l] <- T[j,j+l])
     referred = auto()  # (i,l): T[i,i+l) is referenced by some phrase
 
 
@@ -53,14 +53,63 @@ class SLPLiteralManager(LiteralManager):
         self.text = text
         self.n = len(self.text)
         self.lits = SLPLiteral
+        self.verifyf = {
+            SLPLiteral.phrase: self.verify_phrase,
+            SLPLiteral.pstart: self.verify_pstart,
+            SLPLiteral.ref: self.verify_ref,
+            SLPLiteral.referred: self.verify_referred,
+        }
         super().__init__(self.lits)
 
     def newid(self, *obj) -> int:
         res = super().newid(*obj)
+        if len(obj) > 0 and obj[0] in self.verifyf:
+            self.verifyf[obj[0]](*obj)
         return res
+
+    def verify_phrase(self, *obj):
+        # print(f"verify_phrase, {obj}")
+        # obj = (name, i, l) (representing T[i:i+l)) is phrase of grammar parsing
+        assert len(obj) == 3
+        name, i, l = obj
+        assert name == self.lits.phrase
+        assert 0 <= i < self.n
+        assert 0 < l <= self.n
+        assert i + l <= self.n
+
+    def verify_pstart(self, *obj):
+        # print(f"verify_pstart, {obj}")
+        # obj = (name, i) i is a starting position of a phrase of grammar parsing
+        assert len(obj) == 2
+        name, i = obj
+        assert name == self.lits.pstart
+        assert 0 <= i <= self.n
+
+    def verify_ref(self, *obj):
+        # print(f"verify_ref, {obj}")
+        # obj = (name, j, i, l) phrase (j,j+l) references T[i,i+l)  (T[i,i+l] <- T[j,j+l])
+        assert len(obj) == 4
+        name, j, i, l = obj
+        assert name == self.lits.ref
+        assert 0 <= i < self.n
+        assert i < i + l <= j < j + l <= self.n
+        assert 0 < l <= self.n
+
+    def verify_referred(self, *obj):
+        # print(f"verify_referred, {obj}")
+        # obj = (name, i, l) T[i,i+l) is referenced by some phrase
+        assert len(obj) == 3
+        name, i, l = obj
+        assert name == self.lits.referred
+        assert 0 <= i < self.n
+        assert 0 < l <= self.n
+        assert i + l <= self.n
 
 
 def compute_lpf(text: bytes):  # non-self-referencing lpf
+    """
+    lpf[i] = length of longest prefix of text[i:] that occurs in text[0:i]
+    """
     n = len(text)
     lpf = []
     for i in range(0, n):
@@ -87,109 +136,119 @@ def smallest_SLP_WCNF(text: bytes):
     wcnf.append([lm.getid(lm.lits.true)])
     wcnf.append([-lm.getid(lm.lits.false)])
 
+    print("sloooow algorithm for lpf... (should use linear time algorithm)")
     lpf = compute_lpf(text)
+    print("done")
     # defining the literals  ########################################
     # ref(i,j,l): defined for all i,j,l>1 s.t. T[i:i+l) = T[j:j+l)
     # pstart(i)
     # phrase(i,l) defined for all i, l > 1
-    print("computing phrases")
+    print("building literals")
     phrases = []
-    for i in range(0, n + 1):
-        lm.newid(lm.lits.pstart, i)  # start
-        if i < n:
-            # for l in range(1, lpf[i] + 1):
-            for l in range(2, n - i + 1):
-                # print(f"1. phrase: {i}, {l}")
-                phrases.append((i, l))
-                lm.newid(lm.lits.phrase, i, l)
-                if l > lpf[i]:  # a first occurrence cannot be a phrase
-                    # print(f"1. phrase: {i}, {l} : always false")
-                    wcnf.append([-lm.getid(lm.lits.phrase, i, l)])
+    for i in range(n + 1):
+        lm.newid(lm.lits.pstart, i)  # definition of p_i
+    for i in range(n):
+        for l in range(1, n - i + 1):
+            phrases.append((i, l))
+            lm.newid(lm.lits.phrase, i, l)  # definition of f_{i,l}
 
-    print("computing refs")
     refs_by_referred = {}
     refs_by_referrer = {}
-    for i in range(0, n - 1):
+    for i in range(n):
         for j in range(i + 1, n):
             for l in range(2, lpf[j] + 1):
-                if text[i : i + l] == text[j : j + l]:
-                    # print(f"1. ref: {i} <- {j} len = {l}")
-                    lm.newid(lm.lits.ref, j, i, l)
+                if i + l <= j and text[i : i + l] == text[j : j + l]:
+                    lm.newid(lm.lits.ref, j, i, l)  # definition of ref_{i<-j,l}
                     if not (i, l) in refs_by_referred:
                         refs_by_referred[i, l] = []
                     refs_by_referred[i, l].append(j)
                     if not (j, l) in refs_by_referrer:
                         refs_by_referrer[j, l] = []
                     refs_by_referrer[j, l].append(i)
-                    # if ref(j,i,l) = true then phrase(j,l) = true
-                    wcnf.append(
-                        pysat_if(
-                            lm.getid(lm.lits.ref, j, i, l),
-                            lm.getid(lm.lits.phrase, j, l),
-                        )
-                    )
+    for (i, l) in refs_by_referred.keys():
+        lm.newid(lm.lits.referred, i, l)
     print("done")
-    for i in range(0, n):
-        if lpf[i] == 0:
-            wcnf.append([lm.getid(lm.lits.pstart, i)])
-    wcnf.append([lm.getid(lm.lits.pstart, n)])
-
-    # // for 1 <= l <= lpf(i):
+    # print(f"refs_by_referred = {refs_by_referred}")
+    # print(f"refs_by_referrer = {refs_by_referrer}")
     # phrase(i,l) = true <=> pstart[i] = pstart[i+l] = true, pstart[i+1..i+l) = false
     # print("compute 1")
+    print("building constraints")
+    # // start constraint (1) ###############################
     for (i, l) in phrases:
-        plst = [-lm.getid(lm.lits.pstart, i + j) for j in range(1, l)] + [
+        plst = [-lm.getid(lm.lits.pstart, (i + j)) for j in range(1, l)] + [
             lm.getid(lm.lits.pstart, i),
-            lm.getid(lm.lits.pstart, i + l),
+            lm.getid(lm.lits.pstart, (i + l)),
         ]
         range_iff_startp, clauses = pysat_and(lm.newid, plst)
         wcnf.extend(clauses)
-        # print(f"2. phrase: {i},{l}, plst={plst2}, range_iff_startp={range_iff_startp}")
         wcnf.extend(pysat_iff(lm.getid(lm.lits.phrase, i, l), range_iff_startp))
-    # print("done")
-    # print("compute 2")
+    # // end constraint (1) ###############################
+
+    # // start constraint (2) ###############################
     # if phrase(j,l) = true there must be exactly one i < j such that ref(j,i,l) is true
     for (j, l) in refs_by_referrer.keys():
-        unique_source, clauses = pysat_exactlyone(
-            lm, [lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]]
+        clauses = CardEnc.atmost(
+            [lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]],
+            bound=1,
+            vpool=lm.vpool,
         )
         wcnf.extend(clauses)
-        wcnf.append(pysat_if(lm.getid(lm.lits.phrase, j, l), unique_source))
+        clause = pysat_atleast_one(
+            [lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]]
+        )
+        var_atleast, clause_atleast = pysat_name_cnf(lm, [clause])
+        wcnf.extend(clause_atleast)
+        phrase = lm.getid(lm.lits.phrase, j, l)
+        wcnf.append(pysat_if(phrase, var_atleast))
+    # for (j, l) in refs_by_referrer.keys():
+    #     assert l > 1
+    #     for i in refs_by_referrer[j, l]:
+    #         print(f"{i}<-{j},{j+l}")
+    #     unique_source, clauses = pysat_exactlyone(
+    #         lm, [lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]]
+    #     )
+    #     wcnf.extend(clauses)
+    #     wcnf.append(pysat_if(lm.getid(lm.lits.phrase, j, l), unique_source))
+    # # // end constraint (2) ###############################
+    # // start constraint (3) ###############################
+    for (j, l) in refs_by_referrer.keys():
+        for i in refs_by_referrer[j, l]:
+            wcnf.append(
+                pysat_if(
+                    lm.getid(lm.lits.ref, j, i, l),  # ref_{i<-j,l}
+                    lm.getid(lm.lits.phrase, j, l),  # f_{j,l}
+                )
+            )
+    # // end constraint (3) ###############################
 
-    # if referred(i,l) = true, then for all other referred(k,l) with k < j and T[i:i+l) = T[k:k+l) must be false
-    # not implemented as this is not a requirement
-    # print("done")
     # print("compute 3")
     # referred(i,l) = true iff there is some j > i such that ref(j,i,l) = true
-    referred = list(refs_by_referred.keys())
+    # // start constraint (4) ###############################
     for (i, l) in refs_by_referred.keys():
-        ref_sources, clauses = pysat_name_cnf(
-            lm, [[lm.getid(lm.lits.ref, j, i, l) for j in refs_by_referred[i, l]]]
+        assert l > 1
+        ref_sources, clauses = pysat_or(
+            lm.newid,
+            [lm.getid(lm.lits.ref, j, i, l) for j in refs_by_referred[i, l]],
         )
         wcnf.extend(clauses)
-        referredid = lm.newid(lm.lits.referred, i, l)
+        referredid = lm.getid(lm.lits.referred, i, l)
         wcnf.extend(pysat_iff(ref_sources, referredid))
-
-    # print("done")
-    # print("compute 4")
-
+    # // end constraint (4) ###############################
     # # if (occ,l) is a referred interval, it cannot be a phrase, but pstart[occ] and pstart[occ+l] must be true
     # # phrase(occ,l) is only defined if l <= lpf[occ]
+    # // start constraint (5) ###############################
+    referred = list(refs_by_referred.keys())
     for (occ, l) in referred:
-        #    if l <= lpf[occ]:
-        # print(f"2: occ={occ}, l={l}")
-        wcnf.append(
-            [-lm.getid(lm.lits.referred, occ, l), -lm.getid(lm.lits.phrase, occ, l)]
-        )
-        wcnf.append(
-            [-lm.getid(lm.lits.referred, occ, l), lm.getid(lm.lits.pstart, occ)]
-        )
-        wcnf.append(
-            [-lm.getid(lm.lits.referred, occ, l), lm.getid(lm.lits.pstart, occ + l)]
-        )
+        if l > 1:
+            qid = lm.getid(lm.lits.referred, occ, l)
+            wcnf.append(pysat_if(qid, -lm.getid(lm.lits.phrase, occ, l)))
+            wcnf.append(pysat_if(qid, lm.getid(lm.lits.pstart, occ)))
+            wcnf.append(pysat_if(qid, lm.getid(lm.lits.pstart, occ + l)))
+    # // end constraint (5) ###############################
     # print("done")
     # print("compute 5")
 
+    # // start constraint (6) ###############################
     # crossing intervals cannot be referred to at the same time.
     referred_by_bp = [[] for _ in range(n)]
     for (occ, l) in referred:
@@ -200,17 +259,39 @@ def smallest_SLP_WCNF(text: bytes):
     for (occ1, l1) in referred:
         for occ2 in range(occ1 + 1, occ1 + l1):
             for l2 in referred_by_bp[occ2]:
-                if occ1 < occ2 and occ2 < occ1 + l1 and occ1 + l1 < occ2 + l2:
-                    id1 = lm.getid(lm.lits.referred, occ1, l1)
-                    id2 = lm.getid(lm.lits.referred, occ2, l2)
-                    wcnf.append([-id1, -id2])
-                else:
+                assert l1 > 1 and l2 > 1
+                assert occ1 < occ2 and occ2 < occ1 + l1
+                if occ1 + l1 >= occ2 + l2:
                     break
+                id1 = lm.getid(lm.lits.referred, occ1, l1)
+                id2 = lm.getid(lm.lits.referred, occ2, l2)
+                wcnf.append([-id1, -id2])
+    # // end constraint (6) ###############################
     # print("done")
+
+    # // start constraint (8) ###############################
+    # a first occurrence of length longer than 2 cannot be a phrase
+    for i in range(0, n):
+        for l in range(2, n - i + 1):
+            if l > lpf[i]:
+                # print(f"1. phrase: {i}, {i+l} : always false")
+                wcnf.append([-lm.getid(lm.lits.phrase, i, l)])
+    # // end constraint (8) ###############################
+
+    # // start constraint (9) ###############################
+    for i in range(0, n):
+        if lpf[i] == 0:
+            # wcnf.append([lm.getid(lm.lits.pstart, i)])
+            wcnf.append([lm.getid(lm.lits.phrase, i, 1)])
+
+    wcnf.append([lm.getid(lm.lits.pstart, 0)])
+    wcnf.append([lm.getid(lm.lits.pstart, n)])
+    # // end constraint (9) ###############################
 
     # soft clauses: minimize of phrases
     for i in range(0, n):
         wcnf.append([-lm.getid(lm.lits.pstart, i)], weight=1)
+    print("done")
     return lm, wcnf, phrases, refs_by_referrer
 
 
@@ -300,8 +381,13 @@ def recover_slp(text: bytes, pstartl, refs_by_referrer):
             leaves.append((pstartl[i], pstartl[i + 1], text[pstartl[i]]))
     internal = [(occ, occ + l, None) for (occ, l) in referred]
     nodes = leaves + internal
-    nodes.sort(key=functools.cmp_to_key(postorder_cmp))
     nodes.append((0, n, None))
+
+    # print(f"leaves: {leaves}")
+    # print(f"internal: {internal}")
+    # print(f"nodes: {nodes}")
+
+    nodes.sort(key=functools.cmp_to_key(postorder_cmp))
     # print(f"leaves: {leaves}")
     # print(f"internal: {internal}")
     # print(f"nodes: {nodes}")
@@ -347,20 +433,21 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
     for (occ, l) in phrases:
         x = lm.getid(lm.lits.phrase, occ, l)
         if x in sol:
-            phrasel.append((occ, l))
+            phrasel.append((occ, occ + l))
     # print(f"phrases: {phrasel}")
 
     refs = set()
     for (j, l) in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             if lm.getid(lm.lits.ref, j, i, l) in sol:
+                # print(f"ref {i} <- {j},{j+l}")
                 refs[j, l] = i
     # print(f"refs = {refs}")
     root, slp = recover_slp(text, posl, refs)
     # print(f"slp = {slp}")
 
     slpsize = len(posl) - 2 + len(set(text))
-    print(f"smallest slp size = {slpsize}")
+    # print(f"smallest slp size = {slpsize}")
 
     if exp:
         exp.time_total = time.time() - total_start
