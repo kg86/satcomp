@@ -136,14 +136,14 @@ def smallest_SLP_WCNF(text: bytes):
     wcnf.append([lm.getid(lm.lits.true)])
     wcnf.append([-lm.getid(lm.lits.false)])
 
-    print("sloooow algorithm for lpf... (should use linear time algorithm)")
+    # print("sloooow algorithm for lpf... (should use linear time algorithm)")
     lpf = compute_lpf(text)
-    print("done")
+    # print("done")
     # defining the literals  ########################################
     # ref(i,j,l): defined for all i,j,l>1 s.t. T[i:i+l) = T[j:j+l)
     # pstart(i)
     # phrase(i,l) defined for all i, l > 1
-    print("building literals")
+    # print("building literals")
     phrases = []
     for i in range(n + 1):
         lm.newid(lm.lits.pstart, i)  # definition of p_i
@@ -167,12 +167,12 @@ def smallest_SLP_WCNF(text: bytes):
                     refs_by_referrer[j, l].append(i)
     for (i, l) in refs_by_referred.keys():
         lm.newid(lm.lits.referred, i, l)
-    print("done")
+    # print("done")
     # print(f"refs_by_referred = {refs_by_referred}")
     # print(f"refs_by_referrer = {refs_by_referrer}")
     # phrase(i,l) = true <=> pstart[i] = pstart[i+l] = true, pstart[i+1..i+l) = false
     # print("compute 1")
-    print("building constraints")
+    # print("building constraints")
     # // start constraint (1) ###############################
     for (i, l) in phrases:
         plst = [-lm.getid(lm.lits.pstart, (i + j)) for j in range(1, l)] + [
@@ -293,7 +293,7 @@ def smallest_SLP_WCNF(text: bytes):
     # soft clauses: minimize of phrases
     for i in range(0, n):
         wcnf.append([-lm.getid(lm.lits.pstart, i)], weight=1)
-    print("done")
+    # print("done")
     return lm, wcnf, phrases, refs_by_referrer
 
 
@@ -405,7 +405,7 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
     """
     total_start = time.time()
     lm, wcnf, phrases, refs_by_referrer = smallest_SLP_WCNF(text)
-    print(f"WCNF constructed")
+    # print(f"WCNF constructed")
     rc2 = RC2(wcnf)
     time_prep = time.time() - total_start
     sol_ = rc2.compute()
