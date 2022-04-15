@@ -11,6 +11,7 @@ sympy = "*"
 dataclasses-json = "*"
 joblib = "*"
 pandas = "*"
+numpy = "*"
 
 [dev-packages]
 black = "*"

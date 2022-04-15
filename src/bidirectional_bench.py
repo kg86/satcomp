@@ -49,21 +49,23 @@ def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     else:
         time_total = 0
         bd = BiDirType([])
-
     return BiDirExp(
-        str(datetime.datetime.now()),
-        status,
-        "naive",
-        os.path.basename(input_file),
-        len(open(input_file, "rb").read()),
-        0,
-        time_total,
-        0,
-        0,
-        0,
-        len(bd),
-        bd,
-    )
+            date =                         str(datetime.datetime.now()),
+            status =                       status,
+            algo =                         "naive",
+            file_name =                    os.path.basename(input_file),
+            file_len =                     len(open(input_file, "rb").read()),
+            time_prep =                    0,
+            time_total =                   time_total,
+            sol_nvars =                    0,
+            sol_nhard =                    0,
+            sol_nsoft =                    0,
+            factor_size =                  len(bd),
+            sol_navgclause =               0.0,
+            sol_ntotalvars =               0,
+            sol_nmaxclause =               0,
+            factors =                      bd,
+            )
 
 
 def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
@@ -96,19 +98,22 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
         assert exp
     else:
         exp = BiDirExp(
-            str(datetime.datetime.now()),
-            status,
-            "solver",
-            os.path.basename(input_file),
-            len(open(input_file, "rb").read()),
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            BiDirType([]),
-        )
+            date =                         str(datetime.datetime.now()),
+            status =                       status,
+            algo =                         "solver",
+            file_name =                    os.path.basename(input_file),
+            file_len =                     len(open(input_file, "rb").read()),
+            time_prep =                    0,
+            time_total =                   0,
+            sol_nvars =                    0,
+            sol_nhard =                    0,
+            sol_nsoft =                    0,
+            factor_size =                  0,
+            sol_navgclause =               0.0,
+            sol_ntotalvars =               0,
+            sol_nmaxclause =               0,
+            factors =                      BiDirType([]),
+            )
     return exp
 
 
