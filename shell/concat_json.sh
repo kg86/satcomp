@@ -1,7 +1,17 @@
 #!/bin/zsh
+
+function die {
+	echo "$1" >&2
+	exit 1
+}
+
+[[ "$#" -eq 1 ]] || die "Usage: $0 [log-folder]"
+logFolder=$(readlink -e "$1")
+[[ -d "$logFolder" ]] || die "$logFolder is not a directory"
+
 echo '['
 ((counter=0))
-for filename in *.log; do
+for filename in $logFolder/*.log; do
 	[[ "$counter" -gt 0 ]] && echo ', '
 	((counter++))
 	algo=$(echo $filename | cut -f1 -d'_')
