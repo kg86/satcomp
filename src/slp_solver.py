@@ -184,7 +184,7 @@ def smallest_SLP_WCNF(text: bytes):
         wcnf.extend(pysat_iff(lm.getid(lm.lits.phrase, i, l), range_iff_startp))
     # // end constraint (1) ###############################
 
-    # // start constraint (2) ###############################
+    # // start constraint (2),(3) ###############################
     # if phrase(j,l) = true there must be exactly one i < j such that ref(j,i,l) is true
     for (j, l) in refs_by_referrer.keys():
         clauses = CardEnc.atmost(
@@ -209,8 +209,8 @@ def smallest_SLP_WCNF(text: bytes):
     #     )
     #     wcnf.extend(clauses)
     #     wcnf.append(pysat_if(lm.getid(lm.lits.phrase, j, l), unique_source))
-    # # // end constraint (2) ###############################
-    # // start constraint (3) ###############################
+    # // end constraint (2),(3) ###############################
+    # // start constraint (4) ###############################
     for (j, l) in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             wcnf.append(
@@ -219,11 +219,11 @@ def smallest_SLP_WCNF(text: bytes):
                     lm.getid(lm.lits.phrase, j, l),  # f_{j,l}
                 )
             )
-    # // end constraint (3) ###############################
+    # // end constraint (4) ###############################
 
     # print("compute 3")
     # referred(i,l) = true iff there is some j > i such that ref(j,i,l) = true
-    # // start constraint (4) ###############################
+    # // start constraint (5) ###############################
     for (i, l) in refs_by_referred.keys():
         assert l > 1
         ref_sources, clauses = pysat_or(
@@ -232,11 +232,13 @@ def smallest_SLP_WCNF(text: bytes):
         )
         wcnf.extend(clauses)
         referredid = lm.getid(lm.lits.referred, i, l)
-        wcnf.extend(pysat_iff(ref_sources, referredid))
-    # // end constraint (4) ###############################
+        wcnf.extend(
+            pysat_iff(ref_sources, referredid)
+        )  # q_{i,l} <=> \exists ref_{i<-j,l}
+    # // end constraint (5) ###############################
     # # if (occ,l) is a referred interval, it cannot be a phrase, but pstart[occ] and pstart[occ+l] must be true
     # # phrase(occ,l) is only defined if l <= lpf[occ]
-    # // start constraint (5) ###############################
+    # // start constraint (6) ###############################
     referred = list(refs_by_referred.keys())
     for (occ, l) in referred:
         if l > 1:
@@ -244,11 +246,11 @@ def smallest_SLP_WCNF(text: bytes):
             wcnf.append(pysat_if(qid, -lm.getid(lm.lits.phrase, occ, l)))
             wcnf.append(pysat_if(qid, lm.getid(lm.lits.pstart, occ)))
             wcnf.append(pysat_if(qid, lm.getid(lm.lits.pstart, occ + l)))
-    # // end constraint (5) ###############################
+    # // end constraint (6) ###############################
     # print("done")
     # print("compute 5")
 
-    # // start constraint (6) ###############################
+    # // start constraint (7) ###############################
     # crossing intervals cannot be referred to at the same time.
     referred_by_bp = [[] for _ in range(n)]
     for (occ, l) in referred:
@@ -266,7 +268,7 @@ def smallest_SLP_WCNF(text: bytes):
                 id1 = lm.getid(lm.lits.referred, occ1, l1)
                 id2 = lm.getid(lm.lits.referred, occ2, l2)
                 wcnf.append([-id1, -id2])
-    # // end constraint (6) ###############################
+    # // end constraint (7) ###############################
     # print("done")
 
     # // start constraint (8) ###############################
@@ -281,8 +283,8 @@ def smallest_SLP_WCNF(text: bytes):
     # // start constraint (9) ###############################
     for i in range(0, n):
         if lpf[i] == 0:
-            # wcnf.append([lm.getid(lm.lits.pstart, i)])
-            wcnf.append([lm.getid(lm.lits.phrase, i, 1)])
+            wcnf.append([lm.getid(lm.lits.phrase, i, 1)])  # perhaps not needed
+            pass
 
     wcnf.append([lm.getid(lm.lits.pstart, 0)])
     wcnf.append([lm.getid(lm.lits.pstart, n)])
