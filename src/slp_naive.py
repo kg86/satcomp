@@ -1,20 +1,7 @@
-import argparse
 import copy
-import json
+import argparse
 import os
 import sys
-import time
-from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
-
-from attractor_bench_format import AttractorExp
-
-logger = getLogger(__name__)
-handler = StreamHandler()
-handler.setLevel(DEBUG)
-FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
-formatter = Formatter(FORMAT)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 ##############################################################################################
 # Code by rici
@@ -47,7 +34,7 @@ def enum_ordered(labels):
 
 def minimize_tree(root, nodedic):
     # print(root)
-    if type(root) is Node:
+    if type(root) == Node:
         left = minimize_tree(root.left, nodedic)
         right = minimize_tree(root.right, nodedic)
         if (left, right) in nodedic:
@@ -68,12 +55,6 @@ def parse_args():
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
-    parser.add_argument(
-        "--log_level",
-        type=str,
-        help="log level, DEBUG/INFO/CRITICAL",
-        default="CRITICAL",
-    )
     args = parser.parse_args()
     if args.file == "" and args.str == "":
         parser.print_help()
@@ -90,43 +71,15 @@ if __name__ == "__main__":
     else:
         text = open(args.file, "rb").read()
 
-    if args.log_level == "DEBUG":
-        logger.setLevel(DEBUG)
-    elif args.log_level == "INFO":
-        logger.setLevel(INFO)
-    elif args.log_level == "CRITICAL":
-        logger.setLevel(CRITICAL)
-
-    exp = AttractorExp.create()
-    exp.algo = "slp-naive"
-    exp.file_name = os.path.basename(args.file)
-    exp.file_len = len(text)
-
-    total_start = time.time()
-
     minsz = len(text) * 2
     ming = None
-    solutioncounter = 0
     for tree in enum_ordered(text):
-        solutioncounter += 1
-        logger.info(tree)
+        print(tree)
         nodedic = {}
         rt = minimize_tree(tree, nodedic)
         sz = len(nodedic)
         if sz < minsz:
             minsz = sz
             ming = copy.deepcopy(nodedic)
-
-    exp.time_total = time.time() - total_start
-    exp.time_prep = exp.time_total
-    exp.factor_size = minsz
-    exp.sol_nvars = solutioncounter
-
     print("minimum SLP size = %s" % minsz)
     print("grammar: %s" % ming)
-
-    if args.output == "":
-        print(exp.to_json(ensure_ascii=False))  # type: ignore
-    else:
-        with open(args.output, "w") as f:
-            json.dump(exp, f, ensure_ascii=False)
