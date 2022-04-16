@@ -7,28 +7,18 @@ from typing import List
 import csv
 
 
-algos = [
-    "attractor",
-    "bidirectional_var0",
-    "bidirectional_var1",
-    "bidirectional_var2",
-    "slp",
-]
+algos = ["attractor", "bidirectional", "slp"]
 
 
 def compute_size(filename, algo) -> int:
     assert algo in algos
     if algo == "attractor":
-        cmd = f"uv run src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'"
-    elif algo == "bidirectional_var0":
-        cmd = f"uv run src/bidirectional_solver_var0.py --file {filename} | jq '.factor_size'"
-    elif algo == "bidirectional_var1":
-        cmd = f"uv run src/bidirectional_solver_var1.py --file {filename} | jq '.factor_size'"
-    elif algo == "bidirectional_var2":
-        cmd = f"uv run src/bidirectional_solver_var2.py --file {filename} | jq '.factor_size'"
+        cmd = f"pipenv run python src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'"
+    elif algo == "bidirectional":
+        cmd = f"pipenv run python src/bidirectional_solver.py --file {filename} | jq '.factor_size'"
     elif algo == "slp":
         cmd = (
-            f"uv run src/slp_solver.py --file {filename} | jq '.factor_size'"
+            f"pipenv run python src/slp_solver.py --file {filename} | jq '.factor_size'"
         )
     else:
         assert False
@@ -44,7 +34,6 @@ def make_tsv(files: List[str]):
         for algo in algos:
             size = compute_size(file, algo)
             writer.writerow([file, algo, size])
-            sys.stdout.flush()
 
 
 if __name__ == "__main__":
@@ -54,9 +43,8 @@ if __name__ == "__main__":
         make_tsv(filenames)
     elif prog == "verify":
         filename, algo, true_size = sys.argv[2:]
-        if algo in algos:
-            true_size = int(true_size)
-            size = compute_size(filename, algo)
-            if true_size != size:
-                msg = f"the output size of {algo} for {filename} is expected {true_size}, but is actually {size}"
-                raise Exception(msg)
+        true_size = int(true_size)
+        size = compute_size(filename, algo)
+        if true_size != size:
+            msg = f"the output size of {algo} for {filename} is expected {true_size}, but is actually {size}"
+            raise Exception(msg)

@@ -1,66 +1,10 @@
 name: build
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-env:
-  CARGO_TERM_COLOR: always
-
+on: [push]
 jobs:
-  python:
-    name: check on Python
-    runs-on: ubuntu-24.04
+  check:
+    runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        uses: actions/checkout@v5
-
-      - name: Setup the latest uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          python-version: "3.10"
-
-      - name: install dependencies
-        run: uv tool install --python-preference only-managed --python 3.10 tox --with tox-uv
-
-      - name: run check
-        run: uvx --with tox-uv tox run -e checkall
-
-      - name: run test
-        run: uvx --with tox-uv tox run -e test
-
-  rust:
-    name: check on Rust ${{ matrix.rust }}
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: rust
-    strategy:
-      matrix:
-        rust:
-          - stable
-          - nightly
-    steps:
-      - uses: actions/checkout@v5
-      - name: Install ${{ matrix.rust }}
-        run: |
-          rustup toolchain install ${{ matrix.rust }} --profile minimal --component rustfmt,clippy
-          rustup default ${{ matrix.rust }}
-
-      - name: Run cargo check
-        run: cargo check
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
-
-      - name: Run cargo fmt
-        run: cargo fmt --all -- --check
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
-
-      - name: Run cargo clippy
-        run: cargo clippy -- -D warnings -W clippy::nursery
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
-
-      - name: Run cargo test
-        run: cargo test --release --all-features
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
+      - uses: actions/checkout@v2
+      - run: pip install pipenv && pipenv sync --dev
+      - run: pipenv run pyright
+      - run: tail -n +2 tests/size_list.tsv| xargs -L 1 pipenv run python tests/size_check.py verify
