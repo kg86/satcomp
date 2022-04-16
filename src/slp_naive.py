@@ -6,6 +6,16 @@ import json
 import time
 from attractor_bench_format import AttractorExp
 
+from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
+
+logger = getLogger(__name__)
+handler = StreamHandler()
+handler.setLevel(DEBUG)
+FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
+formatter = Formatter(FORMAT)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 ##############################################################################################
 # Code by rici
 # https://stackoverflow.com/questions/14900693/enumerate-all-full-labeled-binary-tree
@@ -58,6 +68,12 @@ def parse_args():
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
+    parser.add_argument(
+        "--log_level",
+        type=str,
+        help="log level, DEBUG/INFO/CRITICAL",
+        default="CRITICAL",
+    )
     args = parser.parse_args()
     if args.file == "" and args.str == "":
         parser.print_help()
@@ -74,6 +90,14 @@ if __name__ == "__main__":
     else:
         text = open(args.file, "rb").read()
 
+    
+    if args.log_level == "DEBUG":
+        logger.setLevel(DEBUG)
+    elif args.log_level == "INFO":
+        logger.setLevel(INFO)
+    elif args.log_level == "CRITICAL":
+        logger.setLevel(CRITICAL)
+
     exp = AttractorExp.create()
     exp.algo = "slp-naive"
     exp.file_name = os.path.basename(args.file)
@@ -86,7 +110,7 @@ if __name__ == "__main__":
     solutioncounter = 0
     for tree in enum_ordered(text):
         solutioncounter += 1
-        print(tree)
+        logger.info(tree)
         nodedic = {}
         rt = minimize_tree(tree, nodedic)
         sz = len(nodedic)
