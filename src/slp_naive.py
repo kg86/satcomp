@@ -2,6 +2,9 @@ import copy
 import argparse
 import os
 import sys
+import json
+import time
+from attractor_bench_format import AttractorExp
 
 ##############################################################################################
 # Code by rici
@@ -71,9 +74,18 @@ if __name__ == "__main__":
     else:
         text = open(args.file, "rb").read()
 
+    exp = AttractorExp.create()
+    exp.algo = "slp-naive"
+    exp.file_name = os.path.basename(args.file)
+    exp.file_len = len(text)
+
+    total_start = time.time()
+
     minsz = len(text) * 2
     ming = None
+    solutioncounter = 0
     for tree in enum_ordered(text):
+        solutioncounter += 1
         print(tree)
         nodedic = {}
         rt = minimize_tree(tree, nodedic)
@@ -81,5 +93,18 @@ if __name__ == "__main__":
         if sz < minsz:
             minsz = sz
             ming = copy.deepcopy(nodedic)
+
+    exp.time_total = time.time() - total_start
+    exp.time_prep = exp.time_total
+    exp.factor_size = minsz
+    exp.sol_nvars = solutioncounter
+
     print("minimum SLP size = %s" % minsz)
     print("grammar: %s" % ming)
+
+
+    if args.output == "":
+        print(exp.to_json(ensure_ascii=False))  # type: ignore
+    else:
+        with open(args.output, "w") as f:
+            json.dump(exp, f, ensure_ascii=False)
