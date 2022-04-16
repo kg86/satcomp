@@ -17,13 +17,19 @@ for filename in $logFolder/*.log; do
 	algo=$(echo $filename | cut -f1 -d'_')
 	dataset=$(echo $filename | cut -f2- -d'_')
 	if ! grep -q '^{' "$filename"; then
+		[[ "$algo" = "attr" ]] && continue
 		errfile=$filename:r.err
+		Status='unknown'
 		grep -q "DUE TO TIME LIMIT" "$errfile" && Status="no time"
 		grep -q "cgroup out-of-memory" "$errfile" && Status="no mem"
+		[[ "$counter" -gt 0 ]] && echo ', '
+		((counter++))
 		echo "{\"algo\": \"$algo\", \"status\": \"$Status\", \"file_name\": \"$dataset\" }"
 		continue
 	fi
-	grep '^{' "$filename" | sed "s@\"solver\"@\"$algo\"@"
+	[[ "$counter" -gt 0 ]] && echo ', '
+	((counter++))
+	grep '^{' "$filename" | sed "s@\"algo\": \"[^\"]\+\"@\"algo\": \"$algo\"@"
 done
 echo ']'
 

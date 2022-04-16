@@ -9,3 +9,5 @@ for script in ./slurmscripts/*.sh; do
 	$script
 done
 ./concat_json.sh log > benchmark.json
+
+for dataset in ~/data/calgary/*; do ./splitter.sh $dataset ~/data/splitted; done

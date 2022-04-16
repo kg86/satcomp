@@ -10,6 +10,8 @@ function die {
 [[ "$#" -eq 2 ]] || die "Usage: $0 [dataset-folder] [log-folder]"
 datasetFolder=$(readlink -e "$1")
 logFolder=$(readlink -e "$2")
+[[ -d "$1" ]] || die "$1 is not a directory"
+[[ -d "$2" ]] || die "$2 is not a directory"
 [[ -d "$datasetFolder" ]] || die "$datasetFolder is not a directory"
 [[ -d "$logFolder" ]] || die "$logFolder is not a directory"
 
@@ -55,6 +57,7 @@ for filename in $datasetFolder/*; do
 	basefilename="$(basename $filename)"
 	putScriptRedir "$Pipenv src/bidirectional_solver.py" "bidir_$basefilename" "$filename"
 	putScriptRedir "$Pipenv src/attractor_solver.py --algo min" "attr_$basefilename" "$filename"
-	putScriptRedir "$Pipenv src/grammar_solver.py" "grammar_$basefilename" "$filename"
+	# putScriptRedir "$Pipenv src/grammar_solver.py" "grammar_$basefilename" "$filename"
 	putScriptRedir "$Pipenv src/slp_solver.py" "slp_$basefilename" "$filename"
+	putScriptRedir "$Pipenv src/slp_naive.py" "slpnaive_$basefilename" "$filename"
 done 
