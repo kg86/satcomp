@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "3.1", features = ["derive"] }  # MIT or Apache-2.0
 anyhow = "1.0"
-cdivsufsort = "2.0.0"
-structopt = "0.3.22"
 
+[[bin]]
+name = "slp_naive"
+path = 'src/slp_naive.rs'
