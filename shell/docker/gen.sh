@@ -1,4 +1,7 @@
 #!/bin/bash
+scriptpath=`dirname $(readlink -f "$0")` 
+cd "$scriptpath"
+
 set -x
 set -e
 tmpfile=$(mktemp)
