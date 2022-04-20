@@ -19,8 +19,9 @@ Depending on the used operating system, this script might fail.
 For that reasons, we provide a Docker image.
 The starting point for that is the script `shell/docker/gen.sh`, 
 which builds a Docker image, and runs the code inside a Docker container.
-On success, it puts a `plot.tar` file back onto the host machine.
-This file contains LaTex code, which can generate plots for the aforementioned datasets.
+On success, it puts a `shell/docker/plot.tar` file back onto the host machine.
+This file contains LaTex code with tikz/pgf instructions, 
+which can generate plots for the aforementioned datasets.
 
 ## Build instructions
 
