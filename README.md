@@ -1,10 +1,30 @@
 # Computing NP-hard Repetitiveness Measure by SAT solvers
 
-This program computes the NP-hard repetitiveness measures such as attractors and bidirectional macroschemes by using SAT solver.
+Computes the smallest
+- a smallest smallest string attractor,
+- a smallest straight-line program, and
+- a bidirectional macro scheme with the fewest phrases,
+by using the SAT solver pySAT.
+
+## Motivation
+
+Computing these compression measures is NP-hard.
+Solving such hard problems with a SAT-solver seems therefore natural.
+
+## Automatic Evaluation
+
+The script `shell/example_run.sh` evaluates our solutions on files of the Canterbury and Calgary corpus.
+On success, it creates a JSON file `shell/example_run/benchmark.json` storing various statistics of the conducted benchmark.
+Depending on the used operating system, this script might fail.
+For that reasons, we provide a Docker image.
+The starting point for that is the script `shell/docker/gen.sh`, 
+which builds a Docker image, and runs the code inside a Docker container.
+On success, it puts a `plot.tar` file back onto the host machine.
+This file contains LaTex code, which can generate plots for the aforementioned datasets.
 
 ## Build instructions
 
-1. Install `pipenv` on your environment
+1. Install `pipenv` and `python3` on your OS.
 2. Run the following command at the root of this repository.
 
 ```bash
@@ -17,9 +37,9 @@ The code has been tested only on Linux.
 
 ## Usage
 
-Our computation programs are put in the `src` directory and written in Python.
+Our executables are written in Python, and can be accessed from the `src` directory.
 
-You can try the programs through `pipenv` command as follows.
+You can run the programs via the `pipenv` command as follows.
 
 ```bash
 $ pipenv run python src/attractor_solver.py -h
@@ -42,9 +62,10 @@ optional arguments:
 
 ## Running Examples
 
+
 ### Computing minimum string attractors with PySAT
 
-The following program will compute minimum string attractors of size `factor_size = 497` for `grammar.lsp` of length 3721.
+The following program compute a minimum string attractor of size `factor_size = 497` for the dataset `grammar.lsp` having a length of 3721.
 
 ```bash
 $ pipenv run python src/attractor_solver.py --file data/cantrbry/grammar.lsp --algo min
