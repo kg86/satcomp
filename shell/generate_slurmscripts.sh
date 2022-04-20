@@ -1,6 +1,7 @@
 #!/bin/bash
 # set -e
 # set -x
+kMaxMemory='16000'
 
 function die {
 	echo "$1" >&2
@@ -22,12 +23,13 @@ function putScript {
 command="$1"
 basename="$2"
 filename="$3"
+memory="$4"
 cat <<EOF
 #!/bin/zsh
 #
 #SBATCH --job-name=${basename} # Job name
 #SBATCH --ntasks=9                    # Run on a single CPU
-#SBATCH --mem=16000                     # memory in megabyte
+#SBATCH --mem=${memory}                     # memory in megabyte
 #SBATCH --time=01:00:00               # Time limit hrs:min:sec
 #SBATCH --output=$logFolder/${basename}.log   # stdout
 #SBATCH --error=$logFolder/${basename}.err    # stderr
@@ -46,7 +48,9 @@ mkdir -p slurmscripts
 function putScriptRedir {
 	command="$1"
 	basename="$2"
-	putScript "$command" "$basename" "$filename" > "slurmscripts/${basename}.sh"
+	filename="$3"
+	memory="$4"
+	putScript "$command" "$basename" "$filename" "$memory" > "slurmscripts/${basename}.sh"
 	chmod u+x "slurmscripts/${basename}.sh"
 }
 
@@ -55,9 +59,10 @@ Pipenv="pipenv run python"
 
 for filename in $datasetFolder/*; do
 	basefilename="$(basename $filename)"
-	putScriptRedir "$Pipenv src/bidirectional_solver.py" "bidir_$basefilename" "$filename"
-	putScriptRedir "$Pipenv src/attractor_solver.py --algo min" "attr_$basefilename" "$filename"
+	memory=$kMaxMemory
+	putScriptRedir "$Pipenv src/bidirectional_solver.py" "bidir_$basefilename" "$filename" "$memory"
+	putScriptRedir "$Pipenv src/attractor_solver.py --algo min" "attr_$basefilename" "$filename" "$memory"
 	# putScriptRedir "$Pipenv src/grammar_solver.py" "grammar_$basefilename" "$filename"
-	putScriptRedir "$Pipenv src/slp_solver.py" "slp_$basefilename" "$filename"
-	putScriptRedir "$Pipenv src/slp_naive.py" "slpnaive_$basefilename" "$filename"
+	putScriptRedir "$Pipenv src/slp_solver.py" "slp_$basefilename" "$filename" "$memory"
+	putScriptRedir "$Pipenv src/slp_naive.py" "slpnaive_$basefilename" "$filename" "100"
 done 

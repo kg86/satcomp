@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-
+#!/bin/zsh
 function die {
 	echo "$1" >&2
 	exit 1
@@ -13,7 +12,6 @@ datasetFolder=$(readlink -e "$2")
 [[ -d "$datasetFolder" ]] || die "$datasetFolder is not a directory"
 
 base=$(basename "$dataset")
-#for i in $(seq -f "%04.f" 2 3 7); do
 for i in $(seq -f "%04.f" 10 10 200) $(seq -f "%04.f" 200 50 800) $(seq -f "%04.f" 800 200 3000); do
 	dd if="$dataset" of="$datasetFolder/$base.$i" bs=$i count=1
 done
