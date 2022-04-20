@@ -8,13 +8,23 @@ function die {
 	exit 1
 }
 
-[[ "$#" -eq 2 ]] || die "Usage: $0 [dataset-folder] [log-folder]"
-datasetFolder=$(readlink -e "$1")
-logFolder=$(readlink -e "$2")
+[[ "$#" -eq 3 ]] || 
+	die "Usage: $0 [dataset-folder] [log-folder] [script-folder]
+	- dataset-folder: folder in which the datasets are stored
+	- log-folder: folder in which the log files to write
+	- script-folder: folder in which the executable scripts to write"
+
 [[ -d "$1" ]] || die "$1 is not a directory"
-[[ -d "$2" ]] || die "$2 is not a directory"
+datasetFolder=$(readlink -e "$1")
 [[ -d "$datasetFolder" ]] || die "$datasetFolder is not a directory"
+
+mkdir -p "$2" || die "cannot create folder $2"
+logFolder=$(readlink -e "$2")
 [[ -d "$logFolder" ]] || die "$logFolder is not a directory"
+
+mkdir -p "$3" || die "cannot create folder $3"
+scriptFolder=$(readlink -e "$3")
+[[ -d "$scriptFolder" ]] || die "$scriptFolder is not a directory"
 
 
 scriptpath=`dirname $(readlink -f "$0")`
@@ -43,15 +53,14 @@ fi
 EOF
 }
 
-mkdir -p slurmscripts
 
 function putScriptRedir {
 	command="$1"
 	basename="$2"
 	filename="$3"
 	memory="$4"
-	putScript "$command" "$basename" "$filename" "$memory" > "slurmscripts/${basename}.sh"
-	chmod u+x "slurmscripts/${basename}.sh"
+	putScript "$command" "$basename" "$filename" "$memory" > "$scriptFolder/${basename}.sh"
+	chmod u+x "$scriptFolder/${basename}.sh"
 }
 
 
@@ -64,5 +73,5 @@ for filename in $datasetFolder/*; do
 	putScriptRedir "$Pipenv src/attractor_solver.py --algo min" "attr_$basefilename" "$filename" "$memory"
 	# putScriptRedir "$Pipenv src/grammar_solver.py" "grammar_$basefilename" "$filename"
 	putScriptRedir "$Pipenv src/slp_solver.py" "slp_$basefilename" "$filename" "$memory"
-	putScriptRedir "$Pipenv src/slp_naive.py" "slpnaive_$basefilename" "$filename" "100"
+	# putScriptRedir "$Pipenv src/slp_naive.py" "slpnaive_$basefilename" "$filename" "100"
 done 

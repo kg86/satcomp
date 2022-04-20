@@ -451,7 +451,7 @@ def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
 def parse_args():
     parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
     parser.add_argument("--file", type=str, help="input file", default="")
-    parser.add_argument("--text", type=str, help="input string", default="")
+    parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument(
         "--log_level",
@@ -461,7 +461,7 @@ def parse_args():
     )
 
     args = parser.parse_args()
-    if (args.file == "" and args.text == "") or (
+    if (args.file == "" and args.str== "") or (
         args.log_level not in ["DEBUG", "INFO", "CRITICAL"]
     ):
         parser.print_help()
@@ -471,8 +471,8 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    if args.text != "":
-        text = args.text.encode("utf8")
+    if args.str != "":
+        text = args.str.encode("utf8")
     else:
         text = open(args.file, "rb").read()
 
