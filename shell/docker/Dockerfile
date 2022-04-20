@@ -7,8 +7,8 @@ python3-pip pipenv \
 zsh git vim sqlite3  \
 "
 
-
-# slurm-wlm cgroup-tools slurm-client
+# slurm-wlm cgroup-tools slurm-client 
+# COPY solver.tar /
 # COPY cgroup.conf /etc/slurm-llnl/
 # COPY slurm.conf /etc/slurm-llnl
 
@@ -24,13 +24,11 @@ groupadd -g 1001 share && \
 useradd -u 1001 -g 1001 share -G users,uucp,games,cdrom,floppy,audio,dip,video,plugdev && \
 chown share /home/share && \
 chsh -s /bin/bash share && \
-echo 'root:a\nshare:a' | chpasswd  && \
-echo 'LANG=C' > /home/share/.profile
+echo 'root:a\nshare:a' | chpasswd 
 # cgcreate -g memory:myGroup && \
 # echo 16000M > /sys/fs/cgroup/memory/myGroup/memory.limit_in_bytes
-COPY --chown=share run.sh /
-COPY --chown=share solver.tar /
 
 ENV HOME /home/share
 WORKDIR /home/share
 USER share
+
