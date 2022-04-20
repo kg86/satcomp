@@ -18,12 +18,6 @@ from pysat.formula import CNF, WCNF
 from pysat.examples.rc2 import RC2
 from pysat.card import CardEnc, EncType, ITotalizer
 from pysat.solvers import Solver
-import matplotlib.pyplot as plt
-import matplotlib
-
-# prevend appearing gui window
-matplotlib.use("Agg")
-
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -383,7 +377,8 @@ def recover_slp(text: bytes, pstartl, refs_by_referrer):
             leaves.append((pstartl[i], pstartl[i + 1], text[pstartl[i]]))
     internal = [(occ, occ + l, None) for (occ, l) in referred]
     nodes = leaves + internal
-    nodes.append((0, n, None))
+    if len(nodes) > 1:
+        nodes.append((0, n, None))
 
     # print(f"leaves: {leaves}")
     # print(f"internal: {internal}")
