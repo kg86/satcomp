@@ -90,3 +90,10 @@ The following program will compute minimum SLP grammar of size `factor_size = 68
 pipenv run python src/slp_solver.py --file data/cantrbry_pref/cp.html-50
 {"date": "2022-04-19 20:55:49.267226", "status": "", "algo": "slp-sat", "file_name": "cp.html-50", "file_len": 50, "time_prep": 0.05850052833557129, "time_total": 0.06189441680908203, "sol_nvars": 2693, "sol_nhard": 28706, "sol_nsoft": 50, "sol_navgclause": 2.7268166933742073, "sol_ntotalvars": 78276, "sol_nmaxclause": 52, "factor_size": 68, "factors": []}
 ```
+
+### Evaluation of Test Datasets
+
+We have a collection of test datasets in the folder `data`.
+To measure the output sizes of these datasets, we provide the script `shell/measure_datasets.sh`.
+It requires the program `jq` to be installed, and outputs the JSON file `shell/measure/stats.json` storing for each file the output size of each computed compression measure.
+If you apply this script on a SLURM cluster, then it batches the experiments. Collecting the final data has to be done manually (the last lines in the shell script).
