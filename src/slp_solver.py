@@ -127,8 +127,8 @@ def smallest_SLP_WCNF(text: bytes):
     wcnf = WCNF()
 
     lm = SLPLiteralManager(text)
-    wcnf.append([lm.getid(lm.lits.true)])
-    wcnf.append([-lm.getid(lm.lits.false)])
+    # wcnf.append([lm.getid(lm.lits.true)])
+    # wcnf.append([-lm.getid(lm.lits.false)])
 
     # print("sloooow algorithm for lpf... (should use linear time algorithm)")
     lpf = compute_lpf(text)
