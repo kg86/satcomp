@@ -204,7 +204,7 @@ def make_occa2(text: bytes) -> Dict[bytes, List[int]]:
     """
     match2 = defaultdict(list)
     for i in range(len(text) - 1):
-        match2[text[i: i + 2]].append(i)
+        match2[text[i : i + 2]].append(i)
     return match2
 
 
@@ -232,8 +232,8 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     max_depth = max(len(v) for v in occ1.values())
     lm = BiDirLiteralManager(text, max_depth)
     wcnf = WCNF()
-    wcnf.append([lm.getid(lm.lits.true)])
-    wcnf.append([lm.getid(lm.lits.false)])
+    # wcnf.append([lm.getid(lm.lits.true)])
+    # wcnf.append([lm.getid(lm.lits.false)])
 
     # register all literals (except auxiliary literals) to literal manager
     lits = [lm.sym2id(lm.true)]
@@ -265,7 +265,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     # objective to run fast: if text[i:i+2] occurs only once, i+1 is the beginning of a factor
     count = 0
     for i in range(n - 1):
-        if len(occ2[text[i: i + 2]]) == 1:
+        if len(occ2[text[i : i + 2]]) == 1:
             fbeg = lm.getid(lm.lits.fbeg, i + 1)
             wcnf.append([fbeg])
             count += 1
@@ -303,8 +303,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                 # tree-4: if i does not refer to any position at depth, there is no references from i
                 wcnf.append(pysat_if(-dref_i, no_refi))
     for i in range(n):
-        dref_i = [lm.getid(lm.lits.any_ref, depth, i)
-                  for depth in range(max_depth - 1)]
+        dref_i = [lm.getid(lm.lits.any_ref, depth, i) for depth in range(max_depth - 1)]
         root_i = lm.getid(lm.lits.root, i)
         # tree-5: each position is a root or has a reference to any position
         # (use all positions)
@@ -450,8 +449,7 @@ def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Compute Minimum Bidirectional Scheme")
+    parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
