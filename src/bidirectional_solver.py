@@ -91,7 +91,7 @@ class BiDirLiteralManager(LiteralManager):
 
 
 def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]):
-    return CardEnc.equals(lits, bound=bound, encoding=EncType.pairwise, vpool=lm.vpool)
+    return CardEnc.equals(lits, bound=bound, vpool=lm.vpool)
 
 
 def sol2lits(lm: BiDirLiteralManager, sol: Dict[int, bool], lit_name: str) -> list:
@@ -204,7 +204,7 @@ def make_occa2(text: bytes) -> Dict[bytes, List[int]]:
     """
     match2 = defaultdict(list)
     for i in range(len(text) - 1):
-        match2[text[i : i + 2]].append(i)
+        match2[text[i: i + 2]].append(i)
     return match2
 
 
@@ -255,7 +255,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
         for i in range(n):
             # any_ref(depth, i) is true iff i refers to any position at depth
             lits.append(lm.newid(lm.lits.any_ref, depth, i))
-    wcnf.append(lits)
+    # wcnf.append(lits)
 
     # objective: minimizes the number of factors
     for i in range(n):
@@ -265,7 +265,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     # objective to run fast: if text[i:i+2] occurs only once, i+1 is the beginning of a factor
     count = 0
     for i in range(n - 1):
-        if len(occ2[text[i : i + 2]]) == 1:
+        if len(occ2[text[i: i + 2]]) == 1:
             fbeg = lm.getid(lm.lits.fbeg, i + 1)
             wcnf.append([fbeg])
             count += 1
@@ -303,7 +303,8 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                 # tree-4: if i does not refer to any position at depth, there is no references from i
                 wcnf.append(pysat_if(-dref_i, no_refi))
     for i in range(n):
-        dref_i = [lm.getid(lm.lits.any_ref, depth, i) for depth in range(max_depth - 1)]
+        dref_i = [lm.getid(lm.lits.any_ref, depth, i)
+                  for depth in range(max_depth - 1)]
         root_i = lm.getid(lm.lits.root, i)
         # tree-5: each position is a root or has a reference to any position
         # (use all positions)
@@ -346,7 +347,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                 wcnf.append(pysat_if_and_then_or([-ref_ji1, ref_ji0], [fbeg0]))
                 # bridge-4: if j-1 and j refer to i-1 and i, respectively, factor does not begin at j
                 # because if not, the result size is not the minimum.
-                wcnf.append(pysat_if_and_then_or([ref_ji1, ref_ji0], [-fbeg0]))
+                # wcnf.append(pysat_if_and_then_or([ref_ji1, ref_ji0], [-fbeg0]))
 
     logger.debug("# of referrences is only one")
     for i in range(n):
@@ -449,7 +450,8 @@ def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
+    parser = argparse.ArgumentParser(
+        description="Compute Minimum Bidirectional Scheme")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
@@ -461,7 +463,7 @@ def parse_args():
     )
 
     args = parser.parse_args()
-    if (args.file == "" and args.str== "") or (
+    if (args.file == "" and args.str == "") or (
         args.log_level not in ["DEBUG", "INFO", "CRITICAL"]
     ):
         parser.print_help()
