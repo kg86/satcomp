@@ -43,9 +43,16 @@ cat <<EOF
 #SBATCH --time=01:00:00               # Time limit hrs:min:sec
 #SBATCH --output=$logFolder/${basename}.log   # stdout
 #SBATCH --error=$logFolder/${basename}.err    # stderr
+#
+#PBS -N ${basename}
+#PBS -l walltime=01:00:00,mem=${memory}mb,nodes=1,procs=1
+#PBS -o $logFolder/${basename}.log
+#PBS -e $logFolder/${basename}.err
+
+
 
 cd $scriptpath/../
-if [[ -n "\$SLURM_JOB_ID" ]]; then
+if [[ -n "\$SLURM_JOB_ID" ]] || [[ -n "\$PBS_JOBID" ]]; then
 	$command --file "$filename"
 else
 	$command --file "$filename" >  "$logFolder/${basename}.log" 2> "$logFolder/${basename}.err"

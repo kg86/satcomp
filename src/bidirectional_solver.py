@@ -91,7 +91,7 @@ class BiDirLiteralManager(LiteralManager):
 
 
 def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]):
-    return CardEnc.equals(lits, bound=bound, encoding=EncType.pairwise, vpool=lm.vpool)
+    return CardEnc.equals(lits, bound=bound, vpool=lm.vpool)
 
 
 def sol2lits(lm: BiDirLiteralManager, sol: Dict[int, bool], lit_name: str) -> list:
@@ -232,8 +232,8 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     max_depth = max(len(v) for v in occ1.values())
     lm = BiDirLiteralManager(text, max_depth)
     wcnf = WCNF()
-    wcnf.append([lm.getid(lm.lits.true)])
-    wcnf.append([lm.getid(lm.lits.false)])
+    # wcnf.append([lm.getid(lm.lits.true)])
+    # wcnf.append([lm.getid(lm.lits.false)])
 
     # register all literals (except auxiliary literals) to literal manager
     lits = [lm.sym2id(lm.true)]
@@ -255,7 +255,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
         for i in range(n):
             # any_ref(depth, i) is true iff i refers to any position at depth
             lits.append(lm.newid(lm.lits.any_ref, depth, i))
-    wcnf.append(lits)
+    # wcnf.append(lits)
 
     # objective: minimizes the number of factors
     for i in range(n):
@@ -346,7 +346,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                 wcnf.append(pysat_if_and_then_or([-ref_ji1, ref_ji0], [fbeg0]))
                 # bridge-4: if j-1 and j refer to i-1 and i, respectively, factor does not begin at j
                 # because if not, the result size is not the minimum.
-                wcnf.append(pysat_if_and_then_or([ref_ji1, ref_ji0], [-fbeg0]))
+                # wcnf.append(pysat_if_and_then_or([ref_ji1, ref_ji0], [-fbeg0]))
 
     logger.debug("# of referrences is only one")
     for i in range(n):
@@ -461,7 +461,7 @@ def parse_args():
     )
 
     args = parser.parse_args()
-    if (args.file == "" and args.str== "") or (
+    if (args.file == "" and args.str == "") or (
         args.log_level not in ["DEBUG", "INFO", "CRITICAL"]
     ):
         parser.print_help()
