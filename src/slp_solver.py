@@ -413,7 +413,7 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
     check = bytes(slp2str(root, slp))
     assert check == text
 
-    return (root, slp)
+    return SLPType((root, slp))
 
 
 def parse_args():
