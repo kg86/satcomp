@@ -449,7 +449,7 @@ def smallest_SLP(text: bytes, exp: Optional[AttractorExp] = None):
     if exp:
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
-        # exp.factors = result
+        exp.factors = str(slp)
         exp.factor_size = slpsize  # len(internal_nodes) + len(set(text))
         exp.fill(wcnf)
 
