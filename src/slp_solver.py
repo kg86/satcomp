@@ -410,14 +410,14 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
     if exp:
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
-        exp.factors = f"{slp}"
+        exp.factors = f"{(root, slp)}"
         exp.factor_size = slpsize  # len(internal_nodes) + len(set(text))
         exp.fill(wcnf)
 
     check = bytes(slp2str(root, slp))
     assert check == text
 
-    return SLPType((root, slp))
+    return (root, slp)
 
 
 def parse_args():

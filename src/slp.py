@@ -78,7 +78,7 @@ class SLPExp:
             sol_navgclause=0.0,
             sol_ntotalvars=0,
             sol_nmaxclause=0,
-            factors="",
+            factors=None,
         )
 
 
