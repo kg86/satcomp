@@ -91,10 +91,10 @@ which stores the following attributes:
 
 	A non-terminal is given by the triplet (`from`, `to`, `char`) such that its expansion is the substring T[`from`..`to`-1].
 	Each production rule has the shape
-      1) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)]
-      2) (`from`, `to`, `char`): [], or
+      1) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)], or
+      2) (`from`, `to`, `char`): []
 
-    The first case represents an internal node in the partial parse tree, and the non-terminal has two non-terminal children, each defined again by this tripllet of `from`, `to`, and `char` value.
+    The first case represents an internal node in the partial parse tree, and this node has two children representing non-terminals, each defined again by this triplet of `from`, `to`, and `char` value.
     
     The second case represents leaves of the partial parse tree.
     - If T[`from`..`to`-1] is a single character, we know that this non-terminal expands to a single character `char`.
