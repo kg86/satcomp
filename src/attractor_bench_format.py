@@ -3,6 +3,7 @@ from dataclasses_json import dataclass_json
 import datetime
 from attractor import AttractorType
 from pysat.formula import WCNF
+import typing
 
 
 @dataclass_json
@@ -22,7 +23,7 @@ class AttractorExp:
     sol_ntotalvars: int
     sol_nmaxclause: int
     factor_size: int
-    factors: AttractorType
+    factors: Union[Any,AttractorType]
 
     def fill(self, wcnf: WCNF):
         self.sol_nvars = wcnf.nv

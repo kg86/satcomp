@@ -1,10 +1,22 @@
 # Computing NP-hard Repetitiveness Measure by SAT solvers
 
-This software package contains several Python scripts for computing
-- a smallest smallest string attractor,
-- a smallest straight-line program, and
-- a bidirectional macro scheme with the fewest phrases,
+This software repository contains several Python scripts for computing
+- a smallest string attractor,
+- a smallest straight-line program (SLP), and
+- a bidirectional macro scheme (BMS) with the fewest phrases,
 by using the SAT solver pySAT.
+
+## Build instructions
+
+1. Install `pipenv` and `python3.8` on your OS.
+2. Run the following command at the root of this repository.
+
+```console
+pipenv sync
+```
+This installs package dependencies like `pysat` locally to the repository, which are needed for running the Python scripts.
+If the command fails, it is likely that you have a different minor version of `Python3` installed.
+In most of the cases, you can exchange the line `python_version` in `Pipfile` with your Python version.
 
 ## Automatic Evaluation
 
@@ -17,18 +29,6 @@ which builds a Docker image, and runs the code inside a Docker container.
 On success, it puts a `shell/docker/plot.tar` file back onto the host machine.
 This file contains LaTex code with tikz/pgf instructions, 
 which can generate plots for the aforementioned datasets.
-
-## Build instructions
-
-1. Install `pipenv` and `python3.8` on your OS.
-2. Run the following command at the root of this repository.
-
-```console
-pipenv sync
-```
-This installs package dependencies like `pysat` locally to the repository, which are needed for running the Python scripts.
-If the command fails, it is likely that you have a different minor version of `python3` installed.
-In most of the cases, you can exchange the line `python_version` in `Pipfile` with your Python version.
 
 ## Usage
 
@@ -43,7 +43,7 @@ pipenv run python src/bidirectional_solver.py --str "abracadabra"
 Common to all Python scripts are the input parameters `--str` for giving a string as an input, or `--file` for reading an input file.
 
 
-With parameter `-h` you obtain the list of all available parameters:
+With parameter `-h` you can obtain the list of all available parameters:
 ```console
 pipenv run python src/attractor_solver.py -h
 ```
@@ -74,16 +74,16 @@ which stores the following attributes:
 - `status`: empty in case of success; otherwise it can be used for error messages
 - `algo`: the name of the used program like `slp-sat` for our solution computing the smallest SLP
 - `file_name`: the name of the input file (empty if `--str` is used)
-- `file_len`: the length of the input file (0 if `--str` is used)
+- `file_len`: the length of the input (given by either `--str` or `--file`)
 - `time_prep`: the time needed for defining all hard and soft clauses
 - `time_total`: the total running time
-- `sol_nvars`: number of defined Boolean variables for the solver
-- `sol_nhard`: number of defined hard clauses
-- `sol_nsoft`: number of defined soft clauses
-- `sol_navgclause`: average number of literals a clause contains
+- `sol_nvars`: the number of defined Boolean variables for the solver
+- `sol_nhard`: the number of defined hard clauses
+- `sol_nsoft`: the number of defined soft clauses
+- `sol_navgclause`: the average number of literals a clause contains
 - `sol_ntotalvars`: the size of the CNF, i.e., the sum of all literals in each hard clauses
 - `sol_nmaxclause`: the number of literals in the largest clause
-- `factor_size`: the size of the output (i.e., the minimal number of factors of a BMS, the minimal size of a string attractor, the mimimal size of a grammar)
+- `factor_size`: the size of the output (i.e., the smallest number of factors of a BMS, the smallest size of a string attractor, the smallest size of a grammar)
 - `factors`: an instance of a valid output attaining the size `factor_size`. This is
   * for string attractors a list of text positions
   * for BMS a list of pairs [pos, len] for the direction to copy from `T[pos]` a substring of length `len`. If `pos` is -1, then the factor is a ground phrase and it stores its character in `len`.
