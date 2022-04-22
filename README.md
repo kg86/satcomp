@@ -14,7 +14,7 @@ by using the SAT solver pySAT.
 ```console
 pipenv sync
 ```
-This installs package dependencies like `pysat` locally to the repository, which are needed for running the Python scripts.
+This installs package dependencies like `python-sat` locally to the repository, which are needed for running the Python scripts.
 If the command fails, it is likely that you have a different minor version of `Python3` installed.
 In most of the cases, you can exchange the line `python_version` in `Pipfile` with your Python version.
 
@@ -81,7 +81,7 @@ which stores the following attributes:
 - `sol_nhard`: the number of defined hard clauses
 - `sol_nsoft`: the number of defined soft clauses
 - `sol_navgclause`: the average number of literals a clause contains
-- `sol_ntotalvars`: the size of the CNF, i.e., the sum of all literals in each hard clauses
+- `sol_ntotalvars`: the size of the CNF, i.e., the sum of all literals in each hard clause
 - `sol_nmaxclause`: the number of literals in the largest clause
 - `factor_size`: the size of the output (i.e., the smallest number of factors of a BMS, the smallest size of a string attractor, the smallest size of a grammar)
 - `factors`: an instance of a valid output attaining the size `factor_size`. This is
@@ -90,7 +90,7 @@ which stores the following attributes:
   * for SLP a pair (start symbol, production rules), where the production rules are stored in a list. 
 
 	A non-terminal is given by the triplet (`from`, `to`, `char`) such that its expansion is the substring T[`from`..`to`-1].
-	Each production rule having the shape
+	Each production rule has the shape
       1) (`from`, `to`, `char`): [], or
       2) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)]
 
