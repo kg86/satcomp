@@ -1,4 +1,6 @@
-from typing import AnyStr, Iterable, List, Tuple
+from typing import AnyStr, Iterable, List, Optional, Tuple
+
+from tqdm import tqdm
 
 
 def make_sa_MM(text):
@@ -77,10 +79,13 @@ def get_bwt(text, sa):
     return res
 
 
-def get_lcprange(lcp, i, least_lcp=None):
+def get_lcprange(
+    lcp: List[int], i: int, least_lcp: Optional[int] = None
+) -> Tuple[int, int]:
     """
     Compute the maximum range lcp[j1:j2] such that
-    lcp[j] = lcp[i] for j in [j1:j2].
+    least_lcp <= lcp[j] for j in [j1+1:j2]
+    let least_lcp be lcp[i] if it is None.
     """
 
     n = len(lcp)
@@ -167,6 +172,52 @@ def minimum_substr_naive(text) -> List[Tuple[int, int]]:
     return res
 
 
+def minimum_right_substr(text):
+    sa = make_sa_MM(text)
+    isa = make_isa(sa)
+    lcp = make_lcpa_kasai(text, sa, isa)
+    return minimum_right_substr_sa(text, sa, isa, lcp)
+
+
+def minimum_right_substr_sa(
+    text, sa: List[int], isa: List[int], lcp: List[int]
+) -> List[Tuple[int, int]]:
+    """
+    Compute the set of (b, l) s.t. text[b:b+l] is a minimum right substring
+    A minimum right substring x is a substring that the #occ of x is
+    different from #occ of #occ of x[:-1].
+    """
+    n = len(text)
+    res: List[Tuple[int, int]] = [(sa[0], 1)]
+    already_computed = set()
+    for i in tqdm(range(1, n)):
+        if lcp[i] == 0:
+            if sa[i] + 1 <= n:
+                res.append((sa[i], 1))
+            continue
+        if lcp[i - 1] == lcp[i]:
+            continue
+        lcp_range = get_lcprange(lcp, i)
+        # print(i, lcp_range)
+        if (lcp_range, lcp[i]) in already_computed:
+            continue
+        cur = lcp_range[0]
+        while cur <= lcp_range[1]:
+            # text[sa[cur]:sa[cur]+lcp[i]+1] is a minimum right substring
+            lcp_range_sub = get_lcprange(lcp, cur, lcp[i] + 1)
+            assert lcp_range[0] <= lcp_range_sub[0] <= lcp_range_sub[1] <= lcp_range[1]
+            if sa[cur] + lcp[i] + 1 > n:
+                cur += 1
+                continue
+
+            already_computed.add((lcp_range, lcp[i]))
+            res.append((sa[cur], lcp[i] + 1))
+            assert cur < lcp_range_sub[1] + 1
+            cur = lcp_range_sub[1] + 1
+
+    return res
+
+
 def minimum_substr(text):
     sa = make_sa_MM(text)
     isa = make_isa(sa)
@@ -185,7 +236,7 @@ def minimum_substr_sa(
     n = len(text)
     res: List[Tuple[int, int]] = [(sa[0], 1)]
     already_computed = set()
-    for i in range(1, n):
+    for i in tqdm(range(1, n)):
         if lcp[i] == 0:
             res.append((sa[i], 1))
             continue
@@ -193,8 +244,8 @@ def minimum_substr_sa(
             continue
         lcp_range = get_lcprange(lcp, i)
         assert (lcp_range[1] - lcp_range[0] + 1) > 1
-        for k in range(lcp_range[0], lcp_range[1]):
-            assert text[sa[k] : sa[k] + lcp[i]] == text[sa[k + 1] : sa[k + 1] + lcp[i]]
+        # for k in range(lcp_range[0], lcp_range[1]):
+        #     assert text[sa[k] : sa[k] + lcp[i]] == text[sa[k + 1] : sa[k + 1] + lcp[i]]
         if (lcp_range, lcp[i]) in already_computed:
             continue
         cur = lcp_range[0]

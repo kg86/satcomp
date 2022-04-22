@@ -12,6 +12,7 @@ dataclasses-json = "*"
 joblib = "*"
 pandas = "*"
 numpy = "*"
+tqdm = "*"
 
 [dev-packages]
 black = "*"
