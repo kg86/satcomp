@@ -147,3 +147,34 @@ If you apply this script on a SLURM cluster, then it batches the experiments. Co
 ### Notes
 
 The code has been tested only on Linux.
+
+# Other Misc. Code
+## Straight-forward algorithms
+
+We include implementations of straight-forward algorithms to compute the smallest string attractor,
+based on the code by Jeffrey Shallit.
+```console
+pipenv run python src/attractor_naive.py --str "abracadabra"
+```
+
+For SLP, we have a code that enumerates all full binary trees, and considers them as derivation trees.
+The size of the SLP is determined by minimizing this tree where nodes can reused.
+Two versions: one implemented in Python, and the other in `rust` is included:
+
+```console
+pipenv run python src/slp_naive.py --str "abracadabra"
+```
+or
+```console
+cd rust
+cargo run --release -- -t abracadabra
+```
+
+(We have yet to properly format the output)
+
+## Counting Minimal and right-Minimal substrings
+
+We include the code to generate Table 1 in the Appendix of the paper.
+```console
+pipenv run python src/min_substr.py --mode=exp
+```
