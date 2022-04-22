@@ -1,4 +1,5 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
+
 function die {
 	echo "$1" >&2
 	exit 1

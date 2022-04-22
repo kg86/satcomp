@@ -1,6 +1,5 @@
-#!/bin/bash
-# set -e
-# set -x
+#!/usr/bin/env bash
+
 kMaxMemory='16000'
 
 function die {

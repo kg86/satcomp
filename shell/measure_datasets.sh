@@ -1,6 +1,8 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
+
 scriptpath=`dirname $(readlink -f "$0")` 
 cd "$scriptpath"
+
 mkdir -p measure/log measure/scripts
 for datafolder in $scriptpath/../data/*; do
 	[[ -d "$datafolder" ]] || continue

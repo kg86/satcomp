@@ -1,4 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+
+scriptpath=`dirname $(readlink -f "$0")` 
+cd "$scriptpath"
+
 set -x
 if [[ ! -d canterbury-corpus ]]; then
 	git clone https://github.com/pfalcon/canterbury-corpus
