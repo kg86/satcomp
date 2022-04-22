@@ -1,10 +1,22 @@
 # Computing NP-hard Repetitiveness Measure by SAT solvers
 
-This software package contains several Python scripts for computing
-- a smallest smallest string attractor,
-- a smallest straight-line program, and
-- a bidirectional macro scheme with the fewest phrases,
+This software repository contains several Python scripts for computing
+- a smallest string attractor,
+- a smallest straight-line program (SLP), and
+- a bidirectional macro scheme (BMS) with the fewest phrases,
 by using the SAT solver pySAT.
+
+## Build instructions
+
+1. Install `pipenv` and `python3.8` on your OS.
+2. Run the following command at the root of this repository.
+
+```console
+pipenv sync
+```
+This installs package dependencies like `pysat` locally to the repository, which are needed for running the Python scripts.
+If the command fails, it is likely that you have a different minor version of `Python3` installed.
+In most of the cases, you can exchange the line `python_version` in `Pipfile` with your Python version.
 
 ## Automatic Evaluation
 
@@ -17,18 +29,6 @@ which builds a Docker image, and runs the code inside a Docker container.
 On success, it puts a `shell/docker/plot.tar` file back onto the host machine.
 This file contains LaTex code with tikz/pgf instructions, 
 which can generate plots for the aforementioned datasets.
-
-## Build instructions
-
-1. Install `pipenv` and `python3.8` on your OS.
-2. Run the following command at the root of this repository.
-
-```console
-pipenv sync
-```
-This installs package dependencies like `pysat` locally to the repository, which are needed for running the Python scripts.
-If the command fails, it is likely that you have a different minor version of `python3` installed.
-In most of the cases, you can exchange the line `python_version` in `Pipfile` with your Python version.
 
 ## Usage
 
@@ -43,7 +43,7 @@ pipenv run python src/bidirectional_solver.py --str "abracadabra"
 Common to all Python scripts are the input parameters `--str` for giving a string as an input, or `--file` for reading an input file.
 
 
-With parameter `-h` you obtain the list of all available parameters:
+With parameter `-h` you can obtain the list of all available parameters:
 ```console
 pipenv run python src/attractor_solver.py -h
 ```
@@ -74,24 +74,26 @@ which stores the following attributes:
 - `status`: empty in case of success; otherwise it can be used for error messages
 - `algo`: the name of the used program like `slp-sat` for our solution computing the smallest SLP
 - `file_name`: the name of the input file (empty if `--str` is used)
-- `file_len`: the length of the input file (0 if `--str` is used)
+- `file_len`: the length of the input (given by either `--str` or `--file`)
 - `time_prep`: the time needed for defining all hard and soft clauses
 - `time_total`: the total running time
-- `sol_nvars`: number of defined Boolean variables for the solver
-- `sol_nhard`: number of defined hard clauses
-- `sol_nsoft`: number of defined soft clauses
-- `sol_navgclause`: average number of literals a clause contains
+- `sol_nvars`: the number of defined Boolean variables for the solver
+- `sol_nhard`: the number of defined hard clauses
+- `sol_nsoft`: the number of defined soft clauses
+- `sol_navgclause`: the average number of literals a clause contains
 - `sol_ntotalvars`: the size of the CNF, i.e., the sum of all literals in each hard clauses
 - `sol_nmaxclause`: the number of literals in the largest clause
-- `factor_size`: the size of the output (i.e., the minimal number of factors of a BMS, the minimal size of a string attractor, the mimimal size of a grammar)
+- `factor_size`: the size of the output (i.e., the smallest number of factors of a BMS, the smallest size of a string attractor, the smallest size of a grammar)
 - `factors`: an instance of a valid output attaining the size `factor_size`. This is
   * for string attractors a list of text positions
   * for BMS a list of pairs [pos, len] for the direction to copy from `T[pos]` a substring of length `len`. If `pos` is -1, then the factor is a ground phrase and it stores its character in `len`.
-  * for SLP a list of non-terminals specified in the form 
+  * for SLP a pair (start symbol, production rules), where the production rules are stored in a list. 
+
+	A non-terminal is given by the triplet (`from`, `to`, `char`) such that its expansion is the substring T[`from`..`to`-1].
+	Each production rule having the shape
       1) (`from`, `to`, `char`): [], or
       2) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)]
 
-    In both cases, it defines a non-terminal whose expansion is the substring T[`from`..`to`-1].
     In the first case, we know that this non-terminal expands to a single character `char`.
     In the second case, the non-terminal has two non-terminals children, each defined again by this triplet of `from`, `to`, and `char` value.
 
@@ -129,7 +131,7 @@ The following program will compute minimum SLP grammar of size `factor_size = 68
 pipenv run python src/slp_solver.py --file data/cantrbry_pref/cp.html-50
 ```
 ```json
-{"date": "2022-04-22 12:20:16.308535", "status": "", "algo": "slp-sat", "file_name": "cp.html-50", "file_len": 50, "time_prep": 0.05077958106994629, "time_total": 0.053725481033325195, "sol_nvars": 2693, "sol_nhard": 28704, "sol_nsoft": 50, "sol_navgclause": 2.7269370122630994, "sol_ntotalvars": 78274, "sol_nmaxclause": 52, "factor_size": 68, "factors": "{(49, 50, 72): [], (48, 49, 32): [], (47, 48, 65): [], (46, 47, 84): [], (45, 46, 69): [], (44, 45, 77): [], (42, 44, 6): [], (36, 42, 8): [], (35, 36, 47): [], (34, 35, 60): [], (33, 34, 115): [], (32, 33, 114): [], (31, 32, 101): [], (30, 31, 116): [], (29, 30, 110): [], (28, 29, 105): [], (27, 28, 111): [], (26, 27, 80): [], (25, 26, 32): [], (24, 25, 110): [], (23, 24, 111): [], (22, 23, 105): [], (21, 22, 115): [], (20, 21, 115): [], (19, 20, 101): [], (18, 19, 114): [], (17, 18, 112): [], (16, 17, 109): [], (15, 16, 111): [], (14, 15, 67): [], (13, 14, 62): [], (12, 13, 101): [], (11, 12, 108): [], (10, 11, 116): [], (9, 10, 105): [], (8, 9, 116): [], (8, 14, None): [(8, 13, None), (13, 14, 62)], (7, 8, 60): [], (6, 7, 10): [], (6, 8, None): [(6, 7, 10), (7, 8, 60)], (5, 6, 62): [], (4, 5, 100): [], (3, 4, 97): [], (2, 3, 101): [], (1, 2, 104): [], (0, 1, 60): [], (0, 50, None): [(0, 49, None), (49, 50, 72)], (0, 2, None): [(0, 1, 60), (1, 2, 104)], (0, 3, None): [(0, 2, None), (2, 3, 101)], (0, 4, None): [(0, 3, None), (3, 4, 97)], (0, 5, None): [(0, 4, None), (4, 5, 100)], (0, 6, None): [(0, 5, None), (5, 6, 62)], (0, 8, None): [(0, 6, None), (6, 8, None)], (0, 14, None): [(0, 8, None), (8, 14, None)], (0, 15, None): [(0, 14, None), (14, 15, 67)], (0, 16, None): [(0, 15, None), (15, 16, 111)], (0, 17, None): [(0, 16, None), (16, 17, 109)], (0, 18, None): [(0, 17, None), (17, 18, 112)], (0, 19, None): [(0, 18, None), (18, 19, 114)], (0, 20, None): [(0, 19, None), (19, 20, 101)], (0, 21, None): [(0, 20, None), (20, 21, 115)], (0, 22, None): [(0, 21, None), (21, 22, 115)], (0, 23, None): [(0, 22, None), (22, 23, 105)], (0, 24, None): [(0, 23, None), (23, 24, 111)], (0, 25, None): [(0, 24, None), (24, 25, 110)], (0, 26, None): [(0, 25, None), (25, 26, 32)], (0, 27, None): [(0, 26, None), (26, 27, 80)], (0, 28, None): [(0, 27, None), (27, 28, 111)], (0, 29, None): [(0, 28, None), (28, 29, 105)], (0, 30, None): [(0, 29, None), (29, 30, 110)], (0, 31, None): [(0, 30, None), (30, 31, 116)], (0, 32, None): [(0, 31, None), (31, 32, 101)], (0, 33, None): [(0, 32, None), (32, 33, 114)], (0, 34, None): [(0, 33, None), (33, 34, 115)], (0, 35, None): [(0, 34, None), (34, 35, 60)], (0, 36, None): [(0, 35, None), (35, 36, 47)], (0, 42, None): [(0, 36, None), (36, 42, 8)], (0, 44, None): [(0, 42, None), (42, 44, 6)], (0, 45, None): [(0, 44, None), (44, 45, 77)], (0, 46, None): [(0, 45, None), (45, 46, 69)], (0, 47, None): [(0, 46, None), (46, 47, 84)], (0, 48, None): [(0, 47, None), (47, 48, 65)], (0, 49, None): [(0, 48, None), (48, 49, 32)], (8, 10, None): [(8, 9, 116), (9, 10, 105)], (8, 11, None): [(8, 10, None), (10, 11, 116)], (8, 12, None): [(8, 11, None), (11, 12, 108)], (8, 13, None): [(8, 12, None), (12, 13, 101)]}"}
+{"date": "2022-04-22 12:57:13.385176", "status": "", "algo": "slp-sat", "file_name": "cp.html-50", "file_len": 50, "time_prep": 0.05773806571960449, "time_total": 0.0611567497253418, "sol_nvars": 2693, "sol_nhard": 28704, "sol_nsoft": 50, "sol_navgclause": 2.7269370122630994, "sol_ntotalvars": 78274, "sol_nmaxclause": 52, "factor_size": 68, "factors": "((0, 50, None), {(49, 50, 72): None, (48, 49, 32): None, (47, 48, 65): None, (46, 47, 84): None, (45, 46, 69): None, (44, 45, 77): None, (42, 44, 6): None, (36, 42, 8): None, (35, 36, 47): None, (34, 35, 60): None, (33, 34, 115): None, (32, 33, 114): None, (31, 32, 101): None, (30, 31, 116): None, (29, 30, 110): None, (28, 29, 105): None, (27, 28, 111): None, (26, 27, 80): None, (25, 26, 32): None, (24, 25, 110): None, (23, 24, 111): None, (22, 23, 105): None, (21, 22, 115): None, (20, 21, 115): None, (19, 20, 101): None, (18, 19, 114): None, (17, 18, 112): None, (16, 17, 109): None, (15, 16, 111): None, (14, 15, 67): None, (13, 14, 62): None, (12, 13, 101): None, (11, 12, 108): None, (10, 11, 116): None, (9, 10, 105): None, (8, 9, 116): None, (8, 14, None): ((8, 13, None), (13, 14, 62)), (7, 8, 60): None, (6, 7, 10): None, (6, 8, None): ((6, 7, 10), (7, 8, 60)), (5, 6, 62): None, (4, 5, 100): None, (3, 4, 97): None, (2, 3, 101): None, (1, 2, 104): None, (0, 1, 60): None, (0, 50, None): ((0, 49, None), (49, 50, 72)), (0, 2, None): ((0, 1, 60), (1, 2, 104)), (0, 3, None): ((0, 2, None), (2, 3, 101)), (0, 4, None): ((0, 3, None), (3, 4, 97)), (0, 5, None): ((0, 4, None), (4, 5, 100)), (0, 6, None): ((0, 5, None), (5, 6, 62)), (0, 8, None): ((0, 6, None), (6, 8, None)), (0, 14, None): ((0, 8, None), (8, 14, None)), (0, 15, None): ((0, 14, None), (14, 15, 67)), (0, 16, None): ((0, 15, None), (15, 16, 111)), (0, 17, None): ((0, 16, None), (16, 17, 109)), (0, 18, None): ((0, 17, None), (17, 18, 112)), (0, 19, None): ((0, 18, None), (18, 19, 114)), (0, 20, None): ((0, 19, None), (19, 20, 101)), (0, 21, None): ((0, 20, None), (20, 21, 115)), (0, 22, None): ((0, 21, None), (21, 22, 115)), (0, 23, None): ((0, 22, None), (22, 23, 105)), (0, 24, None): ((0, 23, None), (23, 24, 111)), (0, 25, None): ((0, 24, None), (24, 25, 110)), (0, 26, None): ((0, 25, None), (25, 26, 32)), (0, 27, None): ((0, 26, None), (26, 27, 80)), (0, 28, None): ((0, 27, None), (27, 28, 111)), (0, 29, None): ((0, 28, None), (28, 29, 105)), (0, 30, None): ((0, 29, None), (29, 30, 110)), (0, 31, None): ((0, 30, None), (30, 31, 116)), (0, 32, None): ((0, 31, None), (31, 32, 101)), (0, 33, None): ((0, 32, None), (32, 33, 114)), (0, 34, None): ((0, 33, None), (33, 34, 115)), (0, 35, None): ((0, 34, None), (34, 35, 60)), (0, 36, None): ((0, 35, None), (35, 36, 47)), (0, 42, None): ((0, 36, None), (36, 42, 8)), (0, 44, None): ((0, 42, None), (42, 44, 6)), (0, 45, None): ((0, 44, None), (44, 45, 77)), (0, 46, None): ((0, 45, None), (45, 46, 69)), (0, 47, None): ((0, 46, None), (46, 47, 84)), (0, 48, None): ((0, 47, None), (47, 48, 65)), (0, 49, None): ((0, 48, None), (48, 49, 32)), (8, 10, None): ((8, 9, 116), (9, 10, 105)), (8, 11, None): ((8, 10, None), (10, 11, 116)), (8, 12, None): ((8, 11, None), (11, 12, 108)), (8, 13, None): ((8, 12, None), (12, 13, 101))})"}
 ```
 
 ### Evaluation of Test Datasets
