@@ -3,7 +3,7 @@ from dataclasses_json import dataclass_json
 import datetime
 from attractor import AttractorType
 from pysat.formula import WCNF
-import typing
+from typing import Union, Any
 
 
 @dataclass_json
