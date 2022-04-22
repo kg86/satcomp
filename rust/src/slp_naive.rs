@@ -109,8 +109,6 @@ impl fmt::Display for LeafNode {
     }
 }
 
-// 再帰関数の中でクロージャを生成し、それを再帰関数に渡すことはできない
-// 良く分かってないけど、トレイトオブジェクトを使うと上手くいく
 // cf. http://www.nct9.ne.jp/m_hiroi/linux/rust03.html
 fn enum_ordered(labels: &[u8], f: &dyn Fn(Node)) {
     if labels.len() == 1 {
