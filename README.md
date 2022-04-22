@@ -89,15 +89,18 @@ which stores the following attributes:
 - `factors`: an instance of a valid output attaining the size `factor_size`. This is
   * for string attractors a list of text positions
   * for BMS a list of pairs [pos, len] for the direction to copy from `T[pos]` a substring of length `len`. If `pos` is -1, then the factor is a ground phrase and it stores its character in `len`.
-  * for SLP a pair (start symbol, production rules), where the production rules are stored in a list. 
+  * for SLP a pair (start symbol, production rules), where the production rules are stored in a list (actually, a dictionary. Furthermore, the encoding is a representation of the partial parse tree and differs, in representation, slightly from a grammar)
 
 	A non-terminal is given by the triplet (`from`, `to`, `char`) such that its expansion is the substring T[`from`..`to`-1].
 	Each production rule has the shape
-      1) (`from`, `to`, `char`): [], or
-      2) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)]
+      1) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)]
+      2) (`from`, `to`, `char`): [], or
 
-    In the first case, we know that this non-terminal expands to a single character `char`.
-    In the second case, the non-terminal has two non-terminals children, each defined again by this triplet of `from`, `to`, and `char` value.
+    The first case represents an internal node in the partial parse tree, and the non-terminal has two non-terminal children, each defined again by this tripllet of `from`, `to`, and `char` value.
+    
+    The second case represents leaves of the partial parse tree.
+    - If T[`from`..`to`-1] is a single character, we know that this non-terminal expands to a single character `char`.
+    - If T[`from`..`to`-1] is longer than 1, the leaf is a non-terminal equivalent to the non-terminal (`char`, `char`+`to`-`from`, None) guaranteed to exist.
 
 Please find below concrete examples in how the output looks like.
 
