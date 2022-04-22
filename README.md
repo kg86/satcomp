@@ -33,7 +33,7 @@ which can generate plots for the aforementioned datasets.
 ## Usage
 
 Our executables are written in Python, and can be accessed from the `src` directory.
-You can run the programs via the `pipenv` command as follows.
+You can run the programs via the `pipenv` command as follows for the example string `abracadabra`.
 
 ```console
 pipenv run python src/slp_solver.py --str "abracadabra"
@@ -97,13 +97,13 @@ which stores the following attributes:
     In the first case, we know that this non-terminal expands to a single character `char`.
     In the second case, the non-terminal has two non-terminals children, each defined again by this triplet of `from`, `to`, and `char` value.
 
-Please see below for concrete examples in how the output looks like.
+Please find below concrete examples in how the output looks like.
 
 ## Running Examples
 
 ### Computing minimum string attractors with PySAT
 
-The following program compute a minimum string attractor of size `factor_size = 497` for the dataset `grammar.lsp` having a length of 3721.
+We compute a smallest string attractor of size `factor_size = 497` for the dataset `grammar.lsp` having a length of 3721.
 
 ```bash
 pipenv run python src/attractor_solver.py --file data/cantrbry/grammar.lsp --algo min
@@ -114,7 +114,7 @@ pipenv run python src/attractor_solver.py --file data/cantrbry/grammar.lsp --alg
 
 ### Computing minimum bidirectional macroschemes with PySAT
 
-The following program will compute minimum bidirectional macroschemes of size `factor_size = 43` for `cp.html-50` of length 50.
+We compute a smallest BMS of size `factor_size = 43` for `cp.html-50` of length 50.
 
 ```bash
 pipenv run python src/bidirectional_solver.py --file data/cantrbry_pref/cp.html-50 
@@ -125,7 +125,7 @@ pipenv run python src/bidirectional_solver.py --file data/cantrbry_pref/cp.html-
 
 ### Computing minimum SLP grammar with PySAT
 
-The following program will compute minimum SLP grammar of size `factor_size = 68` for `cp.html-50` of length 50.
+We compute a smallest SLP grammar of size `factor_size = 68` for `cp.html-50` of length 50.
 
 ```console
 pipenv run python src/slp_solver.py --file data/cantrbry_pref/cp.html-50
@@ -138,8 +138,8 @@ pipenv run python src/slp_solver.py --file data/cantrbry_pref/cp.html-50
 
 We have a collection of test datasets in the folder `data`.
 To measure the output sizes of these datasets, we provide the script `shell/measure_datasets.sh`.
-It requires the program `jq` to be installed, and outputs the JSON file `shell/measure/stats.json` storing for each file the output size of each computed compression measure.
-If you apply this script on a SLURM cluster, then it batches the experiments. Collecting the final data has to be done manually (the last lines in the shell script).
+It requires the program `jq` to be installed, and outputs the JSON file `shell/measure/stats.json` storing for each file the output size of each computed repetitiveness measure.
+If you apply this script on a SLURM cluster, then it batches the experiments. Collecting the final data has then to be done manually (the last lines in the shell script).
 
 ### Notes
 
