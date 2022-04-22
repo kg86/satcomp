@@ -1,9 +1,11 @@
 # Computing NP-hard Repetitiveness Measure by SAT solvers
 
 This software repository contains several Python scripts for computing
+
 - a smallest string attractor,
 - a smallest straight-line program (SLP), and
 - a bidirectional macro scheme (BMS) with the fewest phrases,
+
 by using the SAT solver pySAT.
 
 ## Build instructions
@@ -14,7 +16,7 @@ by using the SAT solver pySAT.
 ```console
 pipenv sync
 ```
-This installs package dependencies like `pysat` locally to the repository, which are needed for running the Python scripts.
+This installs package dependencies like `python-sat` locally to the repository, which are needed for running the Python scripts.
 If the command fails, it is likely that you have a different minor version of `Python3` installed.
 In most of the cases, you can exchange the line `python_version` in `Pipfile` with your Python version.
 
@@ -33,7 +35,7 @@ which can generate plots for the aforementioned datasets.
 ## Usage
 
 Our executables are written in Python, and can be accessed from the `src` directory.
-You can run the programs via the `pipenv` command as follows.
+You can run the programs via the `pipenv` command as follows for the example string `abracadabra`.
 
 ```console
 pipenv run python src/slp_solver.py --str "abracadabra"
@@ -81,7 +83,7 @@ which stores the following attributes:
 - `sol_nhard`: the number of defined hard clauses
 - `sol_nsoft`: the number of defined soft clauses
 - `sol_navgclause`: the average number of literals a clause contains
-- `sol_ntotalvars`: the size of the CNF, i.e., the sum of all literals in each hard clauses
+- `sol_ntotalvars`: the size of the CNF, i.e., the sum of all literals in each hard clause
 - `sol_nmaxclause`: the number of literals in the largest clause
 - `factor_size`: the size of the output (i.e., the smallest number of factors of a BMS, the smallest size of a string attractor, the smallest size of a grammar)
 - `factors`: an instance of a valid output attaining the size `factor_size`. This is
@@ -90,20 +92,20 @@ which stores the following attributes:
   * for SLP a pair (start symbol, production rules), where the production rules are stored in a list. 
 
 	A non-terminal is given by the triplet (`from`, `to`, `char`) such that its expansion is the substring T[`from`..`to`-1].
-	Each production rule having the shape
+	Each production rule has the shape
       1) (`from`, `to`, `char`): [], or
       2) (`from`, `to`, None): [(`fromLeft`, `toLeft`, `charLeft`), (`fromRight`, `toRight`, `charRight`)]
 
     In the first case, we know that this non-terminal expands to a single character `char`.
     In the second case, the non-terminal has two non-terminals children, each defined again by this triplet of `from`, `to`, and `char` value.
 
-Please see below for concrete examples in how the output looks like.
+Please find below concrete examples in how the output looks like.
 
 ## Running Examples
 
 ### Computing minimum string attractors with PySAT
 
-The following program compute a minimum string attractor of size `factor_size = 497` for the dataset `grammar.lsp` having a length of 3721.
+We compute a smallest string attractor of size `factor_size = 497` for the dataset `grammar.lsp` having a length of 3721.
 
 ```bash
 pipenv run python src/attractor_solver.py --file data/cantrbry/grammar.lsp --algo min
@@ -114,7 +116,7 @@ pipenv run python src/attractor_solver.py --file data/cantrbry/grammar.lsp --alg
 
 ### Computing minimum bidirectional macroschemes with PySAT
 
-The following program will compute minimum bidirectional macroschemes of size `factor_size = 43` for `cp.html-50` of length 50.
+We compute a smallest BMS of size `factor_size = 43` for `cp.html-50` of length 50.
 
 ```bash
 pipenv run python src/bidirectional_solver.py --file data/cantrbry_pref/cp.html-50 
@@ -125,7 +127,7 @@ pipenv run python src/bidirectional_solver.py --file data/cantrbry_pref/cp.html-
 
 ### Computing minimum SLP grammar with PySAT
 
-The following program will compute minimum SLP grammar of size `factor_size = 68` for `cp.html-50` of length 50.
+We compute a smallest SLP grammar of size `factor_size = 68` for `cp.html-50` of length 50.
 
 ```console
 pipenv run python src/slp_solver.py --file data/cantrbry_pref/cp.html-50
@@ -138,8 +140,8 @@ pipenv run python src/slp_solver.py --file data/cantrbry_pref/cp.html-50
 
 We have a collection of test datasets in the folder `data`.
 To measure the output sizes of these datasets, we provide the script `shell/measure_datasets.sh`.
-It requires the program `jq` to be installed, and outputs the JSON file `shell/measure/stats.json` storing for each file the output size of each computed compression measure.
-If you apply this script on a SLURM cluster, then it batches the experiments. Collecting the final data has to be done manually (the last lines in the shell script).
+It requires the program `jq` to be installed, and outputs the JSON file `shell/measure/stats.json` storing for each file the output size of each computed repetitiveness measure.
+If you apply this script on a SLURM cluster, then it batches the experiments. Collecting the final data has then to be done manually (the last lines in the shell script).
 
 ### Notes
 
