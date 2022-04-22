@@ -368,6 +368,7 @@
 ./src/mysat.py
 ./src/attractor_bench_format.py
 ./src/stralgo.py
+./src/min_substr.py 
 ./data/artificial/fibonacci.00
 ./data/artificial/fibonacci.01
 ./data/artificial/fibonacci.02
