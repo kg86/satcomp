@@ -131,15 +131,13 @@ def smallest_SLP_WCNF(text: bytes):
     # defining the literals  ########################################
     # ref(i,j,l): defined for all i,j,l>1 s.t. T[i:i+l) = T[j:j+l)
     # pstart(i)
-    # phrase(i,l) defined for all i, l > 1
-    # print("building literals")
+    # phrase(i,l) defined for all i, l > 1 with l <= lpf[i]
     phrases = []
     for i in range(n + 1):
         lm.newid(lm.lits.pstart, i)  # definition of p_i
     for i in range(n):
         for l in range(1, max(2, lpf[i] + 1)):
             phrases.append((i, l))
-            # print(f"phrase({i},{l})")
             lm.newid(lm.lits.phrase, i, l)  # definition of f_{i,l}
 
     refs_by_referred = {}
@@ -161,7 +159,6 @@ def smallest_SLP_WCNF(text: bytes):
     # // start constraint (1) ###############################
     # phrase(i,l) = true <=> pstart[i] = pstart[i+l] = true, pstart[i+1..i+l) = false
     for (i, l) in phrases:
-        # print(f"hoge({i},{l})")
         plst = [-lm.getid(lm.lits.pstart, (i + j)) for j in range(1, l)] + [
             lm.getid(lm.lits.pstart, i),
             lm.getid(lm.lits.pstart, (i + l)),
@@ -170,9 +167,9 @@ def smallest_SLP_WCNF(text: bytes):
         wcnf.extend(clauses)
         wcnf.extend(pysat_iff(lm.getid(lm.lits.phrase, i, l), range_iff_startp))
 
+    # there must be at least one new phrase beginning from [i+1,...,i+max(1,lpf[i])]
     for i in range(n):
         lst = list(range(i + 1, i + max(1, lpf[i]) + 1))
-        # print(f"lst2={lst}")
         wcnf.append([lm.getid(lm.lits.pstart, i) for i in lst])
 
     # // end constraint (1) ###############################
@@ -219,6 +216,7 @@ def smallest_SLP_WCNF(text: bytes):
             pysat_iff(ref_sources, referredid)
         )  # q_{i,l} <=> \exists ref_{i<-j,l}
     # // end constraint (5) ###############################
+
     # // start constraint (6) ###############################
     # if (occ,l) is a referred interval, it cannot be a phrase, but pstart[occ] and pstart[occ+l] must be true
     # phrase(occ,l) is only defined if l <= lpf[occ]
@@ -226,9 +224,7 @@ def smallest_SLP_WCNF(text: bytes):
     for (occ, l) in referred:
         if l > 1:
             qid = lm.getid(lm.lits.referred, occ, l)
-            # wcnf.append(pysat_if(qid, -lm.getid(lm.lits.phrase, occ, l)))
             lst = [-qid] + [lm.getid(lm.lits.pstart, occ + x) for x in range(1, l)]
-            # print(f"lst={lst}")
             wcnf.append(lst)
             wcnf.append(pysat_if(qid, lm.getid(lm.lits.pstart, occ)))
             wcnf.append(pysat_if(qid, lm.getid(lm.lits.pstart, occ + l)))
@@ -253,15 +249,6 @@ def smallest_SLP_WCNF(text: bytes):
                 id2 = lm.getid(lm.lits.referred, occ2, l2)
                 wcnf.append([-id1, -id2])
     # // end constraint (7) ###############################
-
-    # // start constraint (8) ###############################
-    # a first occurrence of length longer than 2 cannot be a phrase
-    # for i in range(0, n):
-    #     for l in range(2, n - i + 1):
-    #         if l > lpf[i]:
-    #             # print(f"1. phrase: {i}, {i+l} : always false")
-    #             wcnf.append([-lm.getid(lm.lits.phrase, i, l)])
-    # // end constraint (8) ###############################
 
     # // start constraint (9) ###############################
     for i in range(0, n):
