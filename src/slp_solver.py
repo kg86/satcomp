@@ -169,8 +169,9 @@ def smallest_SLP_WCNF(text: bytes):
 
     # there must be at least one new phrase beginning from [i+1,...,i+max(1,lpf[i])]
     for i in range(n):
-        lst = list(range(i + 1, i + max(1, lpf[i]) + 1))
-        wcnf.append([lm.getid(lm.lits.pstart, i) for i in lst])
+        if i + 1 == n or lpf[i] - 1 < lpf[i + 1]:
+            lst = list(range(i + 1, i + max(1, lpf[i]) + 1))
+            wcnf.append([lm.getid(lm.lits.pstart, i) for i in lst])
 
     # // end constraint (1) ###############################
 
