@@ -87,10 +87,6 @@ def covert(elm):
             return f"\\num{{{trans}}}"
         except:
             return elm
-    # return trans
-    # if isinstance(trans, float):
-    #     return f"\\num{{{elm:.4f}}}"
-    # return elm
 
 
 def naive(fname):
@@ -105,6 +101,3 @@ def naive(fname):
 if __name__ == "__main__":
     fname = sys.argv[1]
     naive(fname)
-    # vtype = sys.argv[2]
-    # # size_table(fname)
-    # main(fname, vtype)
