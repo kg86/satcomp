@@ -2,3 +2,4 @@ data/cantrbry_pref/*
 data/calgary_pref/*
 out/*
 .vscode
+__pycache__/

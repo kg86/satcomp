@@ -54,19 +54,6 @@ def encode(text: bytes) -> LZType:
 
 def factor_strs(factors: LZType) -> List[bytes]:
     return decode_(factors)[0]
-    # text = []
-    # res = []
-    # for factor in factors:
-    #     bs = []
-    #     if factor[0] == -1:
-    #         bs.append(factor[1])
-    #         text.append(factor[1])
-    #     else:
-    #         for j in range(factor[1]):
-    #             bs.append(text[factor[0] + j])
-    #             text.append(text[factor[0] + j])
-    #     res.append(bs)
-    # return res
 
 
 def decode_(factors: LZType) -> Tuple[List[bytes], bytes]:
@@ -88,11 +75,6 @@ def decode_(factors: LZType) -> Tuple[List[bytes], bytes]:
 
 def decode(factors: LZType) -> bytes:
     return decode_(factors)[1]
-    # res = b""
-    # for f in factor_strs(factors):
-    #     print(f)
-    #     res += f
-    # return res
 
 
 def equal(text: bytes, f1: LZType, f2: LZType) -> bool:

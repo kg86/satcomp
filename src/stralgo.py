@@ -318,20 +318,6 @@ def verify_sa(text, sa):
         assert text[sa[i - 1] :] < text[sa[i] :]
 
 
-def test():
-    text = open("cantrbry/grammar.lsp", "r").read()
-    print(len(text))
-    sa = make_sa_MM(text)
-    isa = make_isa(sa)
-    lcp = make_lcpa_kasai(text, sa, isa)
-    verify_sa(text, sa)
-    print("valid")
-
-    with open("hoge.sa", "w") as f:
-        for i in range(len(text)):
-            f.write("{} {}\n".format(i, text[sa[i] : sa[i] + lcp[i] + 3]))
-
-
 def gen_binary(n: int) -> Iterable[str]:
     """
     Generates all binary strings of length `n`.
@@ -348,11 +334,7 @@ def gen_binary(n: int) -> Iterable[str]:
 
 
 if __name__ == "__main__":
-    # test()
-    # import sys
-    # sys.exit(0)
     text = "bananabanana$"
-    # text = open('fuga.txt', 'r').read()
     sa = make_sa_MM(text)
     verify_sa(text, sa)
 
@@ -360,9 +342,7 @@ if __name__ == "__main__":
     lcp = make_lcpa_kasai(text, sa, isa)
     print_sa_lcp(text, sa, lcp)
 
-    # print([(text[b:b+l], (b,l)) for b, l in mrepeat])
     print(substr_cover(text, sa, lcp, isa, 3, 1))
     print("minimum substr naive")
     print([text[b : b + l] for b, l in minimum_substr_naive(text)])
-    # print([text[b:b+l] for b, l in minimum_substr_sa(text, sa, isa, lcp)])
     print([text[b : b + l] for b, l in minimum_substr_sa(text, sa, isa, lcp)])
