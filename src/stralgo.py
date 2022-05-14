@@ -222,10 +222,21 @@ def minimum_substr(text):
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
-    return minimum_substr_sa(text, sa, isa, lcp)
+    return minimum_substr_linear(text, sa, isa, lcp)
 
 
 def minimum_substr_sa(
+    text, sa: List[int], isa: List[int], lcp: List[int]
+) -> List[Tuple[int, int]]:
+    """
+    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
+    A minimum substring x is a substring that the #occ of x is
+    different from #occ of x[1:] and also #occ of x[:-1].
+    """
+    return minimum_substr_linear(text, sa, isa, lcp)
+
+
+def minimum_substr_square(
     text, sa: List[int], isa: List[int], lcp: List[int]
 ) -> List[Tuple[int, int]]:
     """
@@ -270,6 +281,83 @@ def minimum_substr_sa(
             assert cur < lcp_range_sub[1] + 1
             cur = lcp_range_sub[1] + 1
     # print("#res=", len(res))
+    return res
+
+
+def minimum_substr_linear(
+    text, sa: List[int], isa: List[int], lcp: List[int]
+) -> List[Tuple[int, int]]:
+    """
+    Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
+    A minimum substring x is a substring that the #occ of x is
+    different from #occ of x[1:] and also #occ of x[:-1].
+    """
+    n = len(text)
+
+    class Node:
+        """
+        Node of suffix trees.
+        `depth`: the depth of node.
+        [`begin`, `end`]: the interval of the suffix array prefixed by the string of the node.
+        """
+
+        def __init__(self, depth: int, begin: int, end: int):
+            self.depth = depth
+            self.begin = begin
+            self.end = end
+
+        def show(self) -> str:
+            return f"(depth={self.depth}, begin={self.begin}, end={self.end})"
+
+    root = Node(0, 0, -1)
+    leaf = Node(n - sa[0], 0, -1)
+    path = [root, leaf]  # post order traversal
+    parent_c = (
+        []
+    )  # [(u, c, v)]: (u, v) is a pair of parent and child, and c is the first label on the edge
+    for i in range(1, n):
+        child = None
+        while lcp[i] < path[-1].depth:
+            node = path.pop()
+            node.end = i - 1
+            if child:
+                c = text[sa[child.begin] + node.depth]
+                parent_c.append((node, c, child))
+            child = node
+        if lcp[i] > path[-1].depth:
+            assert child != None
+            # create internal node
+            node = Node(lcp[i], child.begin, -1)
+            path.append(node)
+        if child:
+            c = text[sa[child.begin] + path[-1].depth]
+            parent_c.append((path[-1], c, child))
+        leaf = Node(n - sa[i], i, -1)
+        path.append(leaf)
+    child = None
+    while len(path) > 0:
+        node = path.pop()
+        node.end = n - 1
+        if child:
+            c = text[sa[child.begin] + node.depth]
+            parent_c.append((node, c, child))
+        child = node
+
+    # compute minimum substring
+    res = []
+    for parent, c, child in parent_c:
+        if (
+            parent == root
+            or child.end - child.begin
+            != isa[sa[child.end] + 1] - isa[sa[child.begin] + 1]
+            or (
+                (isa[sa[child.end] + 1] + 1 < n)
+                and lcp[isa[sa[child.end] + 1] + 1] >= parent.depth
+            )
+            or lcp[isa[sa[child.begin] + 1]] >= parent.depth
+        ):
+            res.append((sa[child.begin], parent.depth + 1))
+
     return res
 
 
@@ -335,6 +423,7 @@ def gen_binary(n: int) -> Iterable[str]:
 
 if __name__ == "__main__":
     text = "bananabanana$"
+    text = "banana"
     sa = make_sa_MM(text)
     verify_sa(text, sa)
 
@@ -343,6 +432,19 @@ if __name__ == "__main__":
     print_sa_lcp(text, sa, lcp)
 
     print(substr_cover(text, sa, lcp, isa, 3, 1))
+    mstr_naive = sorted([text[b : b + l] for b, l in minimum_substr_naive(text)])
+    mstr_square = sorted(
+        [text[b : b + l] for b, l in minimum_substr_square(text, sa, isa, lcp)]
+    )
+    mstr_linear = sorted(
+        [text[b : b + l] for b, l in minimum_substr_linear(text, sa, isa, lcp)]
+    )
     print("minimum substr naive")
-    print([text[b : b + l] for b, l in minimum_substr_naive(text)])
-    print([text[b : b + l] for b, l in minimum_substr_sa(text, sa, isa, lcp)])
+    print(mstr_naive)
+    print(mstr_square)
+    print(mstr_linear)
+    assert len(mstr_naive) == len(mstr_square)
+    assert len(mstr_naive) == len(mstr_linear)
+    for x, y, z in zip(mstr_naive, mstr_square, mstr_linear):
+        assert x == y
+        assert x == z
