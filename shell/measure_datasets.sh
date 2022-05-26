@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 scriptpath=`dirname $(readlink -f "$0")` 
 cd "$scriptpath"
