@@ -380,7 +380,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     return lm, wcnf
 
 
-def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
+def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int] = []) -> BiDirType:
     """
     Compute the smallest bidirectional macro schemes.
     """
@@ -388,6 +388,10 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None) -> BiDirType:
     lm, wcnf = bidirectional_WCNF(text)
     for lname in lm.nvar.keys():
         logger.info(f"# of [{lname}] literals  = {lm.nvar[lname]}")
+
+    for i in contain_list:
+        fbeg0 = lm.getid(lm.lits.fbeg, i)
+        wcnf.append([fbeg0])
 
     if exp:
         exp.time_prep = time.time() - total_start
@@ -454,6 +458,13 @@ def parse_args():
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument(
+        "--contains",
+        nargs="+",
+        type=int,
+        help="list of text positions that must be included in the string attractor, starting with index 1",
+        default=[],
+    )
+    parser.add_argument(
         "--log_level",
         type=str,
         help="log level, DEBUG/INFO/CRITICAL",
@@ -491,7 +502,7 @@ if __name__ == "__main__":
     exp.algo = "bidirectional-sat"
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
-    factors_sol = min_bidirectional(text, exp)
+    factors_sol = min_bidirectional(text, exp, args.contains)
     exp.factors = factors_sol
     exp.factor_size = len(factors_sol)
 
