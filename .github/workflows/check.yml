@@ -33,29 +33,26 @@ jobs:
           override: true
           components: rustfmt, clippy
           
-      - name: Move to target directory
-        run: cd rust
-         
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
           command: check
+          args: --manifest-path rust/Cargo.toml
 
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         with:
           command: fmt
-          args: --all -- --check
+          args: --manifest-path rust/Cargo.toml --all -- --check
 
       - name: Run cargo clippy
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings -W clippy::nursery -A clippy::stable-sort-primitive
+          args: --manifest-path rust/Cargo.toml -- -D warnings -W clippy::nursery -A clippy::stable-sort-primitive
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
         with:
           command: test
-          args: --release --all-features
+          args: --manifest-path rust/Cargo.toml --release --all-features
