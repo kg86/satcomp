@@ -32,7 +32,10 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
           components: rustfmt, clippy
-
+          
+      - name: Move to target directory
+        run: cd rust
+         
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
