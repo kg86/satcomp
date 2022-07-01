@@ -1,0 +1,10 @@
+name: build
+on: [push]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip install pipenv && pipenv sync --dev
+      - run: pipenv run pyright
+      - run: tail -n +2 tests/size_list.tsv| xargs -L 1 pipenv run python tests/size_check.py verify

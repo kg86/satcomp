@@ -1,0 +1,94 @@
+%% IMPORT-JSON-DATA scaling scaling.json
+
+\documentclass[tikz]{standalone}
+
+%tikz
+\usepackage{tikz}
+\usetikzlibrary{matrix,positioning,fit}
+\usetikzlibrary{arrows}
+
+
+%%%% BEGIN TIKZ PGFPLOTS
+\usepackage{tikz}
+% \usetikzlibrary{external}
+% \tikzexternalize[prefix=plot/]
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepgfplotslibrary{colorbrewer}
+
+\pgfplotsset{%
+% initialize Dark2
+cycle list/Dark2,
+cycle multiindex* list={%
+mark list*\nextlist
+Dark2\nextlist
+},
+}
+%Dark2 has size 8
+%Mark List has size 11
+
+
+\pgfplotsset{%
+appendLegend/.style={%
+legend style={font=\small}},
+}
+
+%%%% END TIKZ
+
+\begin{document}
+
+% \begin{tikzpicture}
+% \begin{axis}[
+% title={Time/Outputsize for $n=100$},
+% xlabel={output size},
+% ylabel={SAT solver time [s]},
+% appendLegend,
+% only marks,
+% % legend to name={legRandomCompactEight},
+% % legend columns=2
+% ]
+% %% MULTIPLOT(algo) 
+% %% SELECT 
+% %% factor_size AS x, 
+% %% time_total-time_prep as y,
+% %% MULTIPLOT FROM scaling
+% %% WHERE file_len = '100'
+% %% AND factor_size IS NOT NULL
+% %% AND algo NOT IN ('bidir', 'slp')
+% %% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+% %% CONFIG file=plot/timeVSoutputsize.tex type=tex
+% \input{plot/timeVSoutputsize.tex}
+% \end{axis}
+% \end{tikzpicture}
+% \end{document}
+
+
+
+%% DEFINE myplot(column,filename)
+%% SELECT 
+%% file_len AS x, 
+%% $column as y,
+%% MULTIPLOT FROM scaling
+%% WHERE dataset = $filename
+%% AND $column IS NOT NULL
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\ref{legRandomCompactEight}
+
+\begin{tikzpicture}
+\begin{axis}[xmode=log,ymode=log,
+title={Dataset aaa.txt},
+xlabel={prefix length},
+ylabel={total time [s]},
+appendLegend,
+legend to name={legRandomCompactEight},
+legend columns=3
+]
+%% MULTIPLOT(algo) $myplot(time_total, "aaa.txt")
+%% CONFIG file=plot/aaa.txt.time_total.tex type=tex
+\input{plot/aaa.txt.time_total.tex}
+\end{axis}
+\end{tikzpicture}
+
+\input{plot_generated.tex}
+\end{document}
