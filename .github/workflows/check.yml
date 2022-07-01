@@ -5,7 +5,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
+  python:
     name: check on Python
     runs-on: ubuntu-latest
     steps:
@@ -15,6 +15,7 @@ jobs:
       - run: pipenv run black --check src
       - run: tail -n +2 tests/size_list.tsv| xargs -L 1 pipenv run python tests/size_check.py verify
 
+  rust:
     name: check on ${{ matrix.rust }}
     runs-on: ubuntu-latest
     strategy:
