@@ -23,7 +23,7 @@ pub fn fibonacci(i: usize) -> Vec<u8> {
             for j in 0..p2 {
                 res.push(res[j]);
             }
-            i -= 1;
+            i = i - 1;
             let n = p1 + p2;
             p2 = p1;
             p1 = n;
@@ -34,14 +34,15 @@ pub fn fibonacci(i: usize) -> Vec<u8> {
 
 pub fn fibonacci_plus(i: usize) -> Vec<u8> {
     let mut res = fibonacci(i);
-    res.push(if i.is_multiple_of(2) { b'b' } else { b'a' });
+    res.push(if i % 2 == 0 { b'b' } else { b'a' });
     res
 }
 
 // construct ith Thue-Morse word
 // 0: a, 1: ab, 2: abba
 pub fn thue_morse(i: usize) -> Vec<u8> {
-    let mut res = vec![b'a'];
+    let mut res = Vec::new();
+    res.push(b'a');
     let mut i = i;
     while i > 0 {
         let l = res.len();
@@ -52,13 +53,14 @@ pub fn thue_morse(i: usize) -> Vec<u8> {
                 res.push(b'a');
             }
         }
-        i -= 1;
+        i = i - 1;
     }
     res
 }
 
 pub fn period_doubling(i: usize) -> Vec<u8> {
-    let mut res = vec![b'a'];
+    let mut res = Vec::new();
+    res.push(b'a');
     let mut i = i;
     if i > 0 {
         res.push(b'b');
@@ -67,10 +69,11 @@ pub fn period_doubling(i: usize) -> Vec<u8> {
     while i > 0 {
         let l = res.len();
         for j in 0..l / 2 {
-            res.push(b'a');
             if res[l / 2 + j] == b'a' {
+                res.push(b'a');
                 res.push(b'b');
             } else {
+                res.push(b'a');
                 res.push(b'a');
             }
         }
@@ -96,7 +99,7 @@ fn genall_dfs_aux(s: &mut Vec<u8>, alphabet: &[u8], len: usize) {
 #[allow(dead_code)]
 pub fn genall_dfs(alphabet: &[u8], len: usize) {
     let mut s = Vec::new();
-    genall_dfs_aux(&mut s, alphabet, len);
+    genall_dfs_aux(&mut s, &alphabet, len);
 }
 
 #[test]

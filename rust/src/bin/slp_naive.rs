@@ -59,8 +59,8 @@ enum Node {
 impl fmt::Display for Node {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Inner(x) => x.fmt(f),
-            Self::Leaf(x) => x.fmt(f),
+            Node::Inner(x) => x.fmt(f),
+            Node::Leaf(x) => x.fmt(f),
         }
     }
 }

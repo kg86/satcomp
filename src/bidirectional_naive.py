@@ -8,7 +8,7 @@ import os
 
 def bidirectional_naive(input_file: str, timeout: Optional[float] = None) -> BiDirType:
     input_file = os.path.abspath(input_file)
-    cmd = f"cd rustr-master && cargo run --bin optimal_bms -- --input_file {input_file}"
+    cmd = f"cd rust && cargo run --bin optimal_bms -- --input_file {input_file}"
     print(cmd)
     out = subprocess.check_output(
         cmd, shell=True, stderr=subprocess.DEVNULL, timeout=timeout
