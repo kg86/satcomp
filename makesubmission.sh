@@ -1,1 +1,0 @@
-zip code.zip `cat submission.txt`

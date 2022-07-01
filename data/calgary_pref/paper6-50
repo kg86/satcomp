@@ -1,3 +1,0 @@
-.EQ
-delim $$
-define <- ?< "\h'-0.5m'" up 10 "\(em"
