@@ -1,7 +1,6 @@
 use satcomp::bidirectional_parse::BDPhrase;
-use std::io::prelude::*;
-use std::os::unix::prelude::MetadataExt;
-use std::{env, fs, io};
+
+use std::{fs, io};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -9,7 +8,6 @@ use structopt::StructOpt;
     name = "optimal_bms",
     about = "find optimal bidirectional macro scheme"
 )]
-
 struct Opt {
     /// Input file, stdin if not present
     #[structopt(short = "k", long, default_value = "1")]
@@ -28,8 +26,8 @@ struct Opt {
 fn serialize_bd(r: Vec<BDPhrase>) -> Vec<(i32, i32)> {
     let mut res: Vec<(i32, i32)> = Vec::new();
     // let x = (0, 2);
-    for i in 0..r.len() {
-        res.push(match r[i] {
+    for item in r.into_iter() {
+        res.push(match item {
             BDPhrase::Source { len, pos } => (pos as i32, len as i32),
             BDPhrase::Ground(c) => (-1, c as i32),
         });

@@ -7,9 +7,9 @@ pub enum BDPhrase {
     Ground(u8),
 }
 
-pub fn decode(parse: &Vec<BDPhrase>) -> Option<Vec<u8>> {
+pub fn decode(parse: &[BDPhrase]) -> Option<Vec<u8>> {
     let totlen: usize = parse.iter().fold(0, |sum, phrase| match phrase {
-        BDPhrase::Ground(_) => sum + 1 as usize,
+        BDPhrase::Ground(_) => sum + 1_usize,
         BDPhrase::Source { len: l, .. } => sum + *l as usize,
     });
     let mut res = vec![0; totlen];
@@ -35,15 +35,15 @@ pub fn decode(parse: &Vec<BDPhrase>) -> Option<Vec<u8>> {
     }
 
     // Kahn's topological sort algorithm
-    let mut indegree = vec![0 as u32; totlen];
-    for i in 0..totlen {
-        if source[i] as usize != i {
-            indegree[source[i] as usize] += 1
+    let mut indegree = vec![0_u32; totlen];
+    for (i, s) in source.iter().enumerate().take(totlen) {
+        if *s as usize != i {
+            indegree[*s as usize] += 1
         }
     }
     let mut stack = Vec::new();
-    for i in 0..totlen {
-        if indegree[i] == 0 {
+    for (i, d) in indegree.iter().enumerate().take(totlen) {
+        if *d == 0 {
             stack.push(i)
         }
     }
@@ -151,11 +151,11 @@ fn enum_factorizations_dfs<'a>(
         for i in itv.iter() {
             print!("{};", i.len());
         }
-        println!("");
+        println!();
     }
     if k == 0 {
         let mut p = Vec::new();
-        return find_valid_sources_dfs(s, &itv, occs, &mut p);
+        return find_valid_sources_dfs(s, itv, occs, &mut p);
     } else if k == 1 {
         let l = s.len() - cur_len;
         let next_itv = &s[cur_len..s.len()];
@@ -231,7 +231,7 @@ fn find_of_size_aux(
 ) -> Option<Vec<BDPhrase>> {
     let mut itv = Vec::new();
     let mut occs = Vec::new();
-    enum_factorizations_dfs(&s, sa, 0, k, first_phrase_len, &mut occs, &mut itv)
+    enum_factorizations_dfs(s, sa, 0, k, first_phrase_len, &mut occs, &mut itv)
 }
 
 pub fn find_of_size(s: &[u8], first_phrase_len: usize, k: usize) -> Option<Vec<BDPhrase>> {
@@ -260,7 +260,7 @@ pub fn find_in_range(
     maxsz: usize,
     first_phrase_len: usize,
 ) -> Option<Vec<BDPhrase>> {
-    if s.len() > 0 {
+    if !s.is_empty() {
         for k in minsz..std::cmp::min(maxsz, s.len()) + 1 {
             // k is the number of factors
             println!("Checking for bidirectional parse of size: {}", k);
@@ -275,7 +275,7 @@ pub fn find_in_range(
 
 pub fn find_at_least(s: &[u8], minsz: usize, first_phrase_len: usize) -> Vec<BDPhrase> {
     let res = Vec::new();
-    if s.len() > 0 {
+    if !s.is_empty() {
         match find_in_range(s, minsz, s.len(), first_phrase_len) {
             None => (),
             Some(x) => return x,
