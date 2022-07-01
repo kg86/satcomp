@@ -1,4 +1,4 @@
-# Computing NP-hard Repetitiveness Measure by SAT solvers
+# Computing NP-hard Repetitiveness Measures via MAX-SAT
 
 This software repository contains several Python scripts for computing
 - a smallest string attractor,
