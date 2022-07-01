@@ -1,4 +1,4 @@
-use rustr::bidirectional_parse::BDPhrase;
+use satcomp::bidirectional_parse::BDPhrase;
 use std::io::prelude::*;
 use std::os::unix::prelude::MetadataExt;
 use std::{env, fs, io};
@@ -59,7 +59,7 @@ fn main() -> io::Result<()> {
     // let args: Vec<String> = env::args().collect();
     // println!("{:?}", args);
     let text = fs::read(&opt.input_file)?;
-    let r = rustr::bidirectional_parse::find_in_range(
+    let r = satcomp::bidirectional_parse::find_in_range(
         &text,
         opt.minsize,
         match opt.maxsize {
