@@ -8,6 +8,12 @@ This software repository contains several Python scripts for computing
 
 by using the SAT solver pySAT.
 
+The algorithm is described in the following paper.
+
+Hideo Bannai, Keisuke Goto, Masakazu Ishihata, Shunsuke Kanda, Dominik Köppl, Takaaki Nishimoto
+Computing NP-hard Repetitiveness Measures via MAX-SAT
+to appear in ESA 2022.
+
 ## Build instructions
 
 1. Install `pipenv` and `python3.8` on your OS.
