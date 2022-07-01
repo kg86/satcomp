@@ -1,3 +1,0 @@
-.TH XARGS 1L \" -*- nroff -*-
-.SH NAME
-xargs \- build and execute command lines from standard input

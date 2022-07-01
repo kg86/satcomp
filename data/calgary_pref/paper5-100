@@ -1,8 +1,0 @@
-.pn 0
-.EQ
-delim $$
-define RR 'bold R'
-define SS 'bold S'
-define II 'bold I'
-define mo '"\(mo"'
-defin

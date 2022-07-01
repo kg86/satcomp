@@ -1,6 +1,0 @@
-;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*-
-
-(define-language
-  :grammar
-  '(((S $any) -> (S1 $any))
-    ((S (Compound $s1 $s2)) -> (S1 $s1) (Conjunc
