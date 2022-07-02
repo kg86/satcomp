@@ -90,7 +90,6 @@ if __name__ == "__main__":
     else:
         text = open(args.file, "rb").read()
 
-    
     if args.log_level == "DEBUG":
         logger.setLevel(DEBUG)
     elif args.log_level == "INFO":
@@ -125,7 +124,6 @@ if __name__ == "__main__":
 
     print("minimum SLP size = %s" % minsz)
     print("grammar: %s" % ming)
-
 
     if args.output == "":
         print(exp.to_json(ensure_ascii=False))  # type: ignore

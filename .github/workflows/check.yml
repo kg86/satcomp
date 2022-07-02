@@ -1,10 +1,58 @@
 name: build
 on: [push]
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  check:
+  python:
+    name: check on Python
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - run: pip install pipenv && pipenv sync --dev
       - run: pipenv run pyright
+      - run: pipenv run black --check src
       - run: tail -n +2 tests/size_list.tsv| xargs -L 1 pipenv run python tests/size_check.py verify
+
+  rust:
+    name: check on Rust ${{ matrix.rust }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - nightly
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install latest stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --manifest-path rust/Cargo.toml
+
+      - name: Run cargo fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --manifest-path rust/Cargo.toml --all -- --check
+
+      - name: Run cargo clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --manifest-path rust/Cargo.toml -- -D warnings -W clippy::nursery -A clippy::stable-sort-primitive
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --manifest-path rust/Cargo.toml --release --all-features

@@ -49,8 +49,8 @@ cat<<"EOF"
 %% IMPORT-JSON-DATA scaling scaling.json
 
 %% DEFINE myplot(column,filename)
-%% SELECT 
-%% file_len AS x, 
+%% SELECT
+%% file_len AS x,
 %% $column as y,
 %% MULTIPLOT FROM scaling
 %% WHERE dataset = $filename
@@ -179,4 +179,3 @@ for i in plot/*.tex; do
 	sed -i 's@^\\addlegendentry{bidir};@\\addlegendentry{$b$};@' "$i"
 	sed -i 's@^\\addlegendentry{slp};@\\addlegendentry{$g$};@' "$i"
 done
-

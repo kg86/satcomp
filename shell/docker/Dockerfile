@@ -8,7 +8,7 @@ zsh git vim sqlite3  \
 "
 
 
-# slurm-wlm cgroup-tools slurm-client 
+# slurm-wlm cgroup-tools slurm-client
 # COPY cgroup.conf /etc/slurm-llnl/
 # COPY slurm.conf /etc/slurm-llnl
 
@@ -34,4 +34,3 @@ COPY --chown=share solver.tar /
 ENV HOME /home/share
 WORKDIR /home/share
 USER share
-

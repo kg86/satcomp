@@ -23,7 +23,7 @@ for filename in $logFolder/*.log; do
 	fi
 	# echo $dataset
 	# return
-	
+
 	if ! grep -q '^{' "$filename"; then
 		[[ "$algo" = "attr" ]] && continue
 		errfile=$filename:r.err
@@ -40,4 +40,3 @@ for filename in $logFolder/*.log; do
 	grep '^{' "$filename" | sed "s@\"algo\": \"[^\"]\+\"@\"algo\": \"$algo\",\"dataset\": \"$datasetbasename\"@"
 done
 echo ']'
-
