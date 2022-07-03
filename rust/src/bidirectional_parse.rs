@@ -127,7 +127,7 @@ fn find_other_occurrences(esa: &crate::sa::ESA, cur_len: usize, l: usize) -> Vec
         ocs.push(esa.sa[i as usize + 1] as usize);
         i += 1;
     }
-    ocs.sort();
+    ocs.sort_unstable();
     ocs
 }
 

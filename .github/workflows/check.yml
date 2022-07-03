@@ -64,7 +64,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --manifest-path rust/Cargo.toml -- -D warnings -W clippy::nursery -A clippy::stable-sort-primitive
+          args: --manifest-path rust/Cargo.toml -- -D warnings -W clippy::nursery
 
       - name: Run cargo test
         uses: actions-rs/cargo@v1
