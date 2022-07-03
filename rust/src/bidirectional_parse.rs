@@ -82,8 +82,8 @@ fn find_valid_sources_dfs(
 ) -> Option<Vec<BDPhrase>> {
     if phrases.len() == itv.len() {
         //println!("{:?}", phrases);
-        if let Some(_) = decode(phrases) {
-                return Some(phrases.clone());
+        if decode(phrases).is_some() {
+            return Some(phrases.clone());
         }
     } else {
         let next_itv = itv[phrases.len()];
