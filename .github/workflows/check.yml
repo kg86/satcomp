@@ -27,7 +27,7 @@ jobs:
 
       - name: run test
         env:
-          TOXENV: py38
+          TOXENV: test
         run: tox
 
   rust:
