@@ -15,7 +15,12 @@ def make_sa_MM(text):
     rank2 = [0 for _ in range(n)]
     sa = list(range(n))
     while d < n:
-        at = lambda i: (rank[i], rank[i + d] if (i + d) < len(rank) else -1)
+
+        def at(i):
+            key1 = rank[i]
+            key2 = rank[i + d] if (i + d) < len(rank) else -1
+            return (key1, key2)
+
         sa.sort(key=at)
         # print_sa(text, sa)
 
@@ -57,7 +62,7 @@ def make_lcpa_kasai(text, sa, isa=None):
     Make longest common prefix array by Kasai algorithm.
     """
     n = len(text)
-    if isa == None:
+    if isa is None:
         isa = make_isa(sa)
 
     lcp = [0 for _ in range(n)]
@@ -325,7 +330,7 @@ def minimum_substr_linear(
                 parent_c.append((node, c, child))
             child = node
         if lcp[i] > path[-1].depth:
-            assert child != None
+            assert child is not None
             # create internal node
             node = Node(lcp[i], child.begin, -1)
             path.append(node)

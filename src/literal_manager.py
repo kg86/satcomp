@@ -1,7 +1,7 @@
 from collections import defaultdict
+
 from pysat.card import IDPool
 from sympy import Symbol
-
 from sympy.logic.boolalg import Boolean
 
 

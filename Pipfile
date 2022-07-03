@@ -17,6 +17,8 @@ tqdm = "*"
 [dev-packages]
 black = "*"
 pyright = "*"
+flake8 = "*"
+isort = "*"
 
 [requires]
 python_version = "3.8"

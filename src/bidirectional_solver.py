@@ -1,22 +1,29 @@
 # compute the smallest bidirectional macro scheme by using SAT solver
-from enum import auto
-import json
-import sys
 import argparse
+import json
 import os
-from logging import getLogger, DEBUG, INFO, CRITICAL, StreamHandler, Formatter
+import sys
 import time
-from typing import Dict, Iterator, List, Optional
+from collections import defaultdict
+from enum import auto
+from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
+from typing import Dict, Iterator, List, Optional, Tuple
 
-from pysat.card import CardEnc, EncType
-from pysat.formula import WCNF
+from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2
+from pysat.formula import WCNF
 
-from mysat import *
-from bidirectional import BiDirType, decode, BiDirExp, bd_info
-from mytimer import Timer
 import lz77
-
+from bidirectional import BiDirExp, BiDirType, decode
+from mysat import (
+    Enum,
+    Literal,
+    LiteralManager,
+    pysat_and,
+    pysat_if,
+    pysat_if_and_then_or,
+)
+from mytimer import Timer
 
 logger = getLogger(__name__)
 handler = StreamHandler()

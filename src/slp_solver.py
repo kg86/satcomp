@@ -1,22 +1,29 @@
-from mysat import *
-import stralgo
 import argparse
+import functools
+import json
 import os
 import sys
-import json
 import time
-import functools
 from enum import auto
+from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
+from typing import Optional
 
-from slp import SLPType, SLPExp
-
-from typing import Optional, Dict, List
-from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
-
-from pysat.formula import CNF, WCNF
+from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2
-from pysat.card import CardEnc, EncType, ITotalizer
-from pysat.solvers import Solver
+from pysat.formula import WCNF
+
+from mysat import (
+    Enum,
+    Literal,
+    LiteralManager,
+    pysat_and,
+    pysat_atleast_one,
+    pysat_if,
+    pysat_iff,
+    pysat_name_cnf,
+    pysat_or,
+)
+from slp import SLPExp, SLPType
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -294,7 +301,7 @@ def postorder_cmp(x, y):
 def build_slp_aux(nodes, slp):
     root = nodes.pop()
     root_i = root[0]
-    root_j = root[1]
+    # root_j = root[1]
     # print(f"root_i,root_j = {root_i},{root_j}")
     children = []
     while len(nodes) > 0 and nodes[-1][0] >= root_i:
@@ -335,7 +342,7 @@ def slp2str(root, slp):
         res.append(ref)
     else:
         children = slp[root]
-        if ref == None:
+        if ref is None:
             assert len(children) == 2
             res += slp2str(children[0], slp)
             res += slp2str(children[1], slp)
@@ -348,7 +355,6 @@ def slp2str(root, slp):
 
 def recover_slp(text: bytes, pstartl, refs_by_referrer):
     n = len(text)
-    alph = set(text)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
     leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]
     for i in range(len(pstartl) - 1):

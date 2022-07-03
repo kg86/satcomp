@@ -3,3 +3,4 @@ data/calgary_pref/*
 out/*
 .vscode
 __pycache__/
+.tox/

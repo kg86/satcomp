@@ -1,9 +1,11 @@
-from dataclasses import dataclass
-from dataclasses_json import dataclass_json
 import datetime
-from attractor import AttractorType
+from dataclasses import dataclass
+from typing import Any, Union
+
+from dataclasses_json import dataclass_json
 from pysat.formula import WCNF
-from typing import Union, Any
+
+from attractor import AttractorType
 
 
 @dataclass_json
