@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: install dependencies
-        run: pip install tox
+        run: pip install tox pipenv
 
       - name: run check
         env:
@@ -26,9 +26,9 @@ jobs:
         run: tox
 
       - name: run test
-        env:
-          TOXENV: test
-        run: tox
+        run: |
+          pipenv sync --dev
+          tail -n +2 tests/size_list.tsv | xargs -L 1 pipenv run python tests/size_check.py verify
 
   rust:
     name: check on Rust ${{ matrix.rust }}
