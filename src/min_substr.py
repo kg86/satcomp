@@ -1,6 +1,6 @@
 import argparse
-from enum import Enum, auto
 import sys
+from enum import Enum, auto
 from typing import List, Tuple
 
 import stralgo

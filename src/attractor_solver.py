@@ -1,27 +1,26 @@
 # Compute minimum string attractors by pysat
 
 import argparse
+import json
 import os
 import sys
-import json
 import time
+from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
+from typing import List, Optional
+
+import matplotlib
+import matplotlib.pyplot as plt
+from pysat.card import CardEnc, EncType
+from pysat.examples.rc2 import RC2
+from pysat.formula import CNF, WCNF
+from pysat.solvers import Solver
+
+import stralgo
 from attractor import AttractorType
 from attractor_bench_format import AttractorExp
 
-from typing import List, Optional, Dict
-from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
-
-from pysat.formula import CNF, WCNF
-from pysat.examples.rc2 import RC2
-from pysat.card import CardEnc, EncType, ITotalizer
-from pysat.solvers import Solver
-import matplotlib.pyplot as plt
-import matplotlib
-
 # prevend appearing gui window
 matplotlib.use("Agg")
-import stralgo
-
 
 logger = getLogger(__name__)
 handler = StreamHandler()

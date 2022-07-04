@@ -1,6 +1,5 @@
 # trim the specified length prefix of given file, and save it.
 
-import sys
 import glob
 import os
 

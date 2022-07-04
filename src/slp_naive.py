@@ -1,12 +1,12 @@
-import copy
 import argparse
+import copy
+import json
 import os
 import sys
-import json
 import time
-from attractor_bench_format import AttractorExp
+from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
 
-from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
+from attractor_bench_format import AttractorExp
 
 logger = getLogger(__name__)
 handler = StreamHandler()

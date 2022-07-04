@@ -1,17 +1,16 @@
 import argparse
 import datetime
-import subprocess
 import os
 import sqlite3
+import subprocess
 import sys
 import time
 from typing import List, Optional
-from joblib import Parallel, delayed
 
+from joblib import Parallel, delayed
 
 import bidirectional
 from bidirectional import BiDirExp, BiDirType
-
 
 dbname = "out/satcomp.db"
 dbtable = "bidirectional_bench"
@@ -33,7 +32,7 @@ def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
         )
         status = "complete"
     except subprocess.TimeoutExpired:
-        print(f"timeout")
+        print("timeout")
         status = f"timeout-{timeout}"
     except Exception:
         status = "error"

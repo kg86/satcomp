@@ -1,9 +1,9 @@
 import csv
 import sqlite3
 
-import lz_bench
 import attractor_bench
 import bidirectional_bench
+import lz_bench
 
 dbname = "out/satcomp.db"
 
@@ -11,7 +11,6 @@ dbname = "out/satcomp.db"
 def comp_bench(out_file: str, target_key: str, target_none: str):
     con = sqlite3.connect(dbname)
     cur = con.cursor()
-    res = dict()
     cur.execute(f"select file_name from {lz_bench.dbtable}")
     header = ["file", "file_len"] + lz_bench.algos + ["attractor", "bidirectional"]
     files = sorted(
@@ -29,7 +28,7 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
     def get_values(keys, table, file):
         query = f"select {','.join(keys)} from {table} WHERE file_name = '{file}'"
         res = cur.execute(query).fetchone()
-        if res == None:
+        if res is None:
             return ["None" for _ in keys]
         return res
 

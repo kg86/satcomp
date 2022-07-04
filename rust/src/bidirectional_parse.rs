@@ -82,11 +82,8 @@ fn find_valid_sources_dfs(
 ) -> Option<Vec<BDPhrase>> {
     if phrases.len() == itv.len() {
         //println!("{:?}", phrases);
-        match decode(phrases) {
-            Some(_) => {
-                return Some(phrases.clone());
-            }
-            None => (),
+        if decode(phrases).is_some() {
+            return Some(phrases.clone());
         }
     } else {
         let next_itv = itv[phrases.len()];
@@ -130,7 +127,7 @@ fn find_other_occurrences(esa: &crate::sa::ESA, cur_len: usize, l: usize) -> Vec
         ocs.push(esa.sa[i as usize + 1] as usize);
         i += 1;
     }
-    ocs.sort();
+    ocs.sort_unstable();
     ocs
 }
 

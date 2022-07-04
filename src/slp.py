@@ -1,5 +1,9 @@
+import datetime
 from dataclasses import dataclass
-from typing import List, NewType, Dict, Optional, Tuple
+from typing import Dict, List, NewType, Optional, Tuple
+
+from dataclasses_json import dataclass_json
+from pysat.formula import WCNF
 
 # type for SLP: represent a partial parse tree via ([i,j,x]) where:
 # if x == None -> references Node [i,j,None]
@@ -21,11 +25,6 @@ SLPType = NewType(
         ],  # children
     ],
 )
-
-from dataclasses_json import dataclass_json
-import datetime
-
-from pysat.formula import WCNF
 
 
 @dataclass_json

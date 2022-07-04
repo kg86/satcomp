@@ -1,4 +1,4 @@
-from typing import List, NewType, Tuple
+from typing import List, NewType
 
 import stralgo
 
@@ -19,7 +19,7 @@ def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
         lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
         occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
         res = any(occ <= x < (occ + l) for occ in occs for x in attractor)
-        if res == False:
+        if res is False:
             return False
     return True
 

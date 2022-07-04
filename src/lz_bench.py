@@ -3,16 +3,16 @@
 # https://github.com/TNishimoto/lzrr
 
 import argparse
-from dataclasses import asdict, dataclass
 import datetime
-import sys
-import time
-from typing import List
-from joblib import Parallel, delayed
+import os
 import sqlite3
 import subprocess
-import os
+import sys
+import time
+from dataclasses import asdict, dataclass
+from typing import List
 
+from joblib import Parallel, delayed
 
 dbname = "out/satcomp.db"
 dbtable = "lz_bench"

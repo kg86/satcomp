@@ -1,18 +1,12 @@
 from __future__ import annotations
+
 from collections import defaultdict
 from enum import Enum
 from typing import Any, Callable, Tuple
-from numpy.core.numeric import full
 
-from sympy.logic.boolalg import (
-    BooleanFalse,
-    BooleanTrue,
-    Equivalent,
-    Boolean,
-    is_cnf,
-)
-from sympy import Basic, Symbol, Or, And, Not, Xor
-from pysat.card import IDPool, CardEnc
+from pysat.card import CardEnc, IDPool
+from sympy import And, Basic, Not, Or, Symbol
+from sympy.logic.boolalg import Boolean, BooleanFalse, BooleanTrue, Equivalent, is_cnf
 
 debug = False
 

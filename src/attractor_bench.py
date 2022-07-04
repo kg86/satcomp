@@ -1,12 +1,12 @@
 import argparse
 import datetime
-import glob
-import sys
-from typing import Optional
-from joblib import Parallel, delayed
+import os
 import sqlite3
 import subprocess
-import os
+import sys
+from typing import Optional
+
+from joblib import Parallel, delayed
 
 from attractor import AttractorType, verify_attractor
 from attractor_bench_format import AttractorExp
@@ -18,7 +18,9 @@ dbtable = "attractor_bench"
 algos = ["solver"]
 
 
-def run_solver(input_file: str, timeout: Optional[float] = None) -> AttractorExp:
+def run_solver(
+    input_file: str, timeout: Optional[float] = None
+) -> Optional[AttractorExp]:
     cmd = [
         "pipenv",
         "run",

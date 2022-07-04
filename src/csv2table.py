@@ -39,7 +39,7 @@ def main(fname: str, vtype: str):
                             line.append("{:.4f}".format(float(elm)))
                         else:
                             line.append(elm)
-                    except:
+                    except Exception:
                         line.append(elm)
 
             res.append(" & ".join(line))
@@ -81,18 +81,18 @@ def covert(elm):
     try:
         trans = int(elm)
         return f"\\num{{{trans}}}"
-    except:
+    except Exception:
         try:
             trans = "{:.4f}".format(float(elm))
             return f"\\num{{{trans}}}"
-        except:
+        except Exception:
             return elm
 
 
 def naive(fname):
     with open(fname) as csvfile:
         reader = csv.reader(csvfile)
-        header = next(reader)
+        _ = next(reader)
         for row in reader:
             line = [covert(elm) for elm in row]
             print(" & ".join(line), r"\\")

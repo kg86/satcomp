@@ -4,8 +4,6 @@
 
 from typing import List, NewType, Tuple
 
-from sympy.logic.boolalg import Boolean
-
 import stralgo
 
 LZType = NewType("LZType", List[Tuple[int, int]])

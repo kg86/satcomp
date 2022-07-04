@@ -1,9 +1,6 @@
 import argparse
-import os
 import sys
-import json
-import time
-from typing import Tuple, List
+from typing import List, Tuple
 
 
 def mostfreq(inttext: List[int]) -> Tuple[Tuple[int, int], int]:
