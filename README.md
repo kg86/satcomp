@@ -12,6 +12,7 @@ The algorithm is described in the following paper.
 Computing NP-hard Repetitiveness Measures via MAX-SAT, to appear in ESA 2022.
 
 The implementation reported in the ESA 2022 paper is [here](https://github.com/kg86/satcomp/releases/tag/ESA2022).
+The full version of this paper can be found [here](https://arxiv.org/abs/2207.02571).
 
 ## Build instructions
 
