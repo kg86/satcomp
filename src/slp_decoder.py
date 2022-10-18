@@ -70,12 +70,13 @@ if __name__ == "__main__":
 
     output = ""
     for i in range(len(text)):
-        if text[i] == None:
+        c = text[i]
+        if isinstance(c, int):
+            output += chr(c)
+        else:
             is_correct = False
             print(f"could not recover text position {i}")
             output += '?'
-        else:
-            output += chr(text[i])
     print(output)
 
 
