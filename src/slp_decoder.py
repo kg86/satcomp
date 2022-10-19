@@ -85,7 +85,10 @@ if __name__ == "__main__":
     if args.file:
         with open(args.file, "r") as f:
             read = f.read()
-            for i in range(len(read)):
+            if len(read) != len(output):
+                print(f"decoded file sizes mismatch: original-length:{len(read)} vs. decoded-length:{len(output)}")
+                is_correct=False
+            for i in range(min(len(read),len(output))):
                 if read[i] != output[i]:
                     print(f"mismatch at position {i} : decoded={output[i]} original={read[i]}")
                     is_correct=False
