@@ -9,6 +9,8 @@ from typing import Union, Any
 @dataclass_json
 @dataclass
 class AttractorExp:
+    is_optimal: bool
+    is_satisfied: bool
     date: str
     status: str
     algo: str
@@ -42,6 +44,8 @@ class AttractorExp:
     @classmethod
     def create(cls):
         return AttractorExp(
+    is_satisfied =            False,
+    is_optimal =            False,
      date =                  str(datetime.datetime.now()),
      status =                "",
      algo =                  "",

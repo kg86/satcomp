@@ -48,6 +48,8 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> AttractorExp
     print(f"status: {status}")
     if status != "complete":
         exp = AttractorExp(
+                is_satisfied =            False,
+                is_optimal =            False,
                 date =                  str(datetime.datetime.now()),
                 status =                status,
                 algo =                  "solver",

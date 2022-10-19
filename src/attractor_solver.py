@@ -8,15 +8,17 @@ import time
 from attractor import AttractorType
 from attractor_bench_format import AttractorExp
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
 
 from pysat.formula import CNF, WCNF
+from pysat.examples.lsu import LSU
 from pysat.examples.rc2 import RC2
 from pysat.card import CardEnc, EncType, ITotalizer
 from pysat.solvers import Solver
 import matplotlib.pyplot as plt
 import matplotlib
+from threading import Timer
 
 # prevend appearing gui window
 matplotlib.use("Agg")
@@ -46,6 +48,9 @@ def min_substr_hist(min_substrs, th):
     ax.hist(nmin_substrs_th1, bins=50)
     fig.savefig("./out/substrs.png")
 
+def interrupt(s):
+    print("Interrupt!")
+    s.interrupt()
 
 def attractor_of_size(
     text: bytes, k: int, op: str, exp: Optional[AttractorExp] = None
@@ -115,7 +120,13 @@ def attractor_of_size(
     logger.info("solver runs")
     attractor = []
     attractor = AttractorType([])
-    if solver.solve():
+
+    if args.timeout > 0:
+        print(f"Timer at {args.timeout}")
+        timer = Timer(args.timeout, interrupt, [solver])
+        timer.start()
+
+    if solver.solve_limited(expect_interrupt=True):
         sol = solver.get_model()
         assert sol is not None
         attractor = AttractorType(
@@ -154,6 +165,48 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
         wcnf.append([-(i + 1)], weight=1)
     return wcnf
 
+from enum import Enum
+
+class MaxSatType(Enum):
+    RC2 = 0
+    LSU = 1
+    def __str__(self):
+        return str(self.name)
+
+
+class MaxSatWrapper:
+    typ : MaxSatType
+    solver : Any
+    is_satisfied : bool
+    found_optimum : bool
+    model : Any
+
+    def __init__(self, typ : MaxSatType, wcnf : WCNF):
+        self.typ = typ
+        if typ == MaxSatType.RC2:
+            self.solver = RC2(wcnf, verbose=args.verbose)
+        elif typ == MaxSatType.LSU:
+            if args.timeout > 0:
+                self.solver = LSU(wcnf, expect_interrupt=True, verbose=args.verbose)
+            else:
+                self.solver = LSU(wcnf, expect_interrupt=False, verbose=args.verbose)
+        else:
+            raise Exception(f"unknown MaxSatType: {typ}")
+
+    def solve(self):
+        if self.typ == MaxSatType.LSU:
+            if args.timeout > 0:
+                print(f"Timer at {args.timeout}")
+                timer = Timer(args.timeout, interrupt, [self.solver])
+                timer.start()
+            self.is_satisfied = self.solver.solve()
+            self.model = self.solver.model
+            self.found_optimum = self.solver.found_optimum()
+        elif self.typ == MaxSatType.RC2:
+            self.model = self.solver.compute()
+            self.is_satisfied = self.model != None
+            self.found_optimum = True
+
 
 def min_attractor(
     text: bytes, exp: Optional[AttractorExp] = None, contain_list: List[int] = []
@@ -161,19 +214,30 @@ def min_attractor(
     """
     Compute the minimum string attractor.
     """
+
+
     total_start = time.time()
     wcnf = min_attractor_WCNF(text)
     for i in contain_list:
         wcnf.append([i])
-    rc2 = RC2(wcnf)
+    solver = MaxSatWrapper(args.solver, wcnf)
     time_prep = time.time() - total_start
-    sol = rc2.compute()
-    assert sol is not None
 
-    attractor = AttractorType(list(x - 1 for x in filter(lambda x: x > 0, sol)))
+    if args.timeout > 0:
+        print(f"Timer at {args.timeout}")
+        timer = Timer(args.timeout, interrupt, [solver])
+        timer.start()
+
+    solver.solve()
+
+    assert solver.model is not None
+
+    attractor = AttractorType(list(x - 1 for x in filter(lambda x: x > 0, solver.model)))
     logger.info(f"the size of minimum attractor = {len(attractor)}")
     logger.info(f"minimum attractor is {attractor}")
     if exp:
+        exp.is_satisfied = solver.is_satisfied
+        exp.is_optimal = solver.found_optimum
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
         exp.factors = attractor
@@ -201,6 +265,12 @@ def parse_args():
         default=0,
     )
     parser.add_argument(
+        "--timeout",
+        type=int,
+        help="number of seconds spend for the SAT solver until a (maybe unfinished) solution must be reported",
+        default=0,
+    )
+    parser.add_argument(
         "--algo",
         type=str,
         help="[min: find a minimum string attractor, exact/atmost: find a string attractor whose size is exact/atmost SIZE]",
@@ -210,6 +280,19 @@ def parse_args():
         type=str,
         help="log level, DEBUG/INFO/CRITICAL",
         default="CRITICAL",
+    )
+    parser.add_argument(
+        "--verbose",
+        type=int,
+        help="verbosity level of the sat solver",
+        default="0",
+    )
+    parser.add_argument(
+        "--solver",
+        type=lambda x: MaxSatType[x],
+        choices=list(MaxSatType),
+        help="maxsat-solver type",
+        default=MaxSatType.LSU,
     )
     args = parser.parse_args()
     if (
