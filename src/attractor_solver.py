@@ -14,6 +14,7 @@ from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
 from pysat.formula import CNF, WCNF
 from pysat.examples.lsu import LSU
 from pysat.examples.rc2 import RC2
+from pysat.examples.fm import FM
 from pysat.card import CardEnc, EncType, ITotalizer
 from pysat.solvers import Solver
 import matplotlib.pyplot as plt
@@ -48,9 +49,6 @@ def min_substr_hist(min_substrs, th):
     ax.hist(nmin_substrs_th1, bins=50)
     fig.savefig("./out/substrs.png")
 
-def interrupt(s):
-    print("Interrupt!")
-    s.interrupt()
 
 def attractor_of_size(
     text: bytes, k: int, op: str, exp: Optional[AttractorExp] = None
@@ -122,8 +120,8 @@ def attractor_of_size(
     attractor = AttractorType([])
 
     if args.timeout > 0:
-        print(f"Timer at {args.timeout}")
-        timer = Timer(args.timeout, interrupt, [solver])
+        logger.info(f"interrupt SAT solver after {args.timeout} seconds")
+        timer = Timer(args.timeout, lambda x: x.interrupt(), [solver])
         timer.start()
 
     if solver.solve_limited(expect_interrupt=True):
@@ -170,6 +168,7 @@ from enum import Enum
 class MaxSatType(Enum):
     RC2 = 0
     LSU = 1
+    FM = 2
     def __str__(self):
         return str(self.name)
 
@@ -190,14 +189,16 @@ class MaxSatWrapper:
                 self.solver = LSU(wcnf, expect_interrupt=True, verbose=args.verbose)
             else:
                 self.solver = LSU(wcnf, expect_interrupt=False, verbose=args.verbose)
+        if typ == MaxSatType.FM:
+            self.solver = FM(wcnf, verbose=args.verbose)
         else:
             raise Exception(f"unknown MaxSatType: {typ}")
 
     def solve(self):
         if self.typ == MaxSatType.LSU:
             if args.timeout > 0:
-                print(f"Timer at {args.timeout}")
-                timer = Timer(args.timeout, interrupt, [self.solver])
+                logger.info(f"interrupt MAXSAT solver after {args.timeout} seconds")
+                timer = Timer(args.timeout, self.interrupt, [self])
                 timer.start()
             self.is_satisfied = self.solver.solve()
             self.model = self.solver.model
@@ -205,7 +206,15 @@ class MaxSatWrapper:
         elif self.typ == MaxSatType.RC2:
             self.model = self.solver.compute()
             self.is_satisfied = self.model != None
-            self.found_optimum = True
+            self.found_optimum = self.is_satisfied
+        elif self.typ == MaxSatType.FM:
+            self.is_satisfied = self.solver.compute()
+            self.model = self.solver.model
+            self.found_optimum = self.is_satisfied
+    def interrupt(self):
+        assert self.typ == MaxSatType.LSU
+        logger.info("interrupting MAXSAT-solver...")
+        self.solver.interrupt()
 
 
 def min_attractor(
@@ -222,11 +231,6 @@ def min_attractor(
         wcnf.append([i])
     solver = MaxSatWrapper(args.solver, wcnf)
     time_prep = time.time() - total_start
-
-    if args.timeout > 0:
-        print(f"Timer at {args.timeout}")
-        timer = Timer(args.timeout, interrupt, [solver])
-        timer.start()
 
     solver.solve()
 
