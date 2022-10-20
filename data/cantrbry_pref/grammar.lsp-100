@@ -1,5 +1,0 @@
-;;; -*- Mode: Lisp; Syntax: Common-Lisp; -*-
-
-(define-language
-  :grammar
-  '(((S $any) -> (S1 $any)

@@ -22,7 +22,7 @@ algos = ["solver"]
 def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     input_file = os.path.abspath(input_file)
     current_dir = os.path.abspath(".")
-    os.chdir("rustr-master")
+    os.chdir("rust")
     cmd = ["cargo", "run", "--bin", "optimal_bms", "--", "--input_file", input_file]
     print(" ".join(cmd))
     start = time.time()
@@ -50,22 +50,22 @@ def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
         time_total = 0
         bd = BiDirType([])
     return BiDirExp(
-            date =                         str(datetime.datetime.now()),
-            status =                       status,
-            algo =                         "naive",
-            file_name =                    os.path.basename(input_file),
-            file_len =                     len(open(input_file, "rb").read()),
-            time_prep =                    0,
-            time_total =                   time_total,
-            sol_nvars =                    0,
-            sol_nhard =                    0,
-            sol_nsoft =                    0,
-            factor_size =                  len(bd),
-            sol_navgclause =               0.0,
-            sol_ntotalvars =               0,
-            sol_nmaxclause =               0,
-            factors =                      bd,
-            )
+        date=str(datetime.datetime.now()),
+        status=status,
+        algo="naive",
+        file_name=os.path.basename(input_file),
+        file_len=len(open(input_file, "rb").read()),
+        time_prep=0,
+        time_total=time_total,
+        sol_nvars=0,
+        sol_nhard=0,
+        sol_nsoft=0,
+        factor_size=len(bd),
+        sol_navgclause=0.0,
+        sol_ntotalvars=0,
+        sol_nmaxclause=0,
+        factors=bd,
+    )
 
 
 def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
@@ -98,22 +98,22 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
         assert exp
     else:
         exp = BiDirExp(
-            date =                         str(datetime.datetime.now()),
-            status =                       status,
-            algo =                         "solver",
-            file_name =                    os.path.basename(input_file),
-            file_len =                     len(open(input_file, "rb").read()),
-            time_prep =                    0,
-            time_total =                   0,
-            sol_nvars =                    0,
-            sol_nhard =                    0,
-            sol_nsoft =                    0,
-            factor_size =                  0,
-            sol_navgclause =               0.0,
-            sol_ntotalvars =               0,
-            sol_nmaxclause =               0,
-            factors =                      BiDirType([]),
-            )
+            date=str(datetime.datetime.now()),
+            status=status,
+            algo="solver",
+            file_name=os.path.basename(input_file),
+            file_len=len(open(input_file, "rb").read()),
+            time_prep=0,
+            time_total=0,
+            sol_nvars=0,
+            sol_nhard=0,
+            sol_nsoft=0,
+            factor_size=0,
+            sol_navgclause=0.0,
+            sol_ntotalvars=0,
+            sol_nmaxclause=0,
+            factors=BiDirType([]),
+        )
     return exp
 
 

@@ -1,10 +1,16 @@
-# Computing NP-hard Repetitiveness Measure by SAT solvers
+# Computing NP-hard Repetitiveness Measures via MAX-SAT
 
 This software repository contains several Python scripts for computing
 - a smallest string attractor,
 - a smallest straight-line program (SLP), and
 - a bidirectional macro scheme (BMS) with the fewest phrases,
 by using the SAT solver pySAT.
+
+The algorithm is described in the following paper.
+
+>Hideo Bannai, Keisuke Goto, Masakazu Ishihata, Shunsuke Kanda, Dominik Köppl, Takaaki Nishimoto:
+Computing NP-hard Repetitiveness Measures via MAX-SAT
+to appear in ESA 2022.
 
 ## Build instructions
 
@@ -24,10 +30,10 @@ The script `shell/example_run.sh` evaluates our solutions on files of the Canter
 On success, it creates a JSON file `shell/example_run/benchmark.json` storing various statistics of the conducted benchmark.
 Depending on the used operating system, this script might fail.
 For that reasons, we provide a Docker image.
-The starting point for that is the script `shell/docker/gen.sh`, 
+The starting point for that is the script `shell/docker/gen.sh`,
 which builds a Docker image, and runs the code inside a Docker container.
 On success, it puts a `shell/docker/plot.tar` file back onto the host machine.
-This file contains LaTex code with tikz/pgf instructions, 
+This file contains LaTex code with tikz/pgf instructions,
 which can generate plots for the aforementioned datasets.
 
 ## Usage
@@ -95,7 +101,7 @@ which stores the following attributes:
       2) (`from`, `to`, `char`): []
 
     The first case represents an internal node in the partial parse tree, and this node has two children representing non-terminals, each defined again by this triplet of `from`, `to`, and `char` value.
-    
+
     The second case represents leaves of the partial parse tree.
     - If T[`from`..`to`-1] is a single character, we know that this non-terminal expands to a single character `char`.
     - If T[`from`..`to`-1] is longer than 1, the leaf is a non-terminal equivalent to the non-terminal (`char`, `char`+`to`-`from`, None) guaranteed to exist.
@@ -120,7 +126,7 @@ pipenv run python src/attractor_solver.py --file data/cantrbry/grammar.lsp --alg
 We compute a smallest BMS of size `factor_size = 43` for `cp.html-50` of length 50.
 
 ```bash
-pipenv run python src/bidirectional_solver.py --file data/cantrbry_pref/cp.html-50 
+pipenv run python src/bidirectional_solver.py --file data/cantrbry_pref/cp.html-50
 ```
 ```json
 {"date": "2022-04-19 20:51:17.510793", "status": "", "algo": "bidirectional-sat", "file_name": "cp.html-50", "file_len": 50, "time_prep": 0.010410785675048828, "time_total": 0.014687776565551758, "sol_nvars": 1140, "sol_nhard": 3517, "sol_nsoft": 50, "sol_navgclause": 2.3810065396644866, "sol_ntotalvars": 8374, "sol_nmaxclause": 761, "factor_size": 43, "factors": [[-1, 60], [-1, 104], [-1, 101], [-1, 97], [-1, 100], [41, 3], [-1, 116], [-1, 105], [-1, 116], [-1, 108], [-1, 101], [-1, 62], [-1, 67], [-1, 111], [-1, 109], [-1, 112], [-1, 114], [-1, 101], [-1, 115], [-1, 115], [-1, 105], [-1, 111], [-1, 110], [-1, 32], [-1, 80], [-1, 111], [-1, 105], [-1, 110], [-1, 116], [-1, 101], [-1, 114], [-1, 115], [-1, 60], [-1, 47], [8, 6], [-1, 10], [-1, 60], [-1, 77], [-1, 69], [-1, 84], [-1, 65], [-1, 32], [-1, 72]]}
@@ -148,8 +154,8 @@ If you apply this script on a SLURM cluster, then it batches the experiments. Co
 
 The code has been tested only on Linux.
 
-# Other Misc. Code
-## Straight-forward algorithms
+## Other Misc. Code
+### Straight-forward algorithms
 
 We include implementations of straight-forward algorithms to compute the smallest string attractor,
 based on the code by Jeffrey Shallit.
@@ -172,9 +178,26 @@ cargo run --release -- -t abracadabra
 
 (We have yet to properly format the output)
 
-## Counting Minimal and right-Minimal substrings
+### Counting Minimal and right-Minimal substrings
 
 We include the code to generate Table 1 in the Appendix of the paper.
 ```console
 pipenv run python src/min_substr.py --mode=exp
 ```
+
+## License
+
+Licensed under either of
+
+ * Apache License, Version 2.0
+   ([LICENSE-APACHE](LICENSE-APACHE.txt) or http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license
+   ([LICENSE-MIT](LICENSE-MIT.txt) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+## Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.

@@ -1,7 +1,0 @@
-.TH XARGS 1L \" -*- nroff -*-
-.SH NAME
-xargs \- build and execute command lines from standard input
-.SH SYNOPSIS
-.B xargs
-[\-0prtx] [\-e[eof-str]] [\-i[replace-str]] [\-l[max-lines]]
-[\-n max-args] [\
