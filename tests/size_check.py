@@ -13,12 +13,12 @@ algos = ["attractor", "bidirectional", "slp"]
 def compute_size(filename, algo) -> int:
     assert algo in algos
     if algo == "attractor":
-        cmd = f"pipenv run python src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'"
+        cmd = f"pipenv run python src/attractor_solver.py --file {filename} --algo min | jq '.output_size'"
     elif algo == "bidirectional":
-        cmd = f"pipenv run python src/bidirectional_solver.py --file {filename} | jq '.factor_size'"
+        cmd = f"pipenv run python src/bms_solver.py --file {filename} | jq '.output_size'"
     elif algo == "slp":
         cmd = (
-            f"pipenv run python src/slp_solver.py --file {filename} | jq '.factor_size'"
+            f"pipenv run python src/slp_solver.py --file {filename} | jq '.output_size'"
         )
     else:
         assert False

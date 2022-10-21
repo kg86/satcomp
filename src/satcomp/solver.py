@@ -44,7 +44,7 @@ class MaxSatWrapper:
             if self.timeout > 0:
                 if self.logger != None:
                     self.logger.info(f"interrupt MAXSAT solver after {self.timeout} seconds")
-                timer = Timer(self.timeout, self.interrupt, [self])
+                timer = Timer(self.timeout, self.interrupt, [])
                 timer.start()
             self.is_satisfied = self.solver.solve()
             self.model = self.solver.model
@@ -57,6 +57,7 @@ class MaxSatWrapper:
             self.is_satisfied = self.solver.compute()
             self.model = self.solver.model
             self.found_optimum = self.is_satisfied
+
     def interrupt(self):
         assert self.typ == MaxSatType.LSU
         if self.logger != None:

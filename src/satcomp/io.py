@@ -83,7 +83,7 @@ def read_input(args, use_stdin : bool = True) -> bytes:
     """ use_stdin: read from stdin in case that no file is specified in args """
     text = ''
     if args.str != "":
-        text = args.str.encode("utf8") if args.prefix == 0 else args.str[:args.prefix]
+        text = args.str.encode("utf8") if args.prefix == 0 else args.str.encode("utf8")[:args.prefix]
     elif args.file != "":
         with open(args.file, "rb") as f:
             text = f.read() if args.prefix == 0 else f.read(args.prefix)
