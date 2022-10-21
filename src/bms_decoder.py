@@ -6,12 +6,16 @@ import argparse
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check whether <stdin> JSON contains valid BMS")
     parser.add_argument("--file", type=str, help="original text input file", default="")
+    parser.add_argument("--json", type=str, help="JSON input file", default="")
     args = parser.parse_args()
 
-    data = json.load(sys.stdin) 
+    if(args.json):
+        data = json.load(open(args.json, "r"))
+    else:
+        data = json.load(sys.stdin) 
     text = array.array('b',[])
     recovered = []
-    for factor in data["factors"]:
+    for factor in data["output"]:
         if factor[0] == -1:
             text.append(factor[1])
             recovered.append(True)
@@ -25,7 +29,7 @@ if __name__ == "__main__":
 
     requests = set()
     p = 0
-    for factor in data["factors"]:
+    for factor in data["output"]:
         if factor[0] == -1:
             p+=1
             continue

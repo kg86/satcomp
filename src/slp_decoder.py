@@ -4,8 +4,10 @@ import satcomp.io as io
 #TODO: grammar could derive from SLPType, but then pyright gets crazy
 # def decode_slp(grammar : SLPType) -> str:
 
-def decode_slp(grammar) -> str:
+def decode_slp(output) -> list[int]:
+    grammar = eval(output)
     root = grammar[0]
+    print(root)
     text = [0 for _ in range(root[1])]
     assigned = [False for _ in range(root[1])]
     slp = grammar[1]
@@ -51,22 +53,25 @@ def decode_slp(grammar) -> str:
             else:
                 stack.append(slp[top][1])
 
-    is_correct=True
+    # is_correct=True
    
-
-    output = []
     for i in range(len(text)):
         if not assigned[i]:
-            is_correct = False
             print(f"could not recover text position {i}")
-            output.append('?')
-        else:
-            output.append(chr(text[i]))
-    if not is_correct:
-        return ""
-    return ''.join(output)
+
+    # output = []
+    # for i in range(len(text)):
+    #     if not assigned[i]:
+    #         is_correct = False
+    #         print(f"could not recover text position {i}")
+    #         output.append('?')
+    #     else:
+    #         output.append(chr(text[i]))
+    # if not is_correct:
+    #     return ""
+    return text
 
 
 if __name__ == "__main__":
-    io.decode_functor(decode_slp, 'decode an SLP')
+    io.decode_functor(lambda output: ''.join(map(lambda x: chr(x), decode_slp(output))) , 'decode an SLP')
 
