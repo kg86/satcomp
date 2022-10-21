@@ -2,23 +2,23 @@ from slp_decoder import decode_slp
 import satcomp.io as io
 import sys
 
-def verify_slp(read, grammar):
-    output = decode_slp(grammar)
+def verify_slp(text, output):
+    output = decode_slp(output)
 
     is_correct = True
-    if len(read) != len(output):
-        print(f"decoded file sizes mismatch: original-length:{len(read)} vs. decoded-length:{len(output)}")
+    if len(text) != len(output):
+        print(f"decoded file sizes mismatch: original-length:{len(text)} vs. decoded-length:{len(output)}")
         is_correct=False
-    for i in range(min(len(read),len(output))):
-        if read[i] != output[i]:
-            print(f"mismatch at position {i} : decoded={output[i]} original={read[i]}")
+    for i in range(min(len(text),len(output))):
+        if text[i] != output[i]:
+            print(f"mismatch at position {i} : decoded={output[i]} original={text[i]}")
             is_correct=False
     return is_correct
 
 
 if __name__ == "__main__":
-    is_correct = io.verify_functor(verify_slp, 'verifies an SLP')
-    if is_correct:
+    error_code = io.verify_functor(verify_slp, 'verifies an SLP')
+    if error_code == 0:
         print("output correct!")
     else:
         sys.exit("not a valid grammar for the input")

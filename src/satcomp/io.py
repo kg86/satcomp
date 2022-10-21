@@ -109,10 +109,11 @@ def write_json(outfilename : str, exp : Any):
         print(exp.to_json(ensure_ascii=False))  # type: ignore
     else:
         with open(outfilename, "w") as f:
-            json.dump(exp, f, ensure_ascii=False)
+            f.write(exp.to_json(ensure_ascii=False))
+            # json.dump(exp, f, ensure_ascii=False)
 
 def decode_functor(decoder, description : str):
-    parser = verify_parser(description)
+    parser = decode_parser(description)
     args = parser.parse_args()
     data = read_json(args, use_stdin=True)
     if data == None:
