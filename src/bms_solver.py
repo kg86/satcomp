@@ -10,12 +10,13 @@ from typing import Dict, Iterator, List, Optional
 
 from pysat.card import CardEnc, EncType
 from pysat.formula import WCNF
-from pysat.examples.rc2 import RC2
 
-from mysat import *
-from bidirectional import BiDirType, decode, BiDirExp, bd_info
-from mytimer import Timer
-import lz77
+from satcomp.satencoding import *
+from bms_verify import decode_bms
+from satcomp.timer import Timer
+from satcomp.measure import BiDirType, BiDirExp
+from satcomp.solver import MaxSatWrapper, MaxSatType
+import satcomp.lz77 as lz77
 
 
 logger = getLogger(__name__)
@@ -397,8 +398,10 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None, contain_list:
         exp.time_prep = time.time() - total_start
 
     # solver = RC2(wcnf, verbose=3)
-    solver = RC2(wcnf)
-    sol = solver.compute()
+    solver = MaxSatWrapper(args.solver, wcnf, args.timeout, args.verbose, logger)
+    solver.compute()
+    assert solver.model is not None
+    sol = solver.model
 
     assert sol is not None
     sold = dict()
@@ -416,98 +419,71 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None, contain_list:
 
     logger.debug(factors)
     logger.debug(f"original={text}")
-    logger.debug(f"decode={decode(factors)}")
-    assert decode(factors) == text
+    logger.debug(f"decode={decode_bms(factors)}")
+    assert decode_bms(factors) == text
     if exp:
+        exp.is_satisfied = solver.is_satisfied
+        exp.is_optimal = solver.found_optimum
         exp.time_total = time.time() - total_start
-        exp.factors = factors
-        exp.factor_size = len(factors)
+        exp.output = factors
+        exp.output_size = len(factors)
         exp.fill(wcnf)
     return factors
 
 
-def get_sold(sol: List[int]):
-    """
-    Compute dictionary res[literal_id] = True or False.
-    """
-    sold = dict()
-    for x in sol:
-        sold[abs(x)] = x > 0
-    return sold
+# def get_sold(sol: List[int]):
+#     """
+#     Compute dictionary res[literal_id] = True or False.
+#     """
+#     sold = dict()
+#     for x in sol:
+#         sold[abs(x)] = x > 0
+#     return sold
+#
+
+# def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
+#     lm, wcnf = bidirectional_WCNF(text)
+#     solset = set()
+#     overlap = 0
+#     with RC2(wcnf) as solver:
+#         for sol in solver.enumerate():
+#             factors = sol2bidirectional(lm, get_sold(sol), text)
+#             key = tuple(factors)
+#             if key not in solset:
+#                 solset.add(key)
+#                 logger.info(f"overlap solution = {overlap}")
+#                 yield factors
+#             else:
+#                 overlap += 1
+
+import satcomp.io as io
 
 
-def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
-    lm, wcnf = bidirectional_WCNF(text)
-    solset = set()
-    overlap = 0
-    with RC2(wcnf) as solver:
-        for sol in solver.enumerate():
-            factors = sol2bidirectional(lm, get_sold(sol), text)
-            key = tuple(factors)
-            if key not in solset:
-                solset.add(key)
-                logger.info(f"overlap solution = {overlap}")
-                yield factors
-            else:
-                overlap += 1
 
+if __name__ == "__main__":
+    parser = io.solver_parser('compute a minimum bidirectional macro scheme')
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
-    parser.add_argument("--file", type=str, help="input file", default="")
-    parser.add_argument("--str", type=str, help="input string", default="")
-    parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument(
         "--contains",
         nargs="+",
         type=int,
-        help="list of text positions that must be included in the string attractor, starting with index 1",
+        help="list of text positions that must be factor starting positions, starting with index 1",
         default=[],
     )
-    parser.add_argument(
-        "--log_level",
-        type=str,
-        help="log level, DEBUG/INFO/CRITICAL",
-        default="CRITICAL",
-    )
-
     args = parser.parse_args()
-    if (args.file == "" and args.str == "") or (
-        args.log_level not in ["DEBUG", "INFO", "CRITICAL"]
-    ):
-        parser.print_help()
-        sys.exit()
-    return args
-
-
-if __name__ == "__main__":
-    args = parse_args()
-    if args.str != "":
-        text = args.str.encode("utf8")
-    else:
-        text = open(args.file, "rb").read()
-
-    if args.log_level == "DEBUG":
-        logger.setLevel(DEBUG)
-    elif args.log_level == "INFO":
-        logger.setLevel(INFO)
-    elif args.log_level == "CRITICAL":
-        logger.setLevel(CRITICAL)
-
+    logger.setLevel(int(args.loglevel))
+    text = io.read_input(args)
     logger.info(text)
 
     timer = Timer()
 
     exp = BiDirExp.create()
-    exp.algo = "bidirectional-sat"
-    exp.file_name = os.path.basename(args.file)
-    exp.file_len = len(text)
-    factors_sol = min_bidirectional(text, exp, args.contains)
-    exp.factors = factors_sol
-    exp.factor_size = len(factors_sol)
+    exp.fill_args(args, text)
+    exp.algo = "bms-sat"
 
-    if args.output == "":
-        print(exp.to_json(ensure_ascii=False))  # type: ignore
-    else:
-        with open(args.output, "w") as f:
-            json.dump(exp, f, ensure_ascii=False)
+    factors_sol = min_bidirectional(text, exp, args.contains)
+    # exp.output = factors_sol
+    # exp.output_size = len(factors_sol)
+    io.write_json(args.output, exp)
+
+

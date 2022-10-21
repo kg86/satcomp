@@ -6,7 +6,7 @@ from typing import List, NewType, Tuple
 
 from sympy.logic.boolalg import Boolean
 
-import stralgo
+import satcomp.stralgo as stralgo
 
 LZType = NewType("LZType", List[Tuple[int, int]])
 

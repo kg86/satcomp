@@ -1,20 +1,19 @@
-from mysat import *
-import stralgo
-import argparse
-import os
-import sys
-import json
+from satcomp.satencoding import *
+
+import satcomp.io as io
+import satcomp.stralgo as stralgo
+from satcomp.solver import MaxSatWrapper
+
 import time
 import functools
 from enum import auto
 
-from slp import SLPType, SLPExp
+from satcomp.measure import SLPType, SLPExp
 
 from typing import Optional, Dict, List
 from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
 
 from pysat.formula import CNF, WCNF
-from pysat.examples.rc2 import RC2
 from pysat.card import CardEnc, EncType, ITotalizer
 from pysat.solvers import Solver
 
@@ -372,9 +371,12 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
     """
     total_start = time.time()
     lm, wcnf, phrases, refs_by_referrer = smallest_SLP_WCNF(text)
-    rc2 = RC2(wcnf)
+
+    solver = MaxSatWrapper(args.solver, wcnf, args.timeout, args.verbose, logger)
+
     time_prep = time.time() - total_start
-    sol_ = rc2.compute()
+    solver.compute()
+    sol_ = solver.model
     assert sol_ is not None
     sol = set(sol_)
 
@@ -403,10 +405,12 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
     slpsize = len(posl) - 2 + len(set(text))
 
     if exp:
+        exp.is_satisfied = solver.is_satisfied
+        exp.is_optimal = solver.found_optimum
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
-        exp.factors = f"{(root, slp)}"
-        exp.factor_size = slpsize  # len(internal_nodes) + len(set(text))
+        exp.output = f"{(root, slp)}"
+        exp.output_size = slpsize  # len(internal_nodes) + len(set(text))
         exp.fill(wcnf)
 
     check = bytes(slp2str(root, slp))
@@ -414,55 +418,16 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
 
     return SLPType((root, slp))
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
-    parser.add_argument("--file", type=str, help="input file", default="")
-    parser.add_argument("--str", type=str, help="input string", default="")
-    parser.add_argument("--output", type=str, help="output file", default="")
-    parser.add_argument(
-        "--size",
-        type=int,
-        help="exact size or upper bound of attractor size to search",
-        default=0,
-    )
-    parser.add_argument(
-        "--log_level",
-        type=str,
-        help="log level, DEBUG/INFO/CRITICAL",
-        default="CRITICAL",
-    )
-    args = parser.parse_args()
-    if args.file == "" and args.str == "":
-        parser.print_help()
-        sys.exit()
-
-    return args
-
-
 if __name__ == "__main__":
-    args = parse_args()
-
-    if args.str != "":
-        text = bytes(args.str, "utf-8")
-    else:
-        text = open(args.file, "rb").read()
-    if args.log_level == "DEBUG":
-        logger.setLevel(DEBUG)
-    elif args.log_level == "INFO":
-        logger.setLevel(INFO)
-    elif args.log_level == "CRITICAL":
-        logger.setLevel(CRITICAL)
+    parser = io.solver_parser('compute a minimum straight line program')
+    args = parser.parse_args()
+    logger.setLevel(int(args.loglevel))
+    text = io.read_input(args)
 
     exp = SLPExp.create()
     exp.algo = "slp-sat"
-    exp.file_name = os.path.basename(args.file)
-    exp.file_len = len(text)
+    exp.fill_args(args, text)
 
     slp = smallest_SLP(text, exp)
 
-    if args.output == "":
-        print(exp.to_json(ensure_ascii=False))  # type: ignore
-    else:
-        with open(args.output, "w") as f:
-            json.dump(exp, f, ensure_ascii=False)
+    io.write_json(args.output, exp)

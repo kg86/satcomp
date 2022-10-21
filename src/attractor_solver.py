@@ -1,29 +1,28 @@
 # Compute minimum string attractors by pysat
 
+import satcomp.io as io
+from satcomp.solver import MaxSatWrapper
+
 import argparse
 import os
 import sys
 import json
 import time
-from attractor import AttractorType
-from attractor_bench_format import AttractorExp
+from satcomp.measure import AttractorExp, AttractorType
 
 from typing import List, Optional, Dict, Any
 from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
+from threading import Timer
 
 from pysat.formula import CNF, WCNF
-from pysat.examples.lsu import LSU
-from pysat.examples.rc2 import RC2
-from pysat.examples.fm import FM
 from pysat.card import CardEnc, EncType, ITotalizer
 from pysat.solvers import Solver
 import matplotlib.pyplot as plt
 import matplotlib
-from threading import Timer
 
 # prevend appearing gui window
 matplotlib.use("Agg")
-import stralgo
+import satcomp.stralgo as stralgo
 
 
 logger = getLogger(__name__)
@@ -63,7 +62,7 @@ def attractor_of_size(
         `atmost` computes string attractor whose size is at most `k`.
     `exp`: experiment information
     """
-    assert op in ["exact", "atmost"]
+    assert op in [AlgoType.EXACT, AlgoType.ATMOST]
     n = len(text)
     total_start = time.time()
 
@@ -84,7 +83,7 @@ def attractor_of_size(
     logger.info(f"n of clauses={len(cnf.clauses)}, # of vars={cnf.nv}")
     exclauses = None
     # add conditions that # of solutions is exact/atmost `k`.
-    if op == "atmost":
+    if op == AlgoType.ATMOST:
         #
         # atmost = CardEnc.atmost(lits, bound=k, top_id=n + 1, encoding=EncType.seqcounter)
         # atmost = CardEnc.equals(
@@ -98,7 +97,7 @@ def attractor_of_size(
             encoding=EncType.cardnetwrk,
         )  # o
         # atmost = CardEnc.atmost(lits, bound=k, top_id=n + 1, encoding=EncType.bitwise) # x
-    elif op == "exact":
+    elif op == AlgoType.EXACT:
         # atmost = CardEnc.equals(lits, bound=k, top_id=n + 1, encoding=EncType.ladder) # x
         exclauses = CardEnc.equals(
             list(range(1, n + 1)), bound=k, top_id=n + 1, encoding=EncType.totalizer
@@ -134,8 +133,8 @@ def attractor_of_size(
     if exp:
         exp.time_total = time.time() - total_start
         assert isinstance(cnf.nv, int)
-        exp.factors = attractor
-        exp.factor_size = len(attractor)
+        exp.output = attractor
+        exp.output_size = len(attractor)
     return attractor
 
 
@@ -163,59 +162,6 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
         wcnf.append([-(i + 1)], weight=1)
     return wcnf
 
-from enum import Enum
-
-class MaxSatType(Enum):
-    RC2 = 0
-    LSU = 1
-    FM = 2
-    def __str__(self):
-        return str(self.name)
-
-
-class MaxSatWrapper:
-    typ : MaxSatType
-    solver : Any
-    is_satisfied : bool
-    found_optimum : bool
-    model : Any
-
-    def __init__(self, typ : MaxSatType, wcnf : WCNF):
-        self.typ = typ
-        if typ == MaxSatType.RC2:
-            self.solver = RC2(wcnf, verbose=args.verbose)
-        elif typ == MaxSatType.LSU:
-            if args.timeout > 0:
-                self.solver = LSU(wcnf, expect_interrupt=True, verbose=args.verbose)
-            else:
-                self.solver = LSU(wcnf, expect_interrupt=False, verbose=args.verbose)
-        if typ == MaxSatType.FM:
-            self.solver = FM(wcnf, verbose=args.verbose)
-        else:
-            raise Exception(f"unknown MaxSatType: {typ}")
-
-    def solve(self):
-        if self.typ == MaxSatType.LSU:
-            if args.timeout > 0:
-                logger.info(f"interrupt MAXSAT solver after {args.timeout} seconds")
-                timer = Timer(args.timeout, self.interrupt, [self])
-                timer.start()
-            self.is_satisfied = self.solver.solve()
-            self.model = self.solver.model
-            self.found_optimum = self.solver.found_optimum()
-        elif self.typ == MaxSatType.RC2:
-            self.model = self.solver.compute()
-            self.is_satisfied = self.model != None
-            self.found_optimum = self.is_satisfied
-        elif self.typ == MaxSatType.FM:
-            self.is_satisfied = self.solver.compute()
-            self.model = self.solver.model
-            self.found_optimum = self.is_satisfied
-    def interrupt(self):
-        assert self.typ == MaxSatType.LSU
-        logger.info("interrupting MAXSAT-solver...")
-        self.solver.interrupt()
-
 
 def min_attractor(
     text: bytes, exp: Optional[AttractorExp] = None, contain_list: List[int] = []
@@ -229,10 +175,10 @@ def min_attractor(
     wcnf = min_attractor_WCNF(text)
     for i in contain_list:
         wcnf.append([i])
-    solver = MaxSatWrapper(args.solver, wcnf)
+    solver = MaxSatWrapper(args.solver, wcnf, args.timeout, args.verbose, logger)
     time_prep = time.time() - total_start
 
-    solver.solve()
+    solver.compute()
 
     assert solver.model is not None
 
@@ -244,17 +190,24 @@ def min_attractor(
         exp.is_optimal = solver.found_optimum
         exp.time_total = time.time() - total_start
         exp.time_prep = time_prep
-        exp.factors = attractor
-        exp.factor_size = len(attractor)
+        exp.output = attractor
+        exp.output_size = len(attractor)
         exp.fill(wcnf)
     return attractor
 
 
+import enum
+
+class AlgoType(enum.Enum):
+    MIN = "min"
+    EXACT = "exact"
+    ATMOST = "atmost"
+    def __str__(self):
+        return self.value
+
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Compute Minimum String Attractors.")
-    parser.add_argument("--file", type=str, help="input file", default="")
-    parser.add_argument("--str", type=str, help="input string", default="")
-    parser.add_argument("--output", type=str, help="output file", default="")
+    parser = io.solver_parser('compute a minimum string attractor')
     parser.add_argument(
         "--contains",
         nargs="+",
@@ -269,80 +222,34 @@ def parse_args():
         default=0,
     )
     parser.add_argument(
-        "--timeout",
-        type=int,
-        help="number of seconds spend for the SAT solver until a (maybe unfinished) solution must be reported",
-        default=0,
-    )
-    parser.add_argument(
         "--algo",
-        type=str,
+		type=AlgoType,
+		choices=list(AlgoType),
         help="[min: find a minimum string attractor, exact/atmost: find a string attractor whose size is exact/atmost SIZE]",
-    )
-    parser.add_argument(
-        "--log_level",
-        type=str,
-        help="log level, DEBUG/INFO/CRITICAL",
-        default="CRITICAL",
-    )
-    parser.add_argument(
-        "--verbose",
-        type=int,
-        help="verbosity level of the sat solver",
-        default="0",
-    )
-    parser.add_argument(
-        "--solver",
-        type=lambda x: MaxSatType[x],
-        choices=list(MaxSatType),
-        help="maxsat-solver type",
-        default=MaxSatType.LSU,
+        default=AlgoType.MIN,
     )
     args = parser.parse_args()
-    if (
-        (args.file == "" and args.str == "")
-        or args.algo not in ["exact", "atmost", "min"]
-        or (args.algo in ["exact", "atmost"] and args.size <= 0)
-        or (args.log_level not in ["DEBUG", "INFO", "CRITICAL"])
-    ):
-        parser.print_help()
-        sys.exit()
-
     return args
 
 
 if __name__ == "__main__":
     args = parse_args()
-
-    if args.str != "":
-        text = args.str
-    else:
-        text = open(args.file, "rb").read()
-
-    if args.log_level == "DEBUG":
-        logger.setLevel(DEBUG)
-    elif args.log_level == "INFO":
-        logger.setLevel(INFO)
-    elif args.log_level == "CRITICAL":
-        logger.setLevel(CRITICAL)
-
+    logger.setLevel(int(args.loglevel))
+    text = io.read_input(args)
     exp = AttractorExp.create()
     exp.algo = "attractor-sat"
-    exp.file_name = os.path.basename(args.file)
-    exp.file_len = len(text)
+    exp.fill_args(args, text)
 
-    if args.algo in ["exact", "atmost"]:
+    if args.algo in [AlgoType.EXACT, AlgoType.ATMOST]:
         attractor = attractor_of_size(text, args.size, args.algo, exp)
-    elif args.algo == "min":
+    elif args.algo == AlgoType.MIN:
         attractor = min_attractor(text, exp, args.contains)
     else:
         assert False
 
-    exp.factors = attractor
-    exp.factor_size = len(attractor)
+    # exp.output = attractor
+    # exp.output_size = len(attractor)
 
-    if args.output == "":
-        print(exp.to_json(ensure_ascii=False))  # type: ignore
-    else:
-        with open(args.output, "w") as f:
-            json.dump(exp, f, ensure_ascii=False)
+    io.write_json(args.output, exp)
+    
+# vim:fenc=utf-8 ff=unix ft=python ts=4 sw=4 sts=4 si et :

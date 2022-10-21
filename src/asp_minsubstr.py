@@ -1,4 +1,4 @@
-import stralgo
+import satcomp.stralgo as stralgo
 import argparse
 import sys
 

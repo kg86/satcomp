@@ -4,7 +4,9 @@ import os
 import sys
 import json
 import time
-from attractor_bench_format import AttractorExp
+
+import satcomp.io as io
+from satcomp.measure import SLPType, SLPExp
 
 from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
 
@@ -63,42 +65,15 @@ def minimize_tree(root, nodedic):
         return root
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
-    parser.add_argument("--file", type=str, help="input file", default="")
-    parser.add_argument("--str", type=str, help="input string", default="")
-    parser.add_argument("--output", type=str, help="output file", default="")
-    parser.add_argument(
-        "--log_level",
-        type=str,
-        help="log level, DEBUG/INFO/CRITICAL",
-        default="CRITICAL",
-    )
-    args = parser.parse_args()
-    if args.file == "" and args.str == "":
-        parser.print_help()
-        sys.exit()
-    return args
-
+""" TODO: the output is not in the format as slp_solver! """
 
 if __name__ == "__main__":
-    args = parse_args()
+    parser = io.solver_parser('compute a minimum straight line program')
+    args = parser.parse_args()
+    logger.setLevel(int(args.loglevel))
+    text = io.read_input(args)
 
-    if args.str != "":
-        text = bytes(args.str, "utf-8")
-
-    else:
-        text = open(args.file, "rb").read()
-
-    
-    if args.log_level == "DEBUG":
-        logger.setLevel(DEBUG)
-    elif args.log_level == "INFO":
-        logger.setLevel(INFO)
-    elif args.log_level == "CRITICAL":
-        logger.setLevel(CRITICAL)
-
-    exp = AttractorExp.create()
+    exp = SLPExp.create()
     exp.algo = "slp-naive"
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
@@ -120,15 +95,12 @@ if __name__ == "__main__":
 
     exp.time_total = time.time() - total_start
     exp.time_prep = exp.time_total
-    exp.factor_size = minsz
+    exp.output_size = minsz
+    exp.output = str(ming)
     exp.sol_nvars = solutioncounter
 
-    print("minimum SLP size = %s" % minsz)
-    print("grammar: %s" % ming)
+    # print("minimum SLP size = %s" % minsz)
+    # print("grammar: %s" % ming)
 
 
-    if args.output == "":
-        print(exp.to_json(ensure_ascii=False))  # type: ignore
-    else:
-        with open(args.output, "w") as f:
-            json.dump(exp, f, ensure_ascii=False)
+    io.write_json(args.output, exp)
