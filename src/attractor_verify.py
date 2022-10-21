@@ -1,11 +1,9 @@
 from typing import List, NewType, Tuple
+from satcomp.measure import AttractorType, AttractorExp
 
-import stralgo
+import satcomp.stralgo as stralgo
 
-AttractorType = NewType("AttractorType", List[int])
-
-
-def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
+def is_attractor(text: bytes, output : AttractorType) -> bool:
     """
     Verify the attractor.
     """
@@ -18,13 +16,12 @@ def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
     for b, l in min_substrs:
         lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
         occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
-        res = any(occ <= x < (occ + l) for occ in occs for x in attractor)
+        res = any(occ <= x < (occ + l) for occ in occs for x in output)
         if res == False:
             return False
     return True
 
-
-def main():
+def test_verify_attractor():
     text = """<Y 1874>
 <A T. HARDY>
 <T Madding Crowd(Penguin 197""".encode(
@@ -64,9 +61,11 @@ def main():
             49,
         ]
     )
-    print(verify_attractor(text, attractor))
+    assert is_attractor(text, attractor)
     pass
 
+import satcomp.io as io
+import sys
 
 if __name__ == "__main__":
-    main()
+    sys.exit(io.verify_functor(is_attractor, 'Verify a computed attractor'))

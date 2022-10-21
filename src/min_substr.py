@@ -3,7 +3,7 @@ from enum import Enum, auto
 import sys
 from typing import List, Tuple
 
-import stralgo
+import satcomp.stralgo  as stralgo
 
 
 class Mode(Enum):
