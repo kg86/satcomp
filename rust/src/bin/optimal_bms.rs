@@ -60,10 +60,7 @@ fn main() -> io::Result<()> {
     let r = satcomp::bidirectional_parse::find_in_range(
         &text,
         opt.minsize,
-        match opt.maxsize {
-            None => usize::MAX,
-            Some(x) => x,
-        },
+        opt.maxsize.map_or(usize::MAX, |x| x),
         opt.first_phrase_len,
     );
     if let Some(bd) = r {
