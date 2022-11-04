@@ -37,7 +37,6 @@ jobs:
       matrix:
         rust:
           - stable
-          - beta
           - nightly
     steps:
       - uses: actions/checkout@v2
