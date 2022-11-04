@@ -9,7 +9,7 @@ by using the SAT solver pySAT.
 The algorithm is described in the following paper.
 
 > Hideo Bannai, Keisuke Goto, Masakazu Ishihata, Shunsuke Kanda, Dominik Köppl, Takaaki Nishimoto:
-Computing NP-hard Repetitiveness Measures via MAX-SAT, to appear in ESA 2022.
+Computing NP-hard Repetitiveness Measures via MAX-SAT. In Proc. 30th Annual European Symposium on Algorithms (ESA 2022), pp 12:1--12:16, 2022.
 
 The implementation reported in the ESA 2022 paper is [here](https://github.com/kg86/satcomp/releases/tag/ESA2022).
 The full version of this paper can be found [here](https://arxiv.org/abs/2207.02571).
@@ -197,6 +197,18 @@ Licensed under either of
    ([LICENSE-MIT](LICENSE-MIT.txt) or http://opensource.org/licenses/MIT)
 
 at your option.
+
+Please use the following bibtex when you refer this library from your papers.
+
+```
+@inproceedings{bannai2022computing,
+  title={{Computing NP-Hard Repetitiveness Measures via MAX-SAT}},
+  author={Bannai, Hideo and Goto, Keisuke and Ishihata, Masakazu and Kanda, Shunsuke and K{\"o}ppl, Dominik and Nishimoto, Takaaki},
+  booktitle={30th Annual European Symposium on Algorithms (ESA 2022)},
+  pages={12:1--12:16},
+  year={2022}
+}
+```
 
 ## Contribution
 
