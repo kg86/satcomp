@@ -27,11 +27,14 @@ class MaxSatMeasure:
     sol_ntotalvars: int = 0
     sol_nmaxclause: int = 0
     output_size: int = 0
+    solver: str = ""
 
     def fill_args(self, args, text):
         if args.file:
             self.file_name = os.path.basename(args.file)
         self.file_len = len(text)
+        if args.solver:
+            self.solver = str(args.solver)
         
 
     def fill(self, wcnf: WCNF):
