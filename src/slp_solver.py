@@ -1,6 +1,6 @@
 from satcomp.satencoding import *
 
-import satcomp.io as io
+import satcomp.base as io
 import satcomp.stralgo as stralgo
 from satcomp.solver import MaxSatWrapper
 
@@ -372,7 +372,7 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
     total_start = time.time()
     lm, wcnf, phrases, refs_by_referrer = smallest_SLP_WCNF(text)
 
-    solver = MaxSatWrapper(args.solver, wcnf, args.timeout, args.verbose, logger)
+    solver = MaxSatWrapper(args.strategy, args.solver, wcnf, args.timeout, args.verbose, logger)
 
     time_prep = time.time() - total_start
     solver.compute()

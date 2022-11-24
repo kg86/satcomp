@@ -2,7 +2,7 @@ import argparse
 import logging
 import enum
 from typing import Any
-from satcomp.solver import MaxSatType
+from satcomp.solver import MaxSatStrategy, SolverType
 
 class LogLevel(enum.IntEnum):
     CRITICAL = logging.CRITICAL,
@@ -31,14 +31,21 @@ def solver_parser(description):
         "--verbose",
         type=int,
         help="verbosity level of the sat solver",
-        default="0",
+        default=0,
+    )
+    parser.add_argument(
+        "--strategy",
+        type=lambda x: MaxSatStrategy[x],
+        choices=list(MaxSatStrategy),
+        help="maxsat-solver strategy",
+        default="LSU",
     )
     parser.add_argument(
         "--solver",
-        type=lambda x: MaxSatType[x],
-        choices=list(MaxSatType),
-        help="maxsat-solver type",
-        default="LSU",
+        type=lambda x: SolverType[x],
+        choices=list(SolverType),
+        help="sat-solver",
+        default=SolverType.Glucose4,
     )
     parser.add_argument(
         "--timeout",

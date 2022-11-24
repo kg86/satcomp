@@ -20,6 +20,7 @@ class MaxSatMeasure:
     file_len: int = 0
     time_prep: float = 0
     time_total: float = 0
+    timeout : int = 0
     sol_nvars: int = 0
     sol_nhard: int = 0
     sol_nsoft: int = 0
@@ -28,6 +29,7 @@ class MaxSatMeasure:
     sol_nmaxclause: int = 0
     output_size: int = 0
     solver: str = ""
+    strategy: str = ""
 
     def fill_args(self, args, text):
         if args.file:
@@ -35,7 +37,10 @@ class MaxSatMeasure:
         self.file_len = len(text)
         if args.solver:
             self.solver = str(args.solver)
-        
+        if args.strategy:
+            self.strategy = str(args.strategy)
+        if args.timeout:
+            self.timeout = args.timeout
 
     def fill(self, wcnf: WCNF):
         self.sol_nvars = wcnf.nv

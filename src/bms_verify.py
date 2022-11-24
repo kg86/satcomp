@@ -3,7 +3,7 @@ from typing import List, NewType, Tuple
 
 import sys
 from satcomp.measure import BiDirType, BiDirExp
-import satcomp.io as io
+import satcomp.base as io
 
 
 

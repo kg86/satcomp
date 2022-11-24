@@ -1,5 +1,5 @@
 from slp_decoder import decode_slp
-import satcomp.io as io
+import satcomp.base as io
 import sys
 
 def verify_slp(text, output):
