@@ -15,7 +15,7 @@ from satcomp.satencoding import *
 from bms_verify import decode_bms
 from satcomp.timer import Timer
 from satcomp.measure import BiDirType, BiDirExp
-from satcomp.solver import MaxSatWrapper, MaxSatType
+from satcomp.solver import MaxSatWrapper, MaxSatStrategy
 import satcomp.lz77 as lz77
 
 
@@ -398,7 +398,7 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None, contain_list:
         exp.time_prep = time.time() - total_start
 
     # solver = RC2(wcnf, verbose=3)
-    solver = MaxSatWrapper(args.solver, wcnf, args.timeout, args.verbose, logger)
+    solver = MaxSatWrapper(args.strategy, args.solver, wcnf, args.timeout, args.verbose, logger)
     solver.compute()
     assert solver.model is not None
     sol = solver.model
@@ -456,7 +456,7 @@ def min_bidirectional(text: bytes, exp: Optional[BiDirExp] = None, contain_list:
 #             else:
 #                 overlap += 1
 
-import satcomp.io as io
+import satcomp.base as io
 
 
 

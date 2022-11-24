@@ -1,5 +1,5 @@
 from satcomp.measure import SLPType
-import satcomp.io as io
+import satcomp.base as io
 
 #TODO: grammar could derive from SLPType, but then pyright gets crazy
 # def decode_slp(grammar : SLPType) -> str:

@@ -42,7 +42,7 @@ def lsa(w) -> List[int]:  # length of smallest attractor of w
 #     return max(lsa("0" + "".join(u)) for u in product("01", repeat=n - 1))
 # print([a(n) for n in range(1, 20)])
 
-import satcomp.io as io
+import satcomp.base as io
 import satcomp.measure as measure
 
 if __name__ == "__main__":

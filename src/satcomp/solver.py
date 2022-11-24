@@ -6,16 +6,26 @@ from pysat.examples.fm import FM
 from pysat.formula import WCNF
 from typing import Any
 
-class MaxSatType(enum.Enum):
+class MaxSatStrategy(enum.Enum):
     RC2 = 0
     LSU = 1
     FM = 2
     def __str__(self):
         return str(self.name)
 
+class SolverType(enum.Enum):
+    Glucose4 = 0
+    Cadical = 1
+    def __str__(self):
+        return str(self.name)
+    def toString(self):
+        if self == SolverType.Glucose4:
+            return "g4"
+        else:
+            return "cd"
 
 class MaxSatWrapper:
-    typ : MaxSatType
+    strategy : MaxSatStrategy
     solver : Any
     is_satisfied : bool
     found_optimum : bool
@@ -23,24 +33,26 @@ class MaxSatWrapper:
     timeout : int
     logger : Any = None
 
-    def __init__(self, typ : MaxSatType, wcnf : WCNF, timeout : int, verbosity : int, logger = None):
+    def __init__(self, strategy : MaxSatStrategy, solvertype : SolverType, wcnf : WCNF, timeout : int, verbosity : int, logger = None):
         self.logger = logger
-        self.typ = typ
+        self.strategy = strategy
         self.timeout = timeout
-        if typ == MaxSatType.RC2:
-            self.solver = RC2(wcnf, verbose=verbosity)
-        elif typ == MaxSatType.LSU:
-            if timeout > 0:
-                self.solver = LSU(wcnf, expect_interrupt=True, verbose=verbosity)
-            else:
-                self.solver = LSU(wcnf, expect_interrupt=False, verbose=verbosity)
-        elif typ == MaxSatType.FM:
-            self.solver = FM(wcnf, verbose=verbosity)
+        hasTimeout = timeout > 0
+
+        if strategy == MaxSatStrategy.RC2:
+            incremental = False
+            if solvertype == SolverType.Glucose4:
+                incremental = True
+            self.solver = RC2(wcnf, solver=solvertype.toString(), verbose=verbosity, incr=incremental)
+        elif strategy == MaxSatStrategy.LSU:
+            self.solver = LSU(wcnf, solver=solvertype.toString(), expect_interrupt=hasTimeout, verbose=verbosity)
+        elif strategy == MaxSatStrategy.FM:
+            self.solver = FM(wcnf, verbose=verbosity, solver=solvertype.toString())
         else:
-            raise Exception(f"unknown MaxSatType: {typ}")
+            raise Exception(f"unknown MaxSatStrategy: {strategy}")
 
     def compute(self):
-        if self.typ == MaxSatType.LSU:
+        if self.strategy == MaxSatStrategy.LSU:
             if self.timeout > 0:
                 if self.logger != None:
                     self.logger.info(f"interrupt MAXSAT solver after {self.timeout} seconds")
@@ -49,17 +61,17 @@ class MaxSatWrapper:
             self.is_satisfied = self.solver.solve()
             self.model = self.solver.model
             self.found_optimum = self.solver.found_optimum()
-        elif self.typ == MaxSatType.RC2:
+        elif self.strategy == MaxSatStrategy.RC2:
             self.model = self.solver.compute()
             self.is_satisfied = self.model != None
             self.found_optimum = self.is_satisfied
-        elif self.typ == MaxSatType.FM:
+        elif self.strategy == MaxSatStrategy.FM:
             self.is_satisfied = self.solver.compute()
             self.model = self.solver.model
             self.found_optimum = self.is_satisfied
 
     def interrupt(self):
-        assert self.typ == MaxSatType.LSU
+        assert self.strategy == MaxSatStrategy.LSU
         if self.logger != None:
             self.logger.info("interrupting MAXSAT-solver...")
         self.solver.interrupt()

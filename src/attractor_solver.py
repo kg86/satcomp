@@ -1,6 +1,6 @@
 # Compute minimum string attractors by pysat
 
-import satcomp.io as io
+import satcomp.base as io
 from satcomp.solver import MaxSatWrapper
 
 import argparse
@@ -175,7 +175,7 @@ def min_attractor(
     wcnf = min_attractor_WCNF(text)
     for i in contain_list:
         wcnf.append([i])
-    solver = MaxSatWrapper(args.solver, wcnf, args.timeout, args.verbose, logger)
+    solver = MaxSatWrapper(args.strategy, args.solver, wcnf, args.timeout, args.verbose, logger)
     time_prep = time.time() - total_start
 
     solver.compute()

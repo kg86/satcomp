@@ -64,7 +64,7 @@ def test_verify_attractor():
     assert is_attractor(text, attractor)
     pass
 
-import satcomp.io as io
+import satcomp.base as io
 import sys
 
 if __name__ == "__main__":

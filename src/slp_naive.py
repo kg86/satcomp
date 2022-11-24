@@ -5,7 +5,7 @@ import sys
 import json
 import time
 
-import satcomp.io as io
+import satcomp.base as io
 from satcomp.measure import SLPType, SLPExp
 
 from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
