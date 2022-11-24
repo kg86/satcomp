@@ -71,13 +71,39 @@ function putScriptRedir {
 
 
 Pipenv="pipenv run python"
+function prepare_generator {
+	for solver in Glucose4 Cadical; do
+		for strategy in RC2 LSU FM; do
+			[[ $solver == cd ]] && [[ $strategy != RC2 ]] && continue
+			prefixlengthname=$(printf "%07.f" "$prefixlength")
+			basefilename="${compressionmeasure}_${strategy}_${solver}_$(basename $filename)_${prefixlengthname}"
+			memory=$kMaxMemory
+			putScriptRedir "$Pipenv src/${compressionmeasure}_solver.py --prefix "$prefixlength" --solver "$solver" --strategy $strategy" "${basefilename}" "$filename" "$memory"
+		done 
+	done
+}
 
 for filename in $datasetFolder/*; do
-	basefilename="$(basename $filename)"
-	memory=$kMaxMemory
-	putScriptRedir "$Pipenv src/bidirectional_solver.py" "bidir_$basefilename" "$filename" "$memory"
-	putScriptRedir "$Pipenv src/attractor_solver.py --algo min" "attr_$basefilename" "$filename" "$memory"
-	# putScriptRedir "$Pipenv src/grammar_solver.py" "grammar_$basefilename" "$filename"
-	putScriptRedir "$Pipenv src/slp_solver.py" "slp_$basefilename" "$filename" "$memory"
-	# putScriptRedir "$Pipenv src/slp_naive.py" "slpnaive_$basefilename" "$filename" "100"
-done 
+	filesize=$(stat --printf="%s" "$filename")
+	for prefixlength in $(seq 100 20 300); do
+		if [[ $prefixlength -gt $filesize ]]; then
+			break
+		fi
+		for compressionmeasure in bms attractor slp; do
+				prepare_generator
+		done
+	done
+done
+
+for filename in $datasetFolder/*; do
+	filesize=$(stat --printf="%s" "$filename")
+	for prefixlength in $(seq 100000 100000 2000000); do
+		if [[ $prefixlength -gt $filesize ]]; then
+			break
+		fi
+		for compressionmeasure in attractor; do
+				prepare_generator
+		done
+	done
+done
+
