@@ -58,8 +58,9 @@ class BiDirLiteralManager(LiteralManager):
         self.lits = BiDirLiteral
         self.verifyf = {
             BiDirLiteral.root: self.verify_root,
+            BiDirLiteral.ref: self.verify_pstart,
             BiDirLiteral.ref: self.verify_ref,
-            # BiDirLiteral.ref: self.verify_pstart,
+            BiDirLiteral.ref: self.verify_tref,
         }
         super().__init__(self.lits)
 
@@ -75,7 +76,20 @@ class BiDirLiteralManager(LiteralManager):
         assert 0 <= obj[1] < self.n
         pass
 
+    def verify_pstart(self, obj: Tuple[str, int]):
+        # obj = (name, pos)
+        assert len(obj) == 2
+        assert 0 <= obj[1] < self.n
+        pass
+
     def verify_ref(self, obj: Tuple[str, int, int]):
+        # obj = (name, pos, ref_pos)
+        assert len(obj) == 3
+        assert obj[1] != obj[2]
+        assert 0 <= obj[1], obj[2] < self.n
+        assert self.text[obj[1]] == self.text[obj[2]]
+
+    def verify_tref(self, obj: Tuple[str, int, int]):
         # obj = (name, pos, ref_pos)
         assert len(obj) == 3
         assert obj[1] != obj[2]
