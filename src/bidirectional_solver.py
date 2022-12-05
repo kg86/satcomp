@@ -21,7 +21,6 @@ from mysat import (
     LiteralManager,
     pysat_and,
     pysat_if,
-    pysat_if_and_then_or,
     pysat_or,
 )
 from mytimer import Timer
@@ -213,7 +212,6 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     logger.info(f"# of text = {n}, # of lz77 = {len(lz77fs)}")
 
     occ1 = make_occa1(text)
-    occ2 = make_occa2(text)
 
     lm = BiDirLiteralManager(text)
     wcnf = WCNF()
