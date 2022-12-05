@@ -15,14 +15,7 @@ from pysat.formula import WCNF
 
 import lz77
 from bidirectional import BiDirExp, BiDirType, decode
-from mysat import (
-    Enum,
-    Literal,
-    LiteralManager,
-    pysat_and,
-    pysat_if,
-    pysat_or,
-)
+from mysat import Enum, Literal, LiteralManager, pysat_and, pysat_if, pysat_or
 from mytimer import Timer
 
 logger = getLogger(__name__)
