@@ -275,20 +275,16 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
 
     for c in occ1.keys():
         for i in occ1[c]:
-            if len(occ1[c]) == 1:  # a single occurrence must be a root and a phrase
-                wcnf.append([lm.getid(lm.lits.root, i)])
-                wcnf.append([lm.getid(lm.lits.pstart, i)])
-            else:
-                # each postion i is either a root(i) or there exist j s.t. (tref(i,j) and root(j))
-                reach_j = []
-                for j in occ_others(occ1, text, i):
-                    reach, clauses = pysat_and(
-                        lm.newid,
-                        [lm.getid(lm.lits.tref, i, j), lm.getid(lm.lits.root, j)],
-                    )
-                    wcnf.extend(clauses)
-                    reach_j.append(reach)
-                wcnf.append([lm.getid(lm.lits.root, i)] + reach_j)
+            # each postion i is either a root(i) or there exist j s.t. (tref(i,j) and root(j))
+            reach_j = []
+            for j in occ_others(occ1, text, i):
+                reach, clauses = pysat_and(
+                    lm.newid,
+                    [lm.getid(lm.lits.tref, i, j), lm.getid(lm.lits.root, j)],
+                )
+                wcnf.extend(clauses)
+                reach_j.append(reach)
+            wcnf.append([lm.getid(lm.lits.root, i)] + reach_j)
 
     # a root must be a beginning of a phrase
     for i in range(n):
