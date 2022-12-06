@@ -286,15 +286,11 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                 reach_j.append(reach)
             wcnf.append([lm.getid(lm.lits.root, i)] + reach_j)
 
-    # a root must be a beginning of a phrase
+    # a root must be a beginning of a phrase: root(i) -> pstart(i)
     for i in range(n):
         root0 = lm.getid(lm.lits.root, i)
         fbeg0 = lm.getid(lm.lits.pstart, i)
         wcnf.append(pysat_if(root0, fbeg0))
-        if i + 1 < n:
-            fbeg1 = lm.getid(lm.lits.pstart, i + 1)
-            # if i is root, a factor begins at i + 1
-            wcnf.append(pysat_if(root0, fbeg1))
 
     # if i = 0 or j = 0 or T[i-1] \neq T[j-1]: not (ref(i,j)) or pstart(i)
     for c in occ1.keys():
