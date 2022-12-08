@@ -1,5 +1,5 @@
 # compute the smallest bidirectional macro scheme by using SAT solver
-# version that reduces total CNF size to O(N^3)
+# tweaks the first version that reduces total CNF size to O(N^3), to get rid of the variable "root"
 
 import argparse
 import json
@@ -17,7 +17,7 @@ from pysat.formula import WCNF
 
 import lz77
 from bidirectional import BiDirExp, BiDirType, decode
-from mysat import Enum, Literal, LiteralManager, pysat_and, pysat_if
+from mysat import Enum, Literal, LiteralManager, pysat_and
 from mytimer import Timer
 
 logger = getLogger(__name__)
@@ -34,7 +34,6 @@ class BiDirLiteral(Enum):
     false = Literal.false
     auxlit = Literal.auxlit
     pstart = auto()  # i: true iff T[i] is start of phrase
-    root = auto()  # i: true iff T[i] is ground phrase
     ref = auto()  # (i,j) true iff position T[i] references position T[j]
     tref = (
         auto()
@@ -51,7 +50,6 @@ class BiDirLiteralManager(LiteralManager):
         self.n = len(self.text)
         self.lits = BiDirLiteral
         self.verifyf = {
-            BiDirLiteral.root: self.verify_root,
             BiDirLiteral.ref: self.verify_pstart,
             BiDirLiteral.ref: self.verify_ref,
             BiDirLiteral.ref: self.verify_tref,
@@ -63,12 +61,6 @@ class BiDirLiteralManager(LiteralManager):
         if len(obj) > 0 and obj[0] in self.verifyf:
             self.verifyf[obj[0]](obj)
         return res
-
-    def verify_root(self, obj: Tuple[str, int]):
-        # obj = (name, pos)
-        assert len(obj) == 2
-        assert 0 <= obj[1] < self.n
-        pass
 
     def verify_pstart(self, obj: Tuple[str, int]):
         # obj = (name, pos)
@@ -127,10 +119,6 @@ def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
             key = (lm.lits.ref, i, j)
             if sol[lm.getid(*key)]:
                 pinfo[i].append(str(key))
-        key = (lm.lits.root, i)
-        lid = lm.getid(*key)
-        if sol[lid]:
-            pinfo[i].append(str(key))
         fbeg_key = (lm.lits.pstart, i)
         if sol[lm.getid(*fbeg_key)]:
             pinfo[i].append(str(fbeg_key))
@@ -217,8 +205,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     for i in range(n):
         # pstart(i) is true iff a factor begins at i
         lits.append(lm.newid(lm.lits.pstart, i))
-        # root(i) is true iff T[i] is a ground phrase
-        lits.append(lm.newid(lm.lits.root, i))
+
     for i in range(n):
         for j in occ_others(occ1, text, i):
             # ref(i, j) is true iff i refers to j
@@ -227,12 +214,10 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
             lits.append(lm.newid(lm.lits.tref, i, j))
     ############################################################################
 
-    logger.debug("each position has exactly one reference, or is a root")
+    logger.debug("each position has atmost one reference")
     for i in range(n):
-        ref_or_root = [
-            lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)
-        ] + [lm.getid(lm.lits.root, i)]
-        wcnf.extend(pysat_equal(lm, 1, ref_or_root))
+        refi = [lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)]
+        wcnf.extend(CardEnc.atmost(refi, bound=1, vpool=lm.vpool))
 
     for c in occ1.keys():
         for i in occ1[c]:
@@ -275,24 +260,19 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                     + pred
                 )
 
-    for c in occ1.keys():
-        for i in occ1[c]:
-            # each postion i is either a root(i) or there exist j s.t. (tref(i,j) and root(j))
-            reach_j = []
-            for j in occ_others(occ1, text, i):
-                reach, clauses = pysat_and(
-                    lm.newid,
-                    [lm.getid(lm.lits.tref, i, j), lm.getid(lm.lits.root, j)],
-                )
-                wcnf.extend(clauses)
-                reach_j.append(reach)
-            wcnf.append([lm.getid(lm.lits.root, i)] + reach_j)
+    # acyclicity of tref: If tref(i,j) -> not tref(j,i)
+    for i in range(n):
+        for j in occ_others(occ1, text, i):
+            wcnf.append([-lm.getid(lm.lits.tref, i, j), -lm.getid(lm.lits.tref, j, i)])
 
     # a root must be a beginning of a phrase: root(i) -> pstart(i)
+    # sum_j ref(i,j) = 0 => pstart(i)
+    # [or ref_[i,j] , pstart (i)]
     for i in range(n):
-        root0 = lm.getid(lm.lits.root, i)
-        fbeg0 = lm.getid(lm.lits.pstart, i)
-        wcnf.append(pysat_if(root0, fbeg0))
+        wcnf.append(
+            [lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)]
+            + [lm.getid(lm.lits.pstart, i)]
+        )
 
     # if i = 0 or j = 0 or T[i-1] \neq T[j-1]: not (ref(i,j)) or pstart(i)
     for c in occ1.keys():
@@ -303,8 +283,8 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                         [-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.pstart, i)]
                     )
     # for i,j > 0, and T[i] = T[j], T[i-1] = T[j-1]
-    # if (root(i-1) or not (ref(i-1,j-1)) and ref(i,j)) => pstart(i)
-    # (not (root(i-1)) and (ref(i-1,j-1) or not (ref(i,j)))) or pstart(i)
+    # if (not ref(i-1,j-1)) and ref(i,j) => pstart(i)
+    # <=> ref(i-1,j-1) or not ref(i,j) or pstart(i)
     for c in occ1.keys():
         for i in occ1[c]:
             for j in occ_others(occ1, text, i):
