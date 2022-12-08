@@ -17,7 +17,7 @@ from pysat.formula import WCNF
 
 import lz77
 from bidirectional import BiDirExp, BiDirType, decode
-from mysat import Enum, Literal, LiteralManager, pysat_and
+from mysat import Enum, Literal, LiteralManager
 from mytimer import Timer
 
 logger = getLogger(__name__)
@@ -235,30 +235,6 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                                 lm.getid(lm.lits.tref, i, j),
                             ]
                         )
-    for c in occ1.keys():
-        for i in occ1[c]:
-            for j in occ_others(occ1, text, i):
-                # if tref(i,j) then (ref(i,j) or there exists k s.t. tref(i,k) and ref(k,j))
-                # not tref(i,j) or ref(i,j) or exists k s.t. (tref(i,k) and ref(k,j))
-                pred = []
-                for k in occ_others(occ1, text, i):
-                    if k != j:
-                        pred1, clauses = pysat_and(
-                            lm.newid,
-                            (
-                                [
-                                    lm.getid(lm.lits.tref, i, k),
-                                    lm.getid(lm.lits.ref, k, j),
-                                ]
-                            ),
-                        )
-                        wcnf.extend(clauses)
-                        pred.append(pred1)
-                wcnf.append(
-                    [-lm.getid(lm.lits.tref, i, j)]
-                    + [lm.getid(lm.lits.ref, i, j)]
-                    + pred
-                )
 
     # acyclicity of tref: If tref(i,j) -> not tref(j,i)
     for i in range(n):
