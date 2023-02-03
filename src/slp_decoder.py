@@ -7,10 +7,16 @@ import satcomp.base as io
 def decode_slp(output) -> list[int]:
     grammar = eval(output)
     root = grammar[0]
-    print(root)
+    # print(root)
     text = [0 for _ in range(root[1])]
     assigned = [False for _ in range(root[1])]
     slp = grammar[1]
+    # print(f"SLP = {slp}")
+
+    slprefdict = dict()
+    for tup in slp.keys():
+        slprefdict[(tup[0],tup[1])] = tup
+        assert slprefdict[(tup[0],tup[1])] in slp
 
     stack = [root]
     cur_textpos = 0
@@ -22,9 +28,10 @@ def decode_slp(output) -> list[int]:
             continue
         elif node[1]-node[0] > 1:
             assert node[2] != None
-            refnode = (node[2],node[2]+node[1]-node[0],None)
-            assert refnode in slp
-            stack.append(slp[refnode][0])
+            refnode = (node[2],node[2]+node[1]-node[0])
+            assert refnode in slprefdict, f"referred node {refnode} not found in SLP"
+            assert slprefdict[refnode] in slp, f"internal error"
+            stack.append(slp[slprefdict[refnode]][0])
             continue
         else:
             assert node[2] != None
@@ -38,9 +45,9 @@ def decode_slp(output) -> list[int]:
         while len(stack) > 0:
             top = stack[-1]
             if slp[top] == None:
-                refnode = (top[2],top[2]+top[1]-top[0],None)
-                assert refnode in slp
-                if slp[refnode][1] != node:
+                refnode = (top[2],top[2]+top[1]-top[0])
+                assert refnode in slprefdict
+                if slp[slprefdict[refnode]][1] != node:
                     break
             elif slp[top][1] != node:
                 break
@@ -48,8 +55,8 @@ def decode_slp(output) -> list[int]:
         if len(stack) > 0:
             top = stack[-1]
             if slp[top] == None:
-                refnode = (top[2],top[2]+top[1]-top[0],None)
-                stack.append(slp[refnode][1])
+                refnode = (top[2],top[2]+top[1]-top[0])
+                stack.append(slp[slprefdict[refnode]][1])
             else:
                 stack.append(slp[top][1])
 
