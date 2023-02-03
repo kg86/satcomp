@@ -359,8 +359,10 @@ def recover_slp(text: bytes, pstartl, refs_by_referrer):
         nodes.append((0, n, None))
 
     nodes.sort(key=functools.cmp_to_key(postorder_cmp))
+    # print(f"NODES = {nodes}")
     slp = {}
     root = build_slp_aux(nodes, slp)
+    # print(f"SLP = {slp}")
     binarize_slp(root, slp)
     return (root, slp)
 
