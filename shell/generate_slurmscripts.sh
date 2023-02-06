@@ -74,7 +74,7 @@ Pipenv="pipenv run python"
 function prepare_generator {
 	for solver in Glucose4 Cadical; do
 		for strategy in RC2 LSU FM; do
-			[[ $solver == cd ]] && [[ $strategy != RC2 ]] && continue
+			[[ $solver == Cadical ]] && [[ $strategy == LSU ]] && continue
 			prefixlengthname=$(printf "%07.f" "$prefixlength")
 			basefilename="${compressionmeasure}_${strategy}_${solver}_$(basename $filename)_${prefixlengthname}"
 			memory=$kMaxMemory
