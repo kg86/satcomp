@@ -4,8 +4,8 @@ import sys
 
 def min_substrings(text: bytes):
 
-    print(f'#const n={len(text)}.')
-    print('% cover(start,end,position)')
+    yield f'#const textlength={len(text)}.'
+    yield '% cover(start,end,position)'
     sa = stralgo.make_sa_MM(text)
     isa = stralgo.make_isa(sa)
     lcp = stralgo.make_lcpa_kasai(text, sa, isa)
@@ -14,7 +14,7 @@ def min_substrings(text: bytes):
         lcp_range = stralgo.get_lcprange(lcp, isa[b], l)
         occs = [sa[i] for i in range(lcp_range[0], lcp_range[1] + 1)]
         for position in set(occ + i + 1 for occ in occs for i in range(l)):
-            print(f'cover({b+1},{b+l},{position}).')
+            yield f'cover({b+1},{b+l},{position}).'
 
 
 
@@ -47,5 +47,9 @@ if __name__ == "__main__":
         text = args.str
     else:
         text = open(args.file, "rb").read()
+    output = sys.stdout
+    if args.output:
+        output = open(args.output, "w", encoding='utf-8')
 
-    min_substrings(text)
+    for line in min_substrings(text):
+        print(line, file=output)
