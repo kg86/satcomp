@@ -2,6 +2,22 @@ from typing import AnyStr, Iterable, List, Optional, Tuple
 
 from tqdm import tqdm
 
+def compute_lpnf(text: bytes):  # non-self-referencing lpf
+    """
+    lpnf[i] = length of longest prefix of text[i:] that occurs in text[0:i]
+    """
+    n = len(text)
+    lpnf = []
+    for i in range(0, n):
+        lpnf.append(0)
+        for j in range(0, i):
+            l = 0
+            while j + l < i and i + l < n and text[i + l] == text[j + l]:
+                l += 1
+            if l > lpnf[i]:
+                lpnf[i] = l
+    # print(f"{lpnf}")
+    return lpnf
 
 def make_sa_MM(text):
     """

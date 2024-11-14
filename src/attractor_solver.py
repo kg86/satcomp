@@ -173,6 +173,9 @@ def min_attractor(
 
     total_start = time.time()
     wcnf = min_attractor_WCNF(text)
+
+    io.dump_wcnf_and_exit(wcnf, args.dump)
+
     for i in contain_list:
         wcnf.append([i])
     solver = MaxSatWrapper(args.strategy, args.solver, wcnf, args.timeout, args.verbose, logger)

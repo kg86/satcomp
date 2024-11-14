@@ -1,22 +1,31 @@
-from satcomp.satencoding import *
+import functools
+import math
+import time
+from enum import auto
+from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
+from typing import Optional
+
 
 import satcomp.base as io
 import satcomp.stralgo as stralgo
 from satcomp.solver import MaxSatWrapper
-
-import time
-import functools
-from enum import auto
-import sys
-
 from satcomp.measure import SLPType, SLPExp
 
-from typing import Optional, Dict, List
-from logging import CRITICAL, getLogger, DEBUG, INFO, StreamHandler, Formatter
+from pysat.card import CardEnc
+from pysat.examples.rc2 import RC2
+from pysat.formula import WCNF
 
-from pysat.formula import CNF, WCNF
-from pysat.card import CardEnc, EncType, ITotalizer
-from pysat.solvers import Solver
+from satcomp.satencoding import (
+    Enum,
+    Literal,
+    LiteralManager,
+    pysat_and,
+    pysat_atleast_one,
+    pysat_if,
+    pysat_iff,
+    pysat_name_cnf,
+    pysat_or,
+)
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -35,6 +44,13 @@ class SLPLiteral(Enum):
     pstart = auto()  # i is a starting position of a phrase of grammar parsing
     ref = auto()  # (j,i,l): phrase (j,j+l) references T[i,i+l)  (T[i,i+l] <- T[j,j+l])
     referred = auto()  # (i,l): T[i,i+l) is referenced by some phrase
+    # vY(L,R): true if referred(i,l) = 1 for some i,l such that
+    # L = i // blocksize, R = (i+l-1) // blocksize
+    vY = auto()
+    # vE(i,R): true if referred(i,l) = 1 for some l such that T[i..i+l) ends in block R (i+l-1)//blocksize = R
+    vE = auto()  # (i,R):
+    # vS(L,j): true if referred(i,l) = 1 for some l such that i+l-1=j starts in block L (i//blocksize) = L
+    vS = auto()  # (L,j):
 
 
 class SLPLiteralManager(LiteralManager):
@@ -97,14 +113,12 @@ class SLPLiteralManager(LiteralManager):
         assert 0 < l <= self.n
         assert i + l <= self.n
 
-
-
-
 def smallest_SLP_WCNF(text: bytes):
     """
     Compute the max sat formula for computing the smallest SLP
     """
     n = len(text)
+    # print(f"n = {n}")
     logger.info(f"text length = {len(text)}")
     wcnf = WCNF()
 
@@ -137,12 +151,12 @@ def smallest_SLP_WCNF(text: bytes):
                     if not (j, l) in refs_by_referrer:
                         refs_by_referrer[j, l] = []
                     refs_by_referrer[j, l].append(i)
-    for (i, l) in refs_by_referred.keys():
+    for i, l in refs_by_referred.keys():
         lm.newid(lm.lits.referred, i, l)
 
     # // start constraint (1) ###############################
     # phrase(i,l) = true <=> pstart[i] = pstart[i+l] = true, pstart[i+1..i+l) = false
-    for (i, l) in phrases:
+    for i, l in phrases:
         plst = [-lm.getid(lm.lits.pstart, (i + j)) for j in range(1, l)] + [
             lm.getid(lm.lits.pstart, i),
             lm.getid(lm.lits.pstart, (i + l)),
@@ -161,7 +175,7 @@ def smallest_SLP_WCNF(text: bytes):
 
     # // start constraint (2),(3) ###############################
     # if phrase(j,l) = true there must be exactly one i < j such that ref(j,i,l) is true
-    for (j, l) in refs_by_referrer.keys():
+    for j, l in refs_by_referrer.keys():
         clauses = CardEnc.atmost(
             [lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]],
             bound=1,
@@ -177,7 +191,7 @@ def smallest_SLP_WCNF(text: bytes):
         wcnf.append(pysat_if(phrase, var_atleast))
     # // end constraint (2),(3) ###############################
     # // start constraint (4) ###############################
-    for (j, l) in refs_by_referrer.keys():
+    for j, l in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             wcnf.append(
                 pysat_if(
@@ -189,7 +203,7 @@ def smallest_SLP_WCNF(text: bytes):
 
     # // start constraint (5) ###############################
     # referred(i,l) = true iff there is some j > i such that ref(j,i,l) = true
-    for (i, l) in refs_by_referred.keys():
+    for i, l in refs_by_referred.keys():
         assert l > 1
         ref_sources, clauses = pysat_or(
             lm.newid,
@@ -206,7 +220,7 @@ def smallest_SLP_WCNF(text: bytes):
     # if (occ,l) is a referred interval, it cannot be a phrase, but pstart[occ] and pstart[occ+l] must be true
     # phrase(occ,l) is only defined if l <= lpf[occ]
     referred = list(refs_by_referred.keys())
-    for (occ, l) in referred:
+    for occ, l in referred:
         if l > 1:
             qid = lm.getid(lm.lits.referred, occ, l)
             lst = [-qid] + [lm.getid(lm.lits.pstart, occ + x) for x in range(1, l)]
@@ -217,23 +231,149 @@ def smallest_SLP_WCNF(text: bytes):
 
     # // start constraint (7) ###############################
     # crossing intervals cannot be referred to at the same time.
+    # new $O(N^{8/3}) size implementation proposed by Bernardo
+    # print(f"text={text}")
+    blocksize = math.ceil(n ** (1.0 / 3))
+    numblocks = math.ceil(n / blocksize)
+    # print(f"blocksize = {blocksize}, numblocks = {numblocks}")
+
     referred_by_bp = [[] for _ in range(n)]
-    for (occ, l) in referred:
+    for occ, l in referred:
         referred_by_bp[occ].append(l)
     for lst in referred_by_bp:
         lst.sort(reverse=True)
 
-    for (occ1, l1) in referred:
-        for occ2 in range(occ1 + 1, occ1 + l1):
-            for l2 in referred_by_bp[occ2]:
-                assert l1 > 1 and l2 > 1
-                assert occ1 < occ2 and occ2 < occ1 + l1
-                if occ1 + l1 >= occ2 + l2:
-                    break
-                id1 = lm.getid(lm.lits.referred, occ1, l1)
-                id2 = lm.getid(lm.lits.referred, occ2, l2)
-                wcnf.append([-id1, -id2])
-    # // end constraint (7) ###############################
+    ref_by_blkse = {}
+    e_by_blkse = {}
+    s_by_blkse = {}
+
+    for occ, l in referred:
+        sblk = occ // blocksize
+        eblk = (occ + l - 1) // blocksize
+        try:
+            ref_by_blkse[(sblk, eblk)].add((occ, l))
+        except KeyError:
+            ref_by_blkse[(sblk, eblk)] = {(occ, l)}
+
+        if not lm.contains(lm.lits.vY, sblk, eblk):
+            lm.newid(lm.lits.vY, sblk, eblk)
+            # print(f"vY({sblk},{eblk})")
+
+        if not lm.contains(lm.lits.vE, occ, eblk):
+            lm.newid(lm.lits.vE, occ, eblk)
+            try:
+                e_by_blkse[(sblk, eblk)].add(occ)
+            except KeyError:
+                e_by_blkse[(sblk, eblk)] = {occ}
+            # print(f"vE({occ},{eblk})")
+
+        if not lm.contains(lm.lits.vS, sblk, occ + l - 1):
+            lm.newid(lm.lits.vS, sblk, occ + l - 1)
+            try:
+                s_by_blkse[(sblk, eblk)].add(occ + l - 1)
+            except KeyError:
+                s_by_blkse[(sblk, eblk)] = {occ + l - 1}
+            # print(f"vS({sblk},{occ + l - 1})")
+
+    for occ, l in referred:
+        # print(f"referred({occ},{l})")
+        idx = lm.getid(lm.lits.referred, occ, l)
+        sblk = occ // blocksize
+        eblk = (occ + l - 1) // blocksize
+        idy = lm.getid(lm.lits.vY, sblk, eblk)
+        wcnf.append([-idx, idy])
+        # print(f"referred({occ},{l}) -> vY({sblk},{eblk})")
+        ide = lm.getid(lm.lits.vE, occ, (occ + l - 1) // blocksize)
+        ids = lm.getid(lm.lits.vS, occ // blocksize, occ + l - 1)
+        wcnf.append([-idx, ide])  # referred(i,l) -> vE(i,R)
+        # print(f"referred({occ},{l}) -> vE({occ},{eblk})")
+        wcnf.append([-idx, ids])  # referred(i,l) -> vS(L,j)
+        # print(f"referred({occ},{l}) -> vS({sblk},{occ + l - 1})")
+
+    for L1, R1 in ref_by_blkse.keys():
+        for L2, R2 in ref_by_blkse.keys():
+            # case: L1 < L2 < R1 < R2
+            if L1 < L2 and L2 < R1 and R1 < R2:
+                refs1 = ref_by_blkse[(L1, R1)]
+                refs2 = ref_by_blkse[(L2, R2)]
+                if refs1 and refs2:
+                    idy1 = lm.getid(lm.lits.vY, L1, R1)
+                    idy2 = lm.getid(lm.lits.vY, L2, R2)
+                    # print(f"NOT (vY({L1},{R1}) and vY({L2},{R2}))")
+                    wcnf.append([-idy1, -idy2])  # not vY(L1,R1) or not vY(L2,R2)
+            # case L1 = L2 <= R1 = R2
+            elif L1 == L2 and R1 == R2:
+                refs1 = ref_by_blkse[(L1, R1)]
+                refs2 = ref_by_blkse[(L2, R2)]
+                for occ1, l1 in refs1:
+                    for occ2, l2 in refs2:
+                        if (
+                            occ1 < occ2
+                            and occ2 <= occ1 + l1 - 1
+                            and occ1 + l1 < occ2 + l2
+                        ):
+                            idx1 = lm.getid(lm.lits.referred, occ1, l1)
+                            idx2 = lm.getid(lm.lits.referred, occ2, l2)
+                            # print(
+                            #     f"NOT (referred({occ1},{l1}) and referred({occ2},{l2}))"
+                            # )
+                            wcnf.append([-idx1, -idx2])
+            # case L1 = L2 < R1 < R2
+            elif L1 == L2 and L2 < R1 and R1 < R2:
+                elst1 = e_by_blkse[(L1, R1)]
+                elst2 = e_by_blkse[(L2, R2)]
+                for occ1 in elst1:
+                    for occ2 in elst2:
+                        if occ1 < occ2:
+                            ide1 = lm.getid(lm.lits.vE, occ1, R1)
+                            ide2 = lm.getid(lm.lits.vE, occ2, R2)
+                            # print(f"NOT (vE({occ1},{R1}) and vE({occ2},{R2}))")
+                            wcnf.append([-ide1, -ide2])
+            # case L1 < L2 < R1 = R2
+            elif L1 < L2 and L2 < R1 and R1 == R2:
+                slst1 = s_by_blkse[(L1, R1)]
+                slst2 = s_by_blkse[(L2, R2)]
+                for j1 in slst1:
+                    for j2 in slst2:
+                        if j1 < j2:
+                            ids1 = lm.getid(lm.lits.vS, L1, j1)
+                            ids2 = lm.getid(lm.lits.vS, L2, j2)
+                            # print(f"NOT (vS({L1},{j1}) and vS({L2},{j2}))")
+                            wcnf.append([-ids1, -ids2])
+            # case L1 < L2 = R1 < R2
+            elif L1 < L2 and L2 == R1 and R1 < R2:
+                slst1 = s_by_blkse[(L1, R1)]
+                elst2 = e_by_blkse[(L2, R2)]
+                for j1 in slst1:
+                    for occ2 in elst2:
+                        if occ2 <= j1:
+                            ids = lm.getid(lm.lits.vS, L1, j1)
+                            ide = lm.getid(lm.lits.vE, occ2, R2)
+                            # print(f"NOT (vS({L1},{j1}) and vE({occ2},{R2}))")
+                            wcnf.append([-ids, -ide])
+            # case L1 = L2 = R1 < R2
+            elif L1 == L2 and L2 == R1 and R1 < R2:
+                refs1 = ref_by_blkse[(L1, R1)]
+                elst2 = e_by_blkse[(L2, R2)]
+                for occ1, l1 in refs1:
+                    for occ2 in elst2:
+                        if occ1 < occ2 and occ2 <= occ1 + l1 - 1:
+                            idx = lm.getid(lm.lits.referred, occ1, l1)
+                            ide = lm.getid(lm.lits.vE, occ2, R2)
+                            # print(f"NOT (referred({occ1},{l1}) and vE({occ2},{R2}))")
+                            wcnf.append([-idx, -ide])
+            # case L1 < L2 = R1 = R2
+            elif L1 < L2 and L2 == R1 and R1 == R2:
+                slst1 = s_by_blkse[(L1, R1)]
+                refs2 = ref_by_blkse[(L2, R2)]
+                for j1 in slst1:
+                    for occ2, l2 in refs2:
+                        if occ2 <= j1 and j1 < occ2 + l2 - 1:
+                            ids = lm.getid(lm.lits.vS, L1, j1)
+                            idx = lm.getid(lm.lits.referred, occ2, l2)
+                            # print(f"NOT (vS({L1},{j1}) and referred({occ2},{l2}))")
+                            wcnf.append([-ids, -idx])
+    # # // end constraint (7) ###############################
 
     # // start constraint (9) ###############################
     for i in range(0, n):
@@ -278,7 +418,7 @@ def postorder_cmp(x, y):
 def build_slp_aux(nodes, slp):
     root = nodes.pop()
     root_i = root[0]
-    root_j = root[1]
+    # root_j = root[1]
     # print(f"root_i,root_j = {root_i},{root_j}")
     children = []
     while len(nodes) > 0 and nodes[-1][0] >= root_i:
@@ -319,7 +459,7 @@ def slp2str(root, slp):
         res.append(ref)
     else:
         children = slp[root]
-        if ref == None:
+        if ref is None:
             assert len(children) == 2
             res += slp2str(children[0], slp)
             res += slp2str(children[1], slp)
@@ -332,7 +472,6 @@ def slp2str(root, slp):
 
 def recover_slp(text: bytes, pstartl, refs_by_referrer):
     n = len(text)
-    alph = set(text)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
     leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]
     for i in range(len(pstartl) - 1):
@@ -344,10 +483,8 @@ def recover_slp(text: bytes, pstartl, refs_by_referrer):
         nodes.append((0, n, None))
 
     nodes.sort(key=functools.cmp_to_key(postorder_cmp))
-    # print(f"NODES = {nodes}")
     slp = {}
     root = build_slp_aux(nodes, slp)
-    # print(f"SLP = {slp}")
     binarize_slp(root, slp)
     return (root, slp)
 
@@ -358,7 +495,6 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
     """
     total_start = time.time()
     lm, wcnf, phrases, refs_by_referrer = smallest_SLP_WCNF(text)
-
     io.dump_wcnf_and_exit(wcnf, args.dump)
 
     solver = MaxSatWrapper(args.strategy, args.solver, wcnf, args.timeout, args.verbose, logger)
@@ -378,13 +514,13 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
             posl.append(i)
     # print(f"posl={posl}")
     phrasel = []
-    for (occ, l) in phrases:
+    for occ, l in phrases:
         x = lm.getid(lm.lits.phrase, occ, l)
         if x in sol:
             phrasel.append((occ, occ + l))
     # print(f"phrasel={phrasel}")
     refs = {}
-    for (j, l) in refs_by_referrer.keys():
+    for j, l in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             if lm.getid(lm.lits.ref, j, i, l) in sol:
                 refs[j, l] = i
@@ -407,14 +543,15 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
 
     return SLPType((root, slp))
 
+
 if __name__ == "__main__":
-    parser = io.solver_parser('compute a minimum straight line program')
+    parser = io.solver_parser('compute a minimum straight line program fast')
     args = parser.parse_args()
     logger.setLevel(int(args.loglevel))
     text = io.read_input(args)
 
     exp = SLPExp.create()
-    exp.algo = "slp-sat"
+    exp.algo = "slp-sat-fast"
     exp.fill_args(args, text)
 
     slp = smallest_SLP(text, exp)
