@@ -14,12 +14,20 @@ class LogLevel(enum.IntEnum):
     def __str__(self):
         return str(self.name)
 
+def dump_wcnf_and_exit(wcnf, dumpfilename):
+    if dumpfilename:
+        wcnf.to_file(dumpfilename)
+        sys.exit(0)
+
+
+
 def solver_parser(description):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--prefix", type=int, help="parse only a prefix of input", default=0)
     parser.add_argument("--output", type=str, help="output file", default="")
+    parser.add_argument("--dump", type=str, help="dump WCNF to <DUMP> instead of solving", default="")
     parser.add_argument(
         "--loglevel",
 		type=lambda x: LogLevel[x],
