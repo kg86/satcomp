@@ -16,7 +16,7 @@ class LogLevel(enum.IntEnum):
 
 def dump_wcnf_and_exit(wcnf, dumpfilename):
     if dumpfilename:
-        wcnf.to_file(dumpfilename)
+        wcnf.to_file(dumpfilename, compress_with='lzma')
         sys.exit(0)
 
 
