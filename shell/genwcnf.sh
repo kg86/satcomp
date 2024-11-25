@@ -14,8 +14,8 @@ dumpfolderbase="asp_compression_datasets/wcnf/$prefixlength/";
 [[ -d "$rawfolder" ]] || die "Folder $rawfolder should contain all input datasets"
 
 
-dumpfolderbase="asp_compression_datasets/wcnf/$prefixlength/";
 prefixlength="$1"
+dumpfolderbase="asp_compression_datasets/wcnf/$prefixlength/";
 
 echo "using prefix length: $prefixsize"
 echo "input folder: $rawfolder"
@@ -33,6 +33,6 @@ for f in "$rawfolder"/*; do
 		solbase=$(basename "$prg" ".py")
 		dumpfolder="$dumpfolderbase/$solbase"
 		mkdir -p "$dumpfolder"
-		pipenv run python "$prg" --file "$f" --prefix "$prefixlength" --dump "$dumpfolder/$b"
+		pipenv run python "$prg" --file "$f" --prefix "$prefixlength" --dump "$dumpfolder/$b.xz"
 	done
 done
