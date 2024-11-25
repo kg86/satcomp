@@ -5,9 +5,22 @@ function die {
 	exit 1
 }
 
-prefixlength=100
 rawfolder="asp_compression_datasets/raw"
 dumpfolderbase="asp_compression_datasets/wcnf/$prefixlength/";
+
+[[ $# -ne 1 ]] && 
+	die "Usage: $0 prefixsize\nAssume that $rawfolder contains all input datasets\nWrites to folder $dumpfolderbase"
+
+[[ -d "$rawfolder" ]] || die "Folder $rawfolder should contain all input datasets"
+
+
+dumpfolderbase="asp_compression_datasets/wcnf/$prefixlength/";
+prefixlength="$1"
+
+echo "using prefix length: $prefixsize"
+echo "input folder: $rawfolder"
+echo "output folder: $dumpfolderbase"
+
 
 set -x
 set -e
