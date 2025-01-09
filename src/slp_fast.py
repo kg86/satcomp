@@ -1,3 +1,5 @@
+# solution based on idea of Bernardo Subercaseaux
+
 import functools
 import math
 import time
