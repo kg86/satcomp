@@ -5,11 +5,12 @@
 import argparse
 import sys
 import time
+import math
+
 from collections import defaultdict
 from enum import auto
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
 from typing import Dict, Iterator, List, Optional, Tuple
-import math
 
 from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2
@@ -21,33 +22,29 @@ import satcomp.lz77 as lz77
 from satcomp.measure import BiDirExp, BiDirType
 from satcomp.timer import Timer
 
+import typing
+
 import satcomp.base as io
-
-logger = getLogger(__name__)
-handler = StreamHandler()
-handler.setLevel(DEBUG)
-FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
-formatter = Formatter(FORMAT)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-
+from satcomp.satencoding import *
+from satcomp.solver import MaxSatWrapper, MaxSatStrategy
 
 from pysat.card import *
 from pysat.formula import WCNF
 
-def encode_x_less_y(x_vars: list[int], y_vars: list[int], top_id=None, vpool=None):
+def encode_x_less_y(x_vars: typing.List[int], y_vars: typing.List[int], lm, identifier):
     # PySAT things for auxiliary variables
-    assert top_id is not None or vpool is not None
-    if vpool is None:
-        vpool = IDPool(start_from=top_id)
-        
+    assert lm is not None
     assert len(x_vars) == len(y_vars)
     n = len(x_vars)
     
     added_clauses = []
+    for i in range(n):
+      lm.newid(lm.lits.depthless, identifier, i)
+      lm.newid(lm.lits.deptheq, identifier, i)
+
     
-    x_lt_y = lambda i : vpool.id(f"x_less_y_{i}")
-    x_eq_y = lambda i : vpool.id(f"x_eq_y_{i}")
+    x_lt_y = lambda i : lm.getid(lm.lits.depthless, identifier, i)
+    x_eq_y = lambda i : lm.getid(lm.lits.deptheq, identifier, i)
     
     # Base cases:
         # x_less_y_{0} <-> (x_0 < y_0)
@@ -86,9 +83,17 @@ def encode_x_less_y(x_vars: list[int], y_vars: list[int], top_id=None, vpool=Non
       
     
     # we want to enforce x_less_y_{n-1}.
-    added_clauses.append([x_lt_y(n-1)])
+    # added_clauses.append([x_lt_y(n-1)])
 
-    return added_clauses
+    return (x_lt_y(n-1), added_clauses)
+
+logger = getLogger(__name__)
+handler = StreamHandler()
+handler.setLevel(DEBUG)
+FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
+formatter = Formatter(FORMAT)
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 class BiDirLiteral(Enum):
@@ -97,9 +102,13 @@ class BiDirLiteral(Enum):
     auxlit = Literal.auxlit
     pstart = auto()  # i: true iff T[i] is start of phrase
     ref = auto()  # (i,j) true iff position T[i] references position T[j]
-    tref = (
-        auto()
-    )  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
+    depth = auto()
+    deptheq = auto()
+    depthless = auto()
+
+    # tref = (
+    #     auto()
+    # )  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
 
 
 class BiDirLiteralManager(LiteralManager):
@@ -185,10 +194,10 @@ def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
         if sol[lm.getid(*fbeg_key)]:
             pinfo[i].append(str(fbeg_key))
 
-        for j in occ_others(occ, text, i):
-            key = (lm.lits.tref, i, j)
-            if sol[lm.getid(*key)]:
-                pinfo[i].append(str(key))
+        # for j in occ_others(occ, text, i):
+        #     key = (lm.lits.tref, i, j)
+        #     if sol[lm.getid(*key)]:
+        #         pinfo[i].append(str(key))
     for i in range(n):
         logger.debug(f"i={i} " + ", ".join(pinfo[i]))
 
@@ -273,7 +282,7 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
             # ref(i, j) is true iff i refers to j
             lits.append(lm.newid(lm.lits.ref, i, j))
             # tref(i, j) is true iff i eventualy refers to j
-            lits.append(lm.newid(lm.lits.tref, i, j))
+            # lits.append(lm.newid(lm.lits.tref, i, j))
     ############################################################################
 
     logger.debug("each position has atmost one reference")
@@ -281,39 +290,43 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
         refi = [lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)]
         wcnf.extend(CardEnc.atmost(refi, bound=1, vpool=lm.vpool))
 
-    binary_length = int(math.log2(n)+1)
+    binary_length = int(math.ceil(math.log2(n)))
+    # print(f"BITS: {binary_length}")
+    # binary_length = 2
 
     for i in range(n):
-        i_vars = [lm.vpool.id(f"{i}_{b}") for b in range(binary_length)]
+        i_vars = [lm.newid(lm.lits.depth, i, b) for b in range(binary_length)]
+
+    for i in range(n):
+        i_vars = [lm.getid(lm.lits.depth, i, b) for b in range(binary_length)]
         for j in occ_others(occ1, text, i):
-            j_vars = [lm.vpool.id(f"{j}_{b}") for b in range(binary_length)]
+            j_vars = [lm.getid(lm.lits.depth, j, b) for b in range(binary_length)]
             refij = lm.getid(lm.lits.ref, i, j)
-            for clause in encode_x_less_y(i_vars, j_vars, vpool=lm.vpool):
-                wcnf.append([-refij] + clause)
+            (varid,clauses) = encode_x_less_y(i_vars, j_vars, lm=lm, identifier = f"depthcomp_{i}_{j}")
+            wcnf.extend(clauses)
+            wcnf.append([-refij, varid])
 
-		## TODO: probably not needed!
-    for c in occ1.keys():
-        for i in occ1[c]:
-            for j in occ_others(occ1, text, i):
-                # if ref(i,j) -> tref(i,j)
-                wcnf.append(
-                    [-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.tref, i, j)]
-                )
-                for k in occ1[c]:
-                    if i != k and j != k:
-                        wcnf.append(  # if tref(i,k) and ref(k,j) -> tref(i,j)
-                            [
-                                -lm.getid(lm.lits.tref, i, k),
-                                -lm.getid(lm.lits.ref, k, j),
-                                lm.getid(lm.lits.tref, i, j),
-                            ]
-                        )
+    # for c in occ1.keys():
+    #     for i in occ1[c]:
+    #         for j in occ_others(occ1, text, i):
+    #             # if ref(i,j) -> tref(i,j)
+    #             wcnf.append(
+    #                 [-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.tref, i, j)]
+    #             )
+    #             for k in occ1[c]:
+    #                 if i != k and j != k:
+    #                     wcnf.append(  # if tref(i,k) and ref(k,j) -> tref(i,j)
+    #                         [
+    #                             -lm.getid(lm.lits.tref, i, k),
+    #                             -lm.getid(lm.lits.ref, k, j),
+    #                             lm.getid(lm.lits.tref, i, j),
+    #                         ]
+    #                     )
 
-		#TODO: not needed!
-    # acyclicity of tref: If tref(i,j) -> not tref(j,i)
-    for i in range(n):
-        for j in occ_others(occ1, text, i):
-            wcnf.append([-lm.getid(lm.lits.tref, i, j), -lm.getid(lm.lits.tref, j, i)])
+    # # acyclicity of tref: If tref(i,j) -> not tref(j,i)
+    # for i in range(n):
+    #     for j in occ_others(occ1, text, i):
+    #         wcnf.append([-lm.getid(lm.lits.tref, i, j), -lm.getid(lm.lits.tref, j, i)])
 
     # a root must be a beginning of a phrase: root(i) -> pstart(i)
     # sum_j ref(i,j) = 0 => pstart(i)
@@ -375,11 +388,12 @@ def min_bidirectional(
     if exp:
         exp.time_prep = time.time() - total_start
 
-    # solver = RC2(wcnf, verbose=3)
-    solver = RC2(wcnf)
-    sol = solver.compute()
+    solver = MaxSatWrapper(args.strategy, args.solver, wcnf, args.timeout, args.verbose, logger)
+    solver.compute()
 
-    assert sol is not None
+    assert solver.model is not None
+    sol = solver.model
+
     sold = get_sold(sol)
 
     show_sol(lm, sold, text)
@@ -390,9 +404,11 @@ def min_bidirectional(
     logger.debug(f"decode={decode_bms(factors)}")
     assert decode_bms(factors) == text
     if exp:
+        exp.is_satisfied = solver.is_satisfied
+        exp.is_optimal = solver.found_optimum
         exp.time_total = time.time() - total_start
-        exp.factors = factors
-        exp.factor_size = len(factors)
+        exp.output = factors
+        exp.output_size = len(factors)
         exp.fill(wcnf)
     return factors
 
