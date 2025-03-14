@@ -21,6 +21,8 @@ from satcomp.measure import BiDirExp, BiDirType
 from satcomp.timer import Timer
 
 import satcomp.base as io
+from satcomp.satencoding import *
+from satcomp.solver import MaxSatWrapper, MaxSatStrategy
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -303,11 +305,12 @@ def min_bidirectional(
     if exp:
         exp.time_prep = time.time() - total_start
 
-    # solver = RC2(wcnf, verbose=3)
-    solver = RC2(wcnf)
-    sol = solver.compute()
+    solver = MaxSatWrapper(args.strategy, args.solver, wcnf, args.timeout, args.verbose, logger)
+    solver.compute()
 
-    assert sol is not None
+    assert solver.model is not None
+    sol = solver.model
+
     sold = get_sold(sol)
 
     show_sol(lm, sold, text)
@@ -318,9 +321,11 @@ def min_bidirectional(
     logger.debug(f"decode={decode_bms(factors)}")
     assert decode_bms(factors) == text
     if exp:
+        exp.is_satisfied = solver.is_satisfied
+        exp.is_optimal = solver.found_optimum
         exp.time_total = time.time() - total_start
-        exp.factors = factors
-        exp.factor_size = len(factors)
+        exp.output = factors
+        exp.output_size = len(factors)
         exp.fill(wcnf)
     return factors
 
