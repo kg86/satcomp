@@ -31,20 +31,43 @@ from satcomp.solver import MaxSatWrapper, MaxSatStrategy
 from pysat.card import *
 from pysat.formula import WCNF
 
-def encode_x_less_y(x_vars: typing.List[int], y_vars: typing.List[int], lm, identifier):
+def create_height_vector(i : int, binary_length : int, lm):
+	if not lm.contains(lm.lits.depth, i, 0):
+		return [lm.newid(lm.lits.depth, i, b) for b in range(binary_length)]
+	return [lm.getid(lm.lits.depth, i, b) for b in range(binary_length)]
+
+#def encode_x_less_y(x_vars: typing.List[int], y_vars: typing.List[int], lm, identifier):
+def encode_x_less_y(x : int, y : int, binary_length : int, lm):
     # PySAT things for auxiliary variables
     assert lm is not None
-    assert len(x_vars) == len(y_vars)
-    n = len(x_vars)
+
+    x_vars = create_height_vector(x, binary_length, lm)
+    y_vars = create_height_vector(y, binary_length, lm)
+    assert len(x_vars) == len(y_vars) == binary_length
     
     added_clauses = []
-    for i in range(n):
-      lm.newid(lm.lits.depthless, identifier, i)
-      lm.newid(lm.lits.deptheq, identifier, i)
+
+    x_lt_y = lambda bit : lm.getid(lm.lits.depthless, x, y, bit)
+    y_lt_x = lambda bit : lm.getid(lm.lits.depthless, y, x, bit)
+		#optimization: use symmetry
+    x_eq_y = lambda bit : lm.getid(lm.lits.deptheq, min(x,y), max(x,y), bit)
+
+		#optimization: use symmetry
+    if lm.contains(lm.lits.depthless, y, x, 0):
+      i = binary_length-1
+      lm.newid(lm.lits.depthless, x, y, i)
+      added_clauses.append([-x_eq_y(i), -x_lt_y(i)])
+      added_clauses.append([-y_lt_x(i), -x_lt_y(i)])
+      added_clauses.append([x_eq_y(i), x_lt_y(i), -y_lt_x(i)])
+      added_clauses.append([x_eq_y(i), x_lt_y(i), -y_lt_x(i)])
+      return (x_lt_y(i), added_clauses)
+
+    for bit in range(binary_length):
+      lm.newid(lm.lits.depthless, x, y, bit)
+      if not lm.contains(lm.lits.deptheq, min(x,y), max(x,y), bit):
+        lm.newid(lm.lits.deptheq, min(x,y), max(x,y), bit)
 
     
-    x_lt_y = lambda i : lm.getid(lm.lits.depthless, identifier, i)
-    x_eq_y = lambda i : lm.getid(lm.lits.deptheq, identifier, i)
     
     # Base cases:
         # x_less_y_{0} <-> (x_0 < y_0)
@@ -63,7 +86,7 @@ def encode_x_less_y(x_vars: typing.List[int], y_vars: typing.List[int], lm, iden
     added_clauses.append([-x_eq_y(0), x_vars[0], -y_vars[0]])
     added_clauses.append([-x_eq_y(0), -x_vars[0], y_vars[0]])
     
-    for i in range(1, n):
+    for i in range(1, binary_length):
         added_clauses.append([-x_lt_y(i-1), x_lt_y(i)])
         #  (x_eq_y_{i-1} & -x_{i} & y_{i}) -> x_less_y_{i}
         added_clauses.append([-x_eq_y(i-1), x_vars[i], -y_vars[i], x_lt_y(i)])
@@ -85,7 +108,7 @@ def encode_x_less_y(x_vars: typing.List[int], y_vars: typing.List[int], lm, iden
     # we want to enforce x_less_y_{n-1}.
     # added_clauses.append([x_lt_y(n-1)])
 
-    return (x_lt_y(n-1), added_clauses)
+    return (x_lt_y(binary_length-1), added_clauses)
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -295,15 +318,10 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     # binary_length = 2
 
     for i in range(n):
-        i_vars = [lm.newid(lm.lits.depth, i, b) for b in range(binary_length)]
-
-    for i in range(n):
-        i_vars = [lm.getid(lm.lits.depth, i, b) for b in range(binary_length)]
         for j in occ_others(occ1, text, i):
-            j_vars = [lm.getid(lm.lits.depth, j, b) for b in range(binary_length)]
-            refij = lm.getid(lm.lits.ref, i, j)
-            (varid,clauses) = encode_x_less_y(i_vars, j_vars, lm=lm, identifier = f"depthcomp_{i}_{j}")
+            (varid,clauses) = encode_x_less_y(i, j, binary_length, lm=lm)
             wcnf.extend(clauses)
+            refij = lm.getid(lm.lits.ref, i, j)
             wcnf.append([-refij, varid])
 
     # for c in occ1.keys():
