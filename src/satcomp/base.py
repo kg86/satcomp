@@ -15,6 +15,16 @@ class LogLevel(enum.IntEnum):
         return str(self.name)
 
 def dump_wcnf_and_exit(wcnf, dumpfilename):
+    max_clause = max([len(l) for l in wcnf.hard])
+    print(f"vars={wcnf.nv}")
+    print(f"hard clauses={len(wcnf.hard)}")
+    print(f"soft clauses={len(wcnf.soft)}")
+    print(f"maxclause={max_clause}")
+    var_in_clause_sum=0
+    for i in range(0,len(wcnf.hard)):
+        var_in_clause_sum+=len(wcnf.hard[i])
+    print(f"totalvars={var_in_clause_sum}")
+
     if dumpfilename:
         wcnf.to_file(dumpfilename, compress_with='lzma')
         sys.exit(0)

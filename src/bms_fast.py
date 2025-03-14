@@ -295,6 +295,9 @@ def min_bidirectional(
     """
     total_start = time.time()
     lm, wcnf = bidirectional_WCNF(text)
+
+    io.dump_wcnf_and_exit(wcnf, args.dump)
+
     for lname in lm.nvar.keys():
         logger.info(f"# of [{lname}] literals  = {lm.nvar[lname]}")
 
