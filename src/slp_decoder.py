@@ -1,10 +1,11 @@
 from satcomp.measure import SLPType
 import satcomp.base as io
+import typing
 
 #TODO: grammar could derive from SLPType, but then pyright gets crazy
 # def decode_slp(grammar : SLPType) -> str:
 
-def decode_slp(output) -> list[int]:
+def decode_slp(output) -> typing.List[int]:
     grammar = eval(output)
     root = grammar[0]
     # print(root)

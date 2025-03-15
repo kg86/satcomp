@@ -58,8 +58,8 @@ def encode_x_less_y(x : int, y : int, binary_length : int, lm):
       lm.newid(lm.lits.depthless, x, y, i)
       added_clauses.append([-x_eq_y(i), -x_lt_y(i)])
       added_clauses.append([-y_lt_x(i), -x_lt_y(i)])
-      added_clauses.append([x_eq_y(i), x_lt_y(i), -y_lt_x(i)])
-      added_clauses.append([x_eq_y(i), x_lt_y(i), -y_lt_x(i)])
+      # added_clauses.append([x_eq_y(i), x_lt_y(i), -y_lt_x(i)])
+      added_clauses.append([x_eq_y(i), x_lt_y(i), y_lt_x(i)])
       return (x_lt_y(i), added_clauses)
 
     for bit in range(binary_length):
