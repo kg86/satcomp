@@ -1,6 +1,6 @@
 #!/bin/zsh
 local -r kTempDir="$(mktemp -d)"
-trap 'rm -rf -- "$kTempDir"' EXIT
+# trap 'rm -rf -- "$kTempDir"' EXIT
 file="$kTempDir/fib06"
 echo 'abaababaabaababaababa' > "$file"
 outfile="$kTempDir/outfile"
@@ -12,9 +12,15 @@ for strategy in RC2 LSU FM; do
 		pipenv run python src/slp_decoder.py --json "$outfile"
 	pipenv run python src/bms_solver.py --file "$file"       --strategy "$strategy" --output "$outfile" &&
 		pipenv run python src/bms_decoder.py --json "$outfile"
+	pipenv run python src/bms_fast.py --file "$file"       --strategy "$strategy" --output "$outfile" &&
+		pipenv run python src/bms_decoder.py --json "$outfile"
+	pipenv run python src/bms_plus.py --file "$file"       --strategy "$strategy" --output "$outfile" &&
+		pipenv run python src/bms_decoder.py --json "$outfile"
 
 	pipenv run python src/slp_solver.py --file "$file"       --strategy "$strategy" | pipenv run python src/slp_verify.py --file "$file"
 	pipenv run python src/bms_solver.py --file "$file"       --strategy "$strategy" | pipenv run python src/bms_verify.py --file "$file"
+	pipenv run python src/bms_fast.py --file "$file"       --strategy "$strategy" | pipenv run python src/bms_verify.py --file "$file"
+	pipenv run python src/bms_plus.py --file "$file"       --strategy "$strategy" | pipenv run python src/bms_verify.py --file "$file"
 	pipenv run python src/attractor_solver.py --file "$file" --strategy "$strategy" | pipenv run python src/attractor_verify.py --file "$file"
 
 done
