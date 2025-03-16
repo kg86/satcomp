@@ -7,6 +7,7 @@ from enum import auto
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
 from typing import Optional
 
+import os 
 
 import satcomp.base as io
 import satcomp.stralgo as stralgo
@@ -558,3 +559,5 @@ if __name__ == "__main__":
     slp = smallest_SLP(text, exp)
 
     io.write_json(args.output, exp)
+    if args.timeout > 0: #hack: program seems not to exit with --timeout
+      os._exit(0)

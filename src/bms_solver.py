@@ -486,5 +486,5 @@ if __name__ == "__main__":
     # exp.output = factors_sol
     # exp.output_size = len(factors_sol)
     io.write_json(args.output, exp)
-
-
+    if args.timeout > 0: #hack: program seems not to exit with --timeout
+      os._exit(0)
