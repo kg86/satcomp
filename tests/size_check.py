@@ -15,11 +15,12 @@ algos = { "attractor" : ["attractor_solver"],
     "slp" : ["slp_solver", "slp_fast"]
     }
 
+maxsat_strategy = ['RC2', 'LSU', 'FM']
 
 def compute_sizes(filename, measure) -> typing.List[int]:
     assert measure in measures
     assert measure in algos
-    cmds = [f"pipenv run python src/{algo}.py --file {filename} | jq '.output_size'" for algo in algos[measure]]
+    cmds = [f"pipenv run python src/{algo}.py --file {filename} --strategy {strategy} | jq '.output_size'" for algo in algos[measure] for strategy in maxsat_strategy]
     res = [int(subprocess.check_output(cmd, shell=True).strip().decode("utf8")) for cmd in cmds]
     return res
 

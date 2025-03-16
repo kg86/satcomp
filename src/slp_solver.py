@@ -414,8 +414,7 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
 if __name__ == "__main__":
     parser = io.solver_parser('compute a minimum straight line program')
     args = parser.parse_args()
-    logger.setLevel(int(args.loglevel))
-    text = io.read_input(args)
+    text = io.solver_initialize(args, logger)
 
     exp = SLPExp.create()
     exp.algo = "slp-sat"
