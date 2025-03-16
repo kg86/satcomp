@@ -20,7 +20,6 @@ from bms_verify import decode_bms
 from satcomp.satencoding import *
 import satcomp.lz77 as lz77
 from satcomp.measure import BiDirExp, BiDirType
-from satcomp.timer import Timer
 
 import typing
 
@@ -500,11 +499,7 @@ if __name__ == "__main__":
         default=[],
     )
     args = parser.parse_args()
-    logger.setLevel(int(args.loglevel))
-    text = io.read_input(args)
-    logger.info(text)
-
-    timer = Timer()
+    text = io.solver_initialize(args, logger)
 
     exp = BiDirExp.create()
     exp.fill_args(args, text)

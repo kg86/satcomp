@@ -3,6 +3,8 @@ import logging
 import enum
 from typing import Any
 from satcomp.solver import MaxSatStrategy, SolverType
+import signal
+import resource
 
 class LogLevel(enum.IntEnum):
     CRITICAL = logging.CRITICAL,
@@ -37,6 +39,9 @@ def solver_parser(description):
     parser.add_argument("--prefix", type=int, help="parse only a prefix of input", default=0)
     parser.add_argument("--output", type=str, help="output file", default="")
     parser.add_argument("--dump", type=str, help="dump WCNF to <DUMP> instead of solving", default="")
+    parser.add_argument("--maxtime", type=int, help="number of seconds after which execution aborts (0 = no restriction)", default=0)
+    parser.add_argument("--maxmem", type=int, help="maximum allowed memory in bytes before abortion (0 = no restriction)", default=0)
+
     parser.add_argument(
         "--loglevel",
 		type=lambda x: LogLevel[x],
@@ -71,6 +76,25 @@ def solver_parser(description):
         default=0,
     )
     return parser
+
+def time_exceeded(signo, frame):
+    print("TIME EXCEEDED")
+    raise SystemExit(1)
+
+
+def solver_initialize(args, logger):
+    logger.setLevel(int(args.loglevel))
+    text = read_input(args)
+    logger.info(text)
+
+    if args.maxtime > 0:
+        resource.setrlimit(resource.RLIMIT_CPU, (args.maxtime, args.maxtime))
+        signal.signal(signal.SIGXCPU, time_exceeded)
+    if args.maxmem > 0:
+            # soft, hard = resource.getrlimit(resource.RLIMIT_AS) 
+            #     resource.setrlimit(resource.RLIMIT_AS, (maxsize, hard)) 
+        resource.setrlimit(resource.RLIMIT_AS, (args.maxmem, args.maxmem))
+    return text
 
 def verify_parser(description):
     parser = argparse.ArgumentParser(description=description)

@@ -237,8 +237,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    logger.setLevel(int(args.loglevel))
-    text = io.read_input(args)
+    text = io.solver_initialize(args, logger)
     exp = AttractorExp.create()
     exp.algo = "attractor-sat"
     exp.fill_args(args, text)

@@ -474,9 +474,7 @@ if __name__ == "__main__":
         default=[],
     )
     args = parser.parse_args()
-    logger.setLevel(int(args.loglevel))
-    text = io.read_input(args)
-    logger.info(text)
+    text = io.solver_initialize(args, logger)
 
     timer = Timer()
 
