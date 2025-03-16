@@ -8,6 +8,7 @@ import time
 import functools
 from enum import auto
 import sys
+import os
 
 from satcomp.measure import SLPType, SLPExp
 
@@ -423,3 +424,5 @@ if __name__ == "__main__":
     slp = smallest_SLP(text, exp)
 
     io.write_json(args.output, exp)
+    if args.timeout > 0: #hack: program seems not to exit with --timeout
+      os._exit(0)
