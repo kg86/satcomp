@@ -14,6 +14,7 @@ MAXTIME = 3600
 OUTDIR="."
 MAXMEM=4*1024*1024*1024
 MAXPREFIX = 100000
+LSUTIMEOUT = MAXTIME-600
 
 measures = ["attractor", "bidirectional", "slp"]
 
@@ -23,9 +24,13 @@ algos = { "attractor" : ["attractor_solver"],
 		}
 
 maxsat_strategy = ['RC2', 'LSU', 'FM']
+satsolvers = ['Glucose4', 'Cadical']
 
 def getinstances(filename : str):
-	return [ (f'{os.path.basename(filename)}_{algo}_{strategy}', ['pipenv', 'run', 'python', f'src/{algo}.py', '--file', filename, '--strategy', strategy, '--maxtime', MAXTIME, '--maxmem', MAXMEM]) for measure in algos.keys() for algo in algos[measure] for strategy in maxsat_strategy]
+	allcombis = ((solver,strategy) for solver in satsolvers for strategy in maxsat_strategy)
+	combis = filter(lambda pair: (pair[0],pair[1]) != ('Cadical', 'LSU'), allcombis)
+	instances = [ (f'{os.path.basename(filename)}_{algo}_{solver}_{strategy}', ['pipenv', 'run', 'python', f'src/{algo}.py', '--file', filename, '--solver', solver, '--strategy', strategy, '--maxtime', MAXTIME, '--maxmem', MAXMEM]) for measure in algos.keys() for algo in algos[measure] for (solver,strategy) in combis]
+	return instances + [(f'{os.path.basename(filename)}_{algo}_Glucose4_LSU_approx', ['pipenv', 'run', 'python', f'src/{algo}.py', '--file', filename, '--solver', 'Glucose4', '--strategy', 'LSU', '--maxtime', MAXTIME, '--maxmem', MAXMEM, '--timeout', LSUTIMEOUT]) for measure in algos.keys() for algo in algos[measure]]
 
 def scalingexperiment(filename : str):
 	candidates = getinstances(filename)
