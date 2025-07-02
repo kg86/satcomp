@@ -406,7 +406,7 @@ if __name__ == "__main__":
 
     exp = BiDirExp.create()
     exp.fill_args(args, text)
-    exp.algo = "bms-sat"
+    exp.algo = "bms-sat-fast"
 
     factors_sol = min_bidirectional(text, exp, args.contains)
     # exp.output = factors_sol

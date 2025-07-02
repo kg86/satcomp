@@ -13,7 +13,7 @@ from pathlib import Path
 MAXTIME = 3600
 OUTDIR="."
 MAXMEM=4*1024*1024*1024
-MAXPREFIX = 100000
+MAXPREFIX = 1000
 LSUTIMEOUT = MAXTIME-600
 
 measures = ["attractor", "bidirectional", "slp"]
@@ -28,16 +28,17 @@ satsolvers = ['Glucose4', 'Cadical']
 
 def getinstances(filename : str):
 	allcombis = ((solver,strategy) for solver in satsolvers for strategy in maxsat_strategy)
-	combis = filter(lambda pair: (pair[0],pair[1]) != ('Cadical', 'LSU'), allcombis)
+	combis = list(filter(lambda pair: (pair[0],pair[1]) != ('Cadical', 'LSU'), allcombis))
 	instances = [ (f'{os.path.basename(filename)}_{algo}_{solver}_{strategy}', ['pipenv', 'run', 'python', f'src/{algo}.py', '--file', filename, '--solver', solver, '--strategy', strategy, '--maxtime', MAXTIME, '--maxmem', MAXMEM]) for measure in algos.keys() for algo in algos[measure] for (solver,strategy) in combis]
-	return instances + [(f'{os.path.basename(filename)}_{algo}_Glucose4_LSU_approx', ['pipenv', 'run', 'python', f'src/{algo}.py', '--file', filename, '--solver', 'Glucose4', '--strategy', 'LSU', '--maxtime', MAXTIME, '--maxmem', MAXMEM, '--timeout', LSUTIMEOUT]) for measure in algos.keys() for algo in algos[measure]]
+	return instances
+#	return instances + [(f'{os.path.basename(filename)}_{algo}_Glucose4_LSU_approx', ['pipenv', 'run', 'python', f'src/{algo}.py', '--file', filename, '--solver', 'Glucose4', '--strategy', 'LSU', '--maxtime', MAXTIME, '--maxmem', MAXMEM, '--timeout', LSUTIMEOUT]) for measure in algos.keys() for algo in algos[measure]]
 
 def scalingexperiment(filename : str):
 	candidates = getinstances(filename)
 	isBeaten = {}
 	for (candidatename, _) in candidates:
 		isBeaten[candidatename] = False
-	for prefix in range(10, MAXPREFIX, 10):
+	for prefix in range(50, MAXPREFIX, 25):
 		if False not in isBeaten.values():
 			break
 		for (candidatename, candidatecmd) in candidates:
