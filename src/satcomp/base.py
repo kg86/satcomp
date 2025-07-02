@@ -171,7 +171,7 @@ def decode_functor(decoder, description : str):
         with open(args.output, "wb") as ostream:
             ostream.write(decodedtext)
     else:
-        sys.stdout.write(decodedtext)
+        sys.stdout.buffer.write(decodedtext)
 
 
 def verify_functor(verificator, description : str):

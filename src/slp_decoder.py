@@ -12,7 +12,7 @@ def decode_slp(output) -> typing.List[int]:
     text = [0 for _ in range(root[1])]
     assigned = [False for _ in range(root[1])]
     slp = grammar[1]
-    # print(f"SLP = {slp}")
+    #print(f"SLP = {slp}")
 
     slprefdict = dict()
     for tup in slp.keys():
@@ -81,5 +81,6 @@ def decode_slp(output) -> typing.List[int]:
 
 
 if __name__ == "__main__":
-    io.decode_functor(lambda output: ''.join(map(lambda x: chr(x), decode_slp(output))) , 'decode an SLP')
+    #io.decode_functor(lambda output: ''.join(map(lambda x: chr(x), decode_slp(output))) , 'decode an SLP')
+    io.decode_functor(lambda output: bytes(decode_slp(output)) , 'decode an SLP')
 

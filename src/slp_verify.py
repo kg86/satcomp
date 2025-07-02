@@ -21,4 +21,5 @@ if __name__ == "__main__":
     if error_code == 0:
         print("output correct!")
     else:
-        sys.exit("not a valid grammar for the input")
+        print("not a valid grammar for the input")
+        sys.exit(1)
