@@ -25,15 +25,24 @@ fi
 #check whether $datasetFolder is nonempty
 if [ ! -d "$datasetFolder/whole" ]; then
 	cd $datasetFolder || die "Failed to change directory to $datasetFolder"
+
+	if [ ! -d "$datasetFolder/artificial_datasets" ]; then
+		git clone https://github.com/koeppl/artificial_datasets || die "Failed to clone canterbury-corpus"
+	fi
+	cp "$datasetFolder/artificial_datasets"/* $wholeFolder/ || die "Failed to copy artificial_datasets files to $wholeFolder directory"
+
 	if [ ! -d "$datasetFolder/canterbury-corpus" ]; then
 		git clone https://github.com/pfalcon/canterbury-corpus || die "Failed to clone canterbury-corpus"
 	fi
 	mkdir whole || die "Failed to create directory whole"
+
 	cd canterbury-corpus
 	cp canterbury/* $wholeFolder/ || die "Failed to copy canterbury-corpus files to $wholeFolder directory"
 	cp calgary/* $wholeFolder/ || die "Failed to copy calgary-corpus files to $wholeFolder directory"
 	cp large/* $wholeFolder/ || die "Failed to copy large-corpus files to $wholeFolder directory"
 	cp artificial/* $wholeFolder/ || die "Failed to copy artificial-corpus files to $wholeFolder directory"
+
+
 	rm $wholeFolder/SHA1SUM
 fi
 
