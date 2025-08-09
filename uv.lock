@@ -421,22 +421,22 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dataclasses-json", specifier = "==0.5.7" },
-    { name = "joblib", specifier = "==1.1.0" },
-    { name = "matplotlib", specifier = "==3.5.2" },
-    { name = "numpy", specifier = "==1.23.0" },
-    { name = "pandas", specifier = "==1.4.3" },
-    { name = "python-sat", specifier = "==0.1.7.dev18" },
-    { name = "sympy", specifier = "==1.10.1" },
-    { name = "tqdm", specifier = "==4.64.0" },
+    { name = "dataclasses-json", specifier = ">=0.5.7" },
+    { name = "joblib", specifier = ">=1.1.0" },
+    { name = "matplotlib", specifier = ">=3.5.2" },
+    { name = "numpy", specifier = ">=1.23.0" },
+    { name = "pandas", specifier = ">=1.4.3" },
+    { name = "python-sat", specifier = ">=0.1.7.dev18" },
+    { name = "sympy", specifier = ">=1.10.1" },
+    { name = "tqdm", specifier = ">=4.64.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "black", specifier = "==22.6.0" },
-    { name = "flake8", specifier = "==4.0.1" },
-    { name = "isort", specifier = "==5.10.1" },
-    { name = "pyright", specifier = "==1.1.256" },
+    { name = "black", specifier = ">=22.6.0" },
+    { name = "flake8", specifier = ">=4.0.1" },
+    { name = "isort", specifier = ">=5.10.1" },
+    { name = "pyright", specifier = ">=1.1.256" },
 ]
 
 [[package]]
