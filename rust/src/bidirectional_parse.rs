@@ -50,8 +50,7 @@ pub fn decode(parse: &[BDPhrase]) -> Option<Vec<u8>> {
 
     let mut cnt = 0;
     let mut top_order = Vec::new();
-    while !stack.is_empty() {
-        let u = stack.pop().unwrap();
+    while let Some(u) = stack.pop() {
         top_order.push(u);
         if source[u] as usize != u {
             indegree[source[u] as usize] -= 1;
