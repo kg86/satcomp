@@ -14,6 +14,10 @@ Computing NP-hard Repetitiveness Measures via MAX-SAT. In Proc. 30th Annual Euro
 The implementation reported in the ESA 2022 paper is [here](https://github.com/kg86/satcomp/releases/tag/ESA2022).
 The full version of this paper can be found [here](https://arxiv.org/abs/2207.02571).
 
+## Limitations
+
+This software has only been verified to work on Ubuntu. 
+
 ## Build instructions
 
 1. Install `pipenv` and `python3.8` on your OS.
