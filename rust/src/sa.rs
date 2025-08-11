@@ -28,9 +28,7 @@ pub fn lcp_array(s: &[u8], sa: &[i32], rank: &[i32]) -> Vec<i32> {
             }
             lcp[x as usize] = k as i32;
         }
-        if k > 0 {
-            k -= 1;
-        }
+        k = k.saturating_sub(1);
     }
     //println!("{:?}", lcp);
     lcp

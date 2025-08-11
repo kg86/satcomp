@@ -14,6 +14,10 @@ Computing NP-hard Repetitiveness Measures via MAX-SAT. In Proc. 30th Annual Euro
 The implementation reported in the ESA 2022 paper is [here](https://github.com/kg86/satcomp/releases/tag/ESA2022).
 The full version of this paper can be found [here](https://arxiv.org/abs/2207.02571).
 
+## Limitations
+
+This software has only been verified to work on Ubuntu. 
+
 ## Build instructions
 
 1. Install `pipenv` and `python3.8` on your OS.
@@ -25,6 +29,30 @@ pipenv sync
 This installs package dependencies like `python-sat` locally to the repository, which are needed for running the Python scripts.
 If the command fails, it is likely that you have a different minor version of `Python3` installed.
 In most of the cases, you can exchange the line `python_version` in `Pipfile` with your Python version.
+
+### Alternative Installation using uv
+
+You can also install the package using [`uv`](https://docs.astral.sh/uv/).
+`uv` is a tool to create isolated Python environments, similar to `pipenv`,
+but it does not require a specific Python version to be installed on your system.
+It is also faster than `pip` in resolving dependencies.
+Thus, we recommend using `uv` in general.
+
+After installing `uv`, run the following command at the root of this repository.
+
+```console
+uv sync
+```
+
+This will create a virtual environment in the `.venv` directory.
+
+Once the installation is done,
+you can run the Python scripts using `uv` instead of `pipenv`, such as:
+
+```diff
+- pipenv run python src/slp_solver.py --str "abracadabra"
++ uv run src/slp_solver.py --str "abracadabra"
+```
 
 ## Automatic Evaluation
 

@@ -1,0 +1,24 @@
+[project]
+name = "satcomp"
+version = "0.1.0"
+description = "Computing NP-hard Repetitiveness Measures via MAX-SAT"
+readme = "README.md"
+requires-python = ">=3.8,<3.9"
+dependencies = [
+    "python-sat>=0.1.7.dev18",
+    "matplotlib>=3.5.2",
+    "sympy>=1.10.1",
+    "dataclasses-json>=0.5.7",
+    "joblib>=1.1.0",
+    "pandas>=1.4.3",
+    "numpy>=1.23.0",
+    "tqdm>=4.64.0"
+]
+
+[dependency-groups]
+dev = [
+    "black>=22.6.0",
+    "pyright>=1.1.256",
+    "flake8>=4.0.1",
+    "isort>=5.10.1"
+]
