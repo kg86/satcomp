@@ -70,7 +70,7 @@ def bd_info(bd: BiDirType, text: bytes) -> str:
             f"len={len(bd)}: factors={bd}",
             f"len of text = {len(text)}",
             f"decode={decode(bd)}",
-            f"equals original? {decode(bd)==text}",
+            f"equals original? {decode(bd) == text}",
         ]
     )
 

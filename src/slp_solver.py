@@ -59,7 +59,7 @@ class SLPLiteralManager(LiteralManager):
             SLPLiteral.ref: self.verify_ref,
             SLPLiteral.referred: self.verify_referred,
         }
-        super().__init__(self.lits)
+        super().__init__(self.lits)  # type: ignore
 
     def newid(self, *obj) -> int:
         res = super().newid(*obj)
@@ -160,12 +160,12 @@ def smallest_SLP_WCNF(text: bytes):
                     if not (j, l) in refs_by_referrer:
                         refs_by_referrer[j, l] = []
                     refs_by_referrer[j, l].append(i)
-    for (i, l) in refs_by_referred.keys():
+    for i, l in refs_by_referred.keys():
         lm.newid(lm.lits.referred, i, l)
 
     # // start constraint (1) ###############################
     # phrase(i,l) = true <=> pstart[i] = pstart[i+l] = true, pstart[i+1..i+l) = false
-    for (i, l) in phrases:
+    for i, l in phrases:
         plst = [-lm.getid(lm.lits.pstart, (i + j)) for j in range(1, l)] + [
             lm.getid(lm.lits.pstart, i),
             lm.getid(lm.lits.pstart, (i + l)),
@@ -184,7 +184,7 @@ def smallest_SLP_WCNF(text: bytes):
 
     # // start constraint (2),(3) ###############################
     # if phrase(j,l) = true there must be exactly one i < j such that ref(j,i,l) is true
-    for (j, l) in refs_by_referrer.keys():
+    for j, l in refs_by_referrer.keys():
         clauses = CardEnc.atmost(
             [lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]],
             bound=1,
@@ -200,7 +200,7 @@ def smallest_SLP_WCNF(text: bytes):
         wcnf.append(pysat_if(phrase, var_atleast))
     # // end constraint (2),(3) ###############################
     # // start constraint (4) ###############################
-    for (j, l) in refs_by_referrer.keys():
+    for j, l in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             wcnf.append(
                 pysat_if(
@@ -212,7 +212,7 @@ def smallest_SLP_WCNF(text: bytes):
 
     # // start constraint (5) ###############################
     # referred(i,l) = true iff there is some j > i such that ref(j,i,l) = true
-    for (i, l) in refs_by_referred.keys():
+    for i, l in refs_by_referred.keys():
         assert l > 1
         ref_sources, clauses = pysat_or(
             lm.newid,
@@ -229,7 +229,7 @@ def smallest_SLP_WCNF(text: bytes):
     # if (occ,l) is a referred interval, it cannot be a phrase, but pstart[occ] and pstart[occ+l] must be true
     # phrase(occ,l) is only defined if l <= lpf[occ]
     referred = list(refs_by_referred.keys())
-    for (occ, l) in referred:
+    for occ, l in referred:
         if l > 1:
             qid = lm.getid(lm.lits.referred, occ, l)
             lst = [-qid] + [lm.getid(lm.lits.pstart, occ + x) for x in range(1, l)]
@@ -241,12 +241,12 @@ def smallest_SLP_WCNF(text: bytes):
     # // start constraint (7) ###############################
     # crossing intervals cannot be referred to at the same time.
     referred_by_bp = [[] for _ in range(n)]
-    for (occ, l) in referred:
+    for occ, l in referred:
         referred_by_bp[occ].append(l)
     for lst in referred_by_bp:
         lst.sort(reverse=True)
 
-    for (occ1, l1) in referred:
+    for occ1, l1 in referred:
         for occ2 in range(occ1 + 1, occ1 + l1):
             for l2 in referred_by_bp[occ2]:
                 assert l1 > 1 and l2 > 1
@@ -393,13 +393,13 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
             posl.append(i)
     # print(f"posl={posl}")
     phrasel = []
-    for (occ, l) in phrases:
+    for occ, l in phrases:
         x = lm.getid(lm.lits.phrase, occ, l)
         if x in sol:
             phrasel.append((occ, occ + l))
     # print(f"phrasel={phrasel}")
     refs = {}
-    for (j, l) in refs_by_referrer.keys():
+    for j, l in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             if lm.getid(lm.lits.ref, j, i, l) in sol:
                 refs[j, l] = i

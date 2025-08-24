@@ -62,7 +62,7 @@ class BiDirLiteralManager(LiteralManager):
             BiDirLiteral.ref: self.verify_ref,
             BiDirLiteral.any_ref: self.verify_depth_ref,
         }
-        super().__init__(self.lits)
+        super().__init__(self.lits)  # type: ignore
 
     def newid(self, *obj) -> int:
         res = super().newid(*obj)
