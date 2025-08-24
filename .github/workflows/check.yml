@@ -12,15 +12,15 @@ env:
 jobs:
   python:
     name: check on Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.8
 
       - name: checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: install dependencies
         run: pip install tox pipenv
@@ -37,45 +37,34 @@ jobs:
 
   rust:
     name: check on Rust ${{ matrix.rust }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: rust
     strategy:
       matrix:
         rust:
           - stable
           - nightly
     steps:
-      - uses: actions/checkout@v2
-      - name: Install latest stable
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-          override: true
-          components: rustfmt, clippy
+      - uses: actions/checkout@v5
+      - name: Install ${{ matrix.rust }}
+        run: |
+          rustup toolchain install ${{ matrix.rust }} --profile minimal --component rustfmt,clippy
+          rustup default ${{ matrix.rust }}
 
       - name: Run cargo check
-        uses: actions-rs/cargo@v1
+        run: cargo check
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        with:
-          command: check
-          args: --manifest-path rust/Cargo.toml
 
       - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
+        run: cargo fmt --all -- --check
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        with:
-          command: fmt
-          args: --manifest-path rust/Cargo.toml --all -- --check
 
       - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
+        run: cargo clippy -- -D warnings -W clippy::nursery
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        with:
-          command: clippy
-          args: --manifest-path rust/Cargo.toml -- -D warnings -W clippy::nursery
 
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
+        run: cargo test --release --all-features
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        with:
-          command: test
-          args: --manifest-path rust/Cargo.toml --release --all-features
