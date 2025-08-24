@@ -16,11 +16,11 @@ The full version of this paper can be found [here](https://arxiv.org/abs/2207.02
 
 ## Limitations
 
-This software has only been verified to work on Ubuntu. 
+This software has only been verified to work on Ubuntu.
 
 ## Build instructions
 
-1. Install `pipenv` and `python3.8` on your OS.
+1. Install `pipenv` and `python3.10` on your OS.
 2. Run the following command at the root of this repository.
 
 ```console

@@ -59,7 +59,7 @@ class SLPLiteralManager(LiteralManager):
             SLPLiteral.ref: self.verify_ref,
             SLPLiteral.referred: self.verify_referred,
         }
-        super().__init__(self.lits)
+        super().__init__(self.lits)  # type: ignore
 
     def newid(self, *obj) -> int:
         res = super().newid(*obj)

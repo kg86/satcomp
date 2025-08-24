@@ -143,7 +143,7 @@ def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[
     # _, ex1_clauses = pysat_atmost(lm, xs, bound=1)
     # res_clauses = []
     ex1_clauses.append(pysat_atleast_one(xs))
-    res_var, res_clauses = pysat_name_cnf(lm, ex1_clauses)
+    res_var, res_clauses = pysat_name_cnf(lm, ex1_clauses)  # type: ignore
     # res_clauses.extend(ex1_clauses)
 
     return res_var, res_clauses
@@ -280,7 +280,7 @@ def sympy_cnf_pysat(new_var, x: Boolean | Any) -> list[list[int]]:
             new_clause = [nvar] + [-literal for literal in literals]
             new_clauses.append(new_clause)
             if debug:
-                print(f"{nvar}={And(*literals)}, cnf={And(*new_clauses)}")
+                print(f"{nvar}={And(*literals)}, cnf={And(*new_clauses)}")  # type: ignore
             new_formula.extend(new_clauses)
 
             return nvar
@@ -290,11 +290,11 @@ def sympy_cnf_pysat(new_var, x: Boolean | Any) -> list[list[int]]:
             literals = [rec(clause) for clause in eq.args]
             new_clauses = []
             for literal in literals:
-                new_clauses.append([nvar, -literal])
+                new_clauses.append([nvar, -literal])  # type: ignore
             new_clause = [-nvar] + literals
             new_clauses.append(new_clause)
             if debug:
-                print(f"{nvar}={Or(*literals)}, cnf={And(*new_clauses)}")
+                print(f"{nvar}={Or(*literals)}, cnf={And(*new_clauses)}")  # type: ignore
             # assert is_nnf(And(*new_clauses))
             new_formula.extend(new_clauses)
             return nvar

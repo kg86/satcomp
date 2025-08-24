@@ -47,7 +47,7 @@ def enum_ordered(labels):
 
 def minimize_tree(root, nodedic):
     # print(root)
-    if type(root) == Node:
+    if type(root) is Node:
         left = minimize_tree(root.left, nodedic)
         right = minimize_tree(root.right, nodedic)
         if (left, right) in nodedic:
