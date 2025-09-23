@@ -22,9 +22,8 @@ def run_solver(
     input_file: str, timeout: Optional[float] = None
 ) -> Optional[AttractorExp]:
     cmd = [
-        "pipenv",
+        "uv",
         "run",
-        "python",
         "src/attractor_solver.py",
         "--algo",
         "min",

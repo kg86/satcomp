@@ -69,9 +69,8 @@ def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
 
 def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     cmd = [
-        "pipenv",
+        "uv",
         "run",
-        "python",
         "src/bidirectional_solver.py",
         "--file",
         input_file,

@@ -7,7 +7,7 @@ function die {
 	exit 1
 }
 
-[[ "$#" -eq 3 ]] || 
+[[ "$#" -eq 3 ]] ||
 	die "Usage: $0 [dataset-folder] [log-folder] [script-folder]
 	- dataset-folder: folder in which the datasets are stored
 	- log-folder: folder in which the log files to write
@@ -70,14 +70,12 @@ function putScriptRedir {
 }
 
 
-Pipenv="pipenv run python"
-
 for filename in $datasetFolder/*; do
 	basefilename="$(basename $filename)"
 	memory=$kMaxMemory
-	putScriptRedir "$Pipenv src/bidirectional_solver.py" "bidir_$basefilename" "$filename" "$memory"
-	putScriptRedir "$Pipenv src/attractor_solver.py --algo min" "attr_$basefilename" "$filename" "$memory"
-	# putScriptRedir "$Pipenv src/grammar_solver.py" "grammar_$basefilename" "$filename"
-	putScriptRedir "$Pipenv src/slp_solver.py" "slp_$basefilename" "$filename" "$memory"
-	# putScriptRedir "$Pipenv src/slp_naive.py" "slpnaive_$basefilename" "$filename" "100"
-done 
+	putScriptRedir "uv run src/bidirectional_solver.py" "bidir_$basefilename" "$filename" "$memory"
+	putScriptRedir "uv run src/attractor_solver.py --algo min" "attr_$basefilename" "$filename" "$memory"
+	# putScriptRedir "uv run src/grammar_solver.py" "grammar_$basefilename" "$filename"
+	putScriptRedir "uv run src/slp_solver.py" "slp_$basefilename" "$filename" "$memory"
+	# putScriptRedir "uv run src/slp_naive.py" "slpnaive_$basefilename" "$filename" "100"
+done

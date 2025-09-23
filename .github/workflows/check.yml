@@ -14,26 +14,22 @@ jobs:
     name: check on Python
     runs-on: ubuntu-24.04
     steps:
-      - name: setup python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
       - name: checkout
         uses: actions/checkout@v5
 
+      - name: Setup the latest uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.10"
+
       - name: install dependencies
-        run: pip install tox pipenv
+        run: uv tool install tox --with tox-uv
 
       - name: run check
-        env:
-          TOXENV: checkall
-        run: tox
+        run: tox -e checkall
 
       - name: run test
-        run: |
-          pipenv sync --dev
-          tail -n +2 tests/size_list.tsv | xargs -L 1 pipenv run python tests/size_check.py verify
+        run: tox -e test
 
   rust:
     name: check on Rust ${{ matrix.rust }}
