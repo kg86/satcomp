@@ -1,0 +1,157 @@
+%% IMPORT-JSON-DATA scaling fig6.json
+
+\documentclass[tikz]{standalone}
+
+%tikz
+\usepackage{tikz}
+\usetikzlibrary{matrix,positioning,fit}
+\usetikzlibrary{arrows}
+
+
+%%%% BEGIN TIKZ PGFPLOTS
+\usepackage{tikz}
+% \usetikzlibrary{external}
+% \tikzexternalize[prefix=plot/]
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepgfplotslibrary{colorbrewer}
+\usepgfplotslibrary{groupplots}
+
+
+\pgfplotsset{%
+% initialize Dark2
+cycle list/Dark2,
+cycle multiindex* list={%
+mark list*\nextlist
+Dark2\nextlist
+},
+}
+%Dark2 has size 8
+%Mark List has size 11
+
+
+\pgfplotsset{%
+appendLegend/.style={%
+legend style={font=\small}},
+}
+
+%%%% END TIKZ
+
+\begin{document}
+
+%% DEFINE myplot(column,filename)
+%% SELECT 
+%% file_len AS x, 
+%% $column as y,
+%% MULTIPLOT FROM scaling
+%% WHERE file_name = $filename
+%% AND file_len >= 210 AND file_len <= 600
+%% AND $column IS NOT NULL
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\ref{legRandomCompactEight}
+
+\begin{tikzpicture}
+\begin{groupplot}[
+ymode=log,
+   group style={%
+     xlabels at=edge bottom,
+     ylabels at=edge left,
+     yticklabels at=edge left,
+     xticklabels at=edge bottom,
+     horizontal sep=5pt,
+     vertical sep=5pt,
+     group size=4 by 2,
+  %   vertical sep=0pt,
+   group name=G},
+   height=4cm,width=4cm, %no markers,
+   every axis plot/.append style={%
+     thick,
+   mark repeat={2},
+   mark options={scale=0.7},
+   },
+xlabel={prefix length},
+ ]
+
+\nextgroupplot[
+title={\textsc{fibonacci.20}},
+ylabel={solver time [s]},
+% ymin=0.0001,ymax=200,
+% extra y ticks={0.001,10}, 
+appendLegend,
+legend to name={legRandomCompactEight},
+legend columns=3
+]
+%% MULTIPLOT(algo) $myplot(time_total - time_prep, "fibonacci.20")
+%% CONFIG file=plot/fibonacci.20.time_solve.tex type=tex
+\input{plot/fibonacci.20.time_solve.tex}
+
+\nextgroupplot[
+title={\textsc{news}},
+% ymin=0.0001,ymax=200,
+]
+%% MULTIPLOT(algo) $myplot(time_total - time_prep, "news")
+%% CONFIG file=plot/news.time_solve.tex type=tex
+\input{plot/news.time_solve.tex}
+\legend{}
+
+\nextgroupplot[
+title={\textsc{asyoulik.txt}},
+% ymin=0.0001,ymax=200,
+]
+%% MULTIPLOT(algo) $myplot(time_total - time_prep, "asyoulik.txt")
+%% CONFIG file=plot/asyoulik.txt.time_solve.tex type=tex
+\input{plot/asyoulik.txt.time_solve.tex}
+\legend{}
+
+\nextgroupplot[
+title={\textsc{paper1}},
+% ymin=0.0001,ymax=200,
+]
+%% MULTIPLOT(algo) $myplot(time_total - time_prep, "paper1")
+%% CONFIG file=plot/paper1.time_solve.tex type=tex
+\input{plot/paper1.time_solve.tex}
+\legend{}
+
+
+\nextgroupplot[ylabel={CNF size},
+extra y ticks={10, 10^3, 10^8}, 
+% ymin=10,ymax=10^9,
+]
+%% MULTIPLOT(algo) $myplot(sol_ntotalvars, "fibonacci.20")
+%% CONFIG file=plot/fibonacci.20.sol_ntotalvars.tex type=tex
+\input{plot/fibonacci.20.sol_ntotalvars.tex}
+\legend{}
+
+
+\nextgroupplot[
+ymin=10,ymax=10^9,
+]
+%% MULTIPLOT(algo) $myplot(sol_ntotalvars, "news")
+%% CONFIG file=plot/news.sol_ntotalvars.tex type=tex
+\input{plot/news.sol_ntotalvars.tex}
+\legend{}
+
+
+\nextgroupplot[
+ymin=10,ymax=10^9,
+]
+%% MULTIPLOT(algo) $myplot(sol_ntotalvars, "asyoulik.txt")
+%% CONFIG file=plot/asyoulik.txt.sol_ntotalvars.tex type=tex
+\input{plot/asyoulik.txt.sol_ntotalvars.tex}
+\legend{}
+
+
+\nextgroupplot[
+ymin=10,ymax=10^9,
+]
+%% MULTIPLOT(algo) $myplot(sol_ntotalvars, "paper1")
+%% CONFIG file=plot/paper1.sol_ntotalvars.tex type=tex
+\input{plot/paper1.sol_ntotalvars.tex}
+\legend{}
+
+\end{groupplot}
+\end{tikzpicture}
+
+\end{document}
+
