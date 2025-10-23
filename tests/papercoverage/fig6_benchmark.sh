@@ -52,7 +52,7 @@ if [ ! -d "$datasetFolder/whole" ]; then
 	rm $wholeFolder/SHA1SUM
 fi
 
-cd "$scriptpath" || die "Failed to change directory to $scriptpath"
+cd "$scriptpath/../.." || die "Failed to change directory to $scriptpath/../.."
 
 
 # Experiment for Figure 6
@@ -61,11 +61,18 @@ if [ ! -d "$logFolder/fig6" ]; then
 	mkdir -p "$logFolder/fig6" || die "Failed to create directory $logFolder"
 fi
 
-pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/fibonacci.20" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
-pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/news" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
-pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/paper1" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
-pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/asyoulik.txt" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
+MINPREFIX=200
+MAXPREFIX=600
 
-python3 "$scriptpath/concat_json.py" "$logFolder/fig6*.json" > fig6.json
-$datasetFolder/sqlplot -i fig6.tex 
-latexmk -pdf fig6.tex
+# MINPREFIX=5
+# MAXPREFIX=10
+
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/fibonacci.20" --maxtime 3600 --maxmem 16000000000 --maxprefix ${MAXPREFIX} --minprefix ${MINPREFIX} --step 100 --outdir "$logFolder/fig6" --fig 6; 
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/news" --maxtime 3600 --maxmem 16000000000 --maxprefix ${MAXPREFIX} --minprefix ${MINPREFIX} --step 100 --outdir "$logFolder/fig6" --fig 6; 
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/paper1" --maxtime 3600 --maxmem 16000000000 --maxprefix ${MAXPREFIX} --minprefix ${MINPREFIX} --step 100 --outdir "$logFolder/fig6" --fig 6; 
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/asyoulik.txt" --maxtime 3600 --maxmem 16000000000 --maxprefix ${MAXPREFIX} --minprefix ${MINPREFIX} --step 100 --outdir "$logFolder/fig6" --fig 6; 
+
+cd "$scriptpath"
+python3 "$scriptpath/concat_json.py" "$logFolder/fig6/"*.json > "$scriptpath/fig6.json"
+$datasetFolder/sqlplot/sqlplot.py -i "$scriptpath/fig6.tex"
+latexmk -pdf "$scriptpath/fig6.tex"
