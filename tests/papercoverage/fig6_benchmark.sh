@@ -22,6 +22,11 @@ if [ ! -d "$datasetFolder" ]; then
 	mkdir -p "$datasetFolder" || die "Failed to create directory $datasetFolder"
 fi
 
+if [ ! -d "$datasetFolder/sqlplot" ]; then
+	cd $datasetFolder || die "Failed to change directory to $datasetFolder"
+	git clone "https://github.com/koeppl/sqlplot" || die "Failed to clone sqlplot"
+fi
+
 #check whether $datasetFolder is nonempty
 if [ ! -d "$datasetFolder/whole" ]; then
 	cd $datasetFolder || die "Failed to change directory to $datasetFolder"
@@ -30,6 +35,7 @@ if [ ! -d "$datasetFolder/whole" ]; then
 	if [ ! -d "$datasetFolder/artificial_datasets" ]; then
 		git clone https://github.com/koeppl/artificial_datasets || die "Failed to clone canterbury-corpus"
 	fi
+
 	cp "$datasetFolder/artificial_datasets"/* $wholeFolder/ || die "Failed to copy artificial_datasets files to $wholeFolder directory"
 
 	if [ ! -d "$datasetFolder/canterbury-corpus" ]; then
@@ -47,6 +53,19 @@ if [ ! -d "$datasetFolder/whole" ]; then
 fi
 
 cd "$scriptpath" || die "Failed to change directory to $scriptpath"
-for file in "$wholeFolder"/*; do 
-	 pipenv run python3 tests/benchmark.py --file "$file" --outdir "$logFolder" --maxtime 3600 --maxmem 64000000000; 
- done
+
+
+# Experiment for Figure 6
+
+if [ ! -d "$logFolder/fig6" ]; then
+	mkdir -p "$logFolder/fig6" || die "Failed to create directory $logFolder"
+fi
+
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/fibonacci.20" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/news" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/paper1" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
+pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/asyoulik.txt" --maxtime 3600 --maxmem 16000000000 --maxprefix 600 --minprefix 200 --step 100 --outdir "$logFolder/fig6" --fig 6; 
+
+python3 "$scriptpath/concat_json.py" "$logFolder/fig6*.json" > fig6.json
+$datasetFolder/sqlplot -i fig6.tex 
+latexmk -pdf fig6.tex
