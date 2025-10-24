@@ -40,7 +40,7 @@ def scalingexperiment(filename : str):
 	isBeaten = {}
 	for (candidatename, _) in candidates:
 		isBeaten[candidatename] = False
-	for prefix in range(MINPREFIX, MAXPREFIX, STEP):
+	for prefix in range(MINPREFIX, MAXPREFIX+1, STEP):
 		if False not in isBeaten.values():
 			break
 		for (candidatename, candidatecmd) in candidates:
