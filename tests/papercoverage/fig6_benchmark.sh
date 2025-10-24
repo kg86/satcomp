@@ -73,6 +73,7 @@ pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/paper1" -
 pipenv run python3 "$scriptpath/fig_benchmark.py" --file "$wholeFolder/asyoulik.txt" --maxtime 3600 --maxmem 16000000000 --maxprefix ${MAXPREFIX} --minprefix ${MINPREFIX} --step 100 --outdir "$logFolder/fig6" --fig 6; 
 
 cd "$scriptpath"
+rm $(grep error -l "$logFolder/fig6/*.json")
 python3 "$scriptpath/concat_json.py" "$logFolder/fig6/"*.json > "$scriptpath/fig6.json"
 $datasetFolder/sqlplot/sqlplot.py -i "$scriptpath/fig6.tex"
 latexmk -pdf "$scriptpath/fig6.tex"
