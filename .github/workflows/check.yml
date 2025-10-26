@@ -23,13 +23,13 @@ jobs:
           python-version: "3.10"
 
       - name: install dependencies
-        run: uv tool install tox --with tox-uv
+        run: uv tool install --python-preference only-managed --python 3.10 tox --with tox-uv
 
       - name: run check
-        run: tox -e checkall
+        run: uvx --with tox-uv tox run -e checkall
 
       - name: run test
-        run: tox -e test
+        run: uvx --with tox-uv tox run -e test
 
   rust:
     name: check on Rust ${{ matrix.rust }}
