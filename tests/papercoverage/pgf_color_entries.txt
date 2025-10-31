@@ -6,7 +6,9 @@
 ('attractor-sat',)	5
 ('bms-sat',)	6
 ('slp-sat',)	7
-('slp-sat-fast',)	8
+('slp-sat-fast',)	11
 ('bms-fast',)	9
 ('bms-plus',)	10
 ('slp-fast',)	11
+('bms-sat-fast',)	9
+('bms-sat-plus',)	10
