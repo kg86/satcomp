@@ -34,7 +34,7 @@ pub fn fibonacci(i: usize) -> Vec<u8> {
 
 pub fn fibonacci_plus(i: usize) -> Vec<u8> {
     let mut res = fibonacci(i);
-    res.push(if i % 2 == 0 { b'b' } else { b'a' });
+    res.push(if i.is_multiple_of(2) { b'b' } else { b'a' });
     res
 }
 

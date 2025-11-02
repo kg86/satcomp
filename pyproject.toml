@@ -5,7 +5,7 @@ description = "Computing NP-hard Repetitiveness Measures via MAX-SAT"
 readme = "README.md"
 requires-python = ">=3.10,<3.11"
 dependencies = [
-    "python-sat>=0.1.7.dev18",
+    "python-sat>=0.1.8.dev18",
     "matplotlib>=3.5.2",
     "sympy>=1.10.1",
     "dataclasses-json>=0.5.7",
@@ -22,3 +22,14 @@ dev = [
     "flake8>=4.0.1",
     "isort>=5.10.1"
 ]
+
+[tool.uv]
+default-groups = ["dev"]
+cache-keys = [ { file = "pyproject.toml" }, { git = true } ]
+
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+reportOptionalSubscript = false
+reportOptionalMemberAccess = false
