@@ -38,7 +38,9 @@ class BiDirLiteral(Enum):
     auxlit = Literal.auxlit
     pstart = auto()  # i: true iff T[i] is start of phrase
     ref = auto()  # (i,j) true iff position T[i] references position T[j]
-    tref = auto()  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
+    tref = (
+        auto()
+    )  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
 
 
 class BiDirLiteralManager(LiteralManager):
