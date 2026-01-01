@@ -307,7 +307,6 @@ def smallest_SLP_WCNF(text: bytes):
                 if refs1 and refs2:
                     idy1 = lm.getid(lm.lits.vY, L1, R1)
                     idy2 = lm.getid(lm.lits.vY, L2, R2)
-                    # print(f"NOT (vY({L1},{R1}) and vY({L2},{R2}))")
                     wcnf.append([-idy1, -idy2])  # not vY(L1,R1) or not vY(L2,R2)
             # case L1 = L2 <= R1 = R2
             elif L1 == L2 and R1 == R2:
@@ -322,9 +321,6 @@ def smallest_SLP_WCNF(text: bytes):
                         ):
                             idx1 = lm.getid(lm.lits.referred, occ1, l1)
                             idx2 = lm.getid(lm.lits.referred, occ2, l2)
-                            # print(
-                            #     f"NOT (referred({occ1},{l1}) and referred({occ2},{l2}))"
-                            # )
                             wcnf.append([-idx1, -idx2])
             # case L1 = L2 < R1 < R2
             elif L1 == L2 and L2 < R1 and R1 < R2:
@@ -335,7 +331,6 @@ def smallest_SLP_WCNF(text: bytes):
                         if occ1 < occ2:
                             ide1 = lm.getid(lm.lits.vE, occ1, R1)
                             ide2 = lm.getid(lm.lits.vE, occ2, R2)
-                            # print(f"NOT (vE({occ1},{R1}) and vE({occ2},{R2}))")
                             wcnf.append([-ide1, -ide2])
             # case L1 < L2 < R1 = R2
             elif L1 < L2 and L2 < R1 and R1 == R2:
@@ -346,7 +341,6 @@ def smallest_SLP_WCNF(text: bytes):
                         if j1 < j2:
                             ids1 = lm.getid(lm.lits.vS, L1, j1)
                             ids2 = lm.getid(lm.lits.vS, L2, j2)
-                            # print(f"NOT (vS({L1},{j1}) and vS({L2},{j2}))")
                             wcnf.append([-ids1, -ids2])
             # case L1 < L2 = R1 < R2
             elif L1 < L2 and L2 == R1 and R1 < R2:
@@ -357,7 +351,6 @@ def smallest_SLP_WCNF(text: bytes):
                         if occ2 <= j1:
                             ids = lm.getid(lm.lits.vS, L1, j1)
                             ide = lm.getid(lm.lits.vE, occ2, R2)
-                            # print(f"NOT (vS({L1},{j1}) and vE({occ2},{R2}))")
                             wcnf.append([-ids, -ide])
             # case L1 = L2 = R1 < R2
             elif L1 == L2 and L2 == R1 and R1 < R2:
@@ -368,7 +361,6 @@ def smallest_SLP_WCNF(text: bytes):
                         if occ1 < occ2 and occ2 <= occ1 + l1 - 1:
                             idx = lm.getid(lm.lits.referred, occ1, l1)
                             ide = lm.getid(lm.lits.vE, occ2, R2)
-                            # print(f"NOT (referred({occ1},{l1}) and vE({occ2},{R2}))")
                             wcnf.append([-idx, -ide])
             # case L1 < L2 = R1 = R2
             elif L1 < L2 and L2 == R1 and R1 == R2:
@@ -379,7 +371,6 @@ def smallest_SLP_WCNF(text: bytes):
                         if occ2 <= j1 and j1 < occ2 + l2 - 1:
                             ids = lm.getid(lm.lits.vS, L1, j1)
                             idx = lm.getid(lm.lits.referred, occ2, l2)
-                            # print(f"NOT (vS({L1},{j1}) and referred({occ2},{l2}))")
                             wcnf.append([-ids, -idx])
 
     # // end constraint (7) ###############################
