@@ -133,7 +133,7 @@ def compute_lpf(text: bytes):  # non-self-referencing lpf
     return lpf
 
 
-def smallest_SLP_WCNF(text: bytes):
+def smallest_SLP_WCNF(text: bytes):  # noqa: C901
     """
     Compute the max sat formula for computing the smallest SLP
     """
