@@ -20,9 +20,6 @@ from mysat import (
     Enum,
     Literal,
     LiteralManager,
-    pysat_and,
-    pysat_if,
-    pysat_if_and_then_or,
 )
 from mytimer import Timer
 
@@ -275,6 +272,7 @@ def min_bidirectional(
     solver = RC2(wcnf)
     sol = solver.compute()
 
+    assert sol is not None
     sold = get_sold(sol)
     show_sol(lm, sold, text)
     factors = sol2bidirectional(lm, sold, text)
@@ -291,7 +289,7 @@ def min_bidirectional(
     return factors
 
 
-def get_sold(sol: List[int]):
+def get_sold(sol: List[int]) -> Dict[int, bool]:
     """
     Compute dictionary res[literal_id] = True or False.
     """
