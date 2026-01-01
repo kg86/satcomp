@@ -250,7 +250,7 @@ def smallest_SLP_WCNF(text: bytes):
 
     # // start constraint (7) ###############################
     # crossing intervals cannot be referred to at the same time.
-    # this is the improvement point to reduce the size into O(N^{8/3}).
+    # We use a blockwise technique to reduce the CNF size from O(n^4) to O(n^{8/3}).
     blocksize = math.ceil(n ** (1.0 / 3))
     referred_by_bp = [[] for _ in range(n)]
     for occ, l in referred:
