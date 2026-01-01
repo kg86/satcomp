@@ -3,13 +3,13 @@
 import argparse
 import functools
 import json
+import math
 import os
 import sys
 import time
 from enum import auto
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
 from typing import Optional
-import math
 
 from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2
