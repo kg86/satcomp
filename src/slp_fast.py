@@ -1,6 +1,9 @@
+"""Fast Implementation of the SLP Solver (TALG 2025, Section 3.3)"""
+
 import argparse
 import functools
 import json
+import math
 import os
 import sys
 import time
@@ -42,6 +45,13 @@ class SLPLiteral(Enum):
     pstart = auto()  # i is a starting position of a phrase of grammar parsing
     ref = auto()  # (j,i,l): phrase (j,j+l) references T[i,i+l)  (T[i,i+l] <- T[j,j+l])
     referred = auto()  # (i,l): T[i,i+l) is referenced by some phrase
+    # vY(L,R): true if referred(i,l) = 1 for some i,l such that
+    # L = i // blocksize, R = (i+l-1) // blocksize
+    vY = auto()
+    # vE(i,R): true if referred(i,l) = 1 for some l such that T[i..i+l) ends in block R (i+l-1)//blocksize = R
+    vE = auto()  # (i,R):
+    # vS(L,j): true if referred(i,l) = 1 for some l such that i+l-1=j starts in block L (i//blocksize) = L
+    vS = auto()  # (L,j):
 
 
 class SLPLiteralManager(LiteralManager):
@@ -123,7 +133,7 @@ def compute_lpf(text: bytes):  # non-self-referencing lpf
     return lpf
 
 
-def smallest_SLP_WCNF(text: bytes):
+def smallest_SLP_WCNF(text: bytes):  # noqa: C901
     """
     Compute the max sat formula for computing the smallest SLP
     """
@@ -240,22 +250,129 @@ def smallest_SLP_WCNF(text: bytes):
 
     # // start constraint (7) ###############################
     # crossing intervals cannot be referred to at the same time.
+    # We use a blockwise technique to reduce the CNF size from O(n^4) to O(n^{8/3}).
+    blocksize = math.ceil(n ** (1.0 / 3))
     referred_by_bp = [[] for _ in range(n)]
     for occ, l in referred:
         referred_by_bp[occ].append(l)
     for lst in referred_by_bp:
         lst.sort(reverse=True)
 
-    for occ1, l1 in referred:
-        for occ2 in range(occ1 + 1, occ1 + l1):
-            for l2 in referred_by_bp[occ2]:
-                assert l1 > 1 and l2 > 1
-                assert occ1 < occ2 and occ2 < occ1 + l1
-                if occ1 + l1 >= occ2 + l2:
-                    break
-                id1 = lm.getid(lm.lits.referred, occ1, l1)
-                id2 = lm.getid(lm.lits.referred, occ2, l2)
-                wcnf.append([-id1, -id2])
+    ref_by_blkse = {}
+    e_by_blkse = {}
+    s_by_blkse = {}
+
+    for occ, l in referred:
+        sblk = occ // blocksize
+        eblk = (occ + l - 1) // blocksize
+        try:
+            ref_by_blkse[(sblk, eblk)].add((occ, l))
+        except KeyError:
+            ref_by_blkse[(sblk, eblk)] = {(occ, l)}
+
+        if not lm.contains(lm.lits.vY, sblk, eblk):
+            lm.newid(lm.lits.vY, sblk, eblk)
+
+        if not lm.contains(lm.lits.vE, occ, eblk):
+            lm.newid(lm.lits.vE, occ, eblk)
+            try:
+                e_by_blkse[(sblk, eblk)].add(occ)
+            except KeyError:
+                e_by_blkse[(sblk, eblk)] = {occ}
+
+        if not lm.contains(lm.lits.vS, sblk, occ + l - 1):
+            lm.newid(lm.lits.vS, sblk, occ + l - 1)
+            try:
+                s_by_blkse[(sblk, eblk)].add(occ + l - 1)
+            except KeyError:
+                s_by_blkse[(sblk, eblk)] = {occ + l - 1}
+
+    for occ, l in referred:
+        idx = lm.getid(lm.lits.referred, occ, l)
+        sblk = occ // blocksize
+        eblk = (occ + l - 1) // blocksize
+        idy = lm.getid(lm.lits.vY, sblk, eblk)
+        wcnf.append([-idx, idy])
+        ide = lm.getid(lm.lits.vE, occ, (occ + l - 1) // blocksize)
+        ids = lm.getid(lm.lits.vS, occ // blocksize, occ + l - 1)
+        wcnf.append([-idx, ide])  # referred(i,l) -> vE(i,R)
+        wcnf.append([-idx, ids])  # referred(i,l) -> vS(L,j)
+
+    for L1, R1 in ref_by_blkse.keys():
+        for L2, R2 in ref_by_blkse.keys():
+            # case: L1 < L2 < R1 < R2
+            if L1 < L2 and L2 < R1 and R1 < R2:
+                refs1 = ref_by_blkse[(L1, R1)]
+                refs2 = ref_by_blkse[(L2, R2)]
+                if refs1 and refs2:
+                    idy1 = lm.getid(lm.lits.vY, L1, R1)
+                    idy2 = lm.getid(lm.lits.vY, L2, R2)
+                    wcnf.append([-idy1, -idy2])  # not vY(L1,R1) or not vY(L2,R2)
+            # case L1 = L2 <= R1 = R2
+            elif L1 == L2 and R1 == R2:
+                refs1 = ref_by_blkse[(L1, R1)]
+                refs2 = ref_by_blkse[(L2, R2)]
+                for occ1, l1 in refs1:
+                    for occ2, l2 in refs2:
+                        if (
+                            occ1 < occ2
+                            and occ2 <= occ1 + l1 - 1
+                            and occ1 + l1 < occ2 + l2
+                        ):
+                            idx1 = lm.getid(lm.lits.referred, occ1, l1)
+                            idx2 = lm.getid(lm.lits.referred, occ2, l2)
+                            wcnf.append([-idx1, -idx2])
+            # case L1 = L2 < R1 < R2
+            elif L1 == L2 and L2 < R1 and R1 < R2:
+                elst1 = e_by_blkse[(L1, R1)]
+                elst2 = e_by_blkse[(L2, R2)]
+                for occ1 in elst1:
+                    for occ2 in elst2:
+                        if occ1 < occ2:
+                            ide1 = lm.getid(lm.lits.vE, occ1, R1)
+                            ide2 = lm.getid(lm.lits.vE, occ2, R2)
+                            wcnf.append([-ide1, -ide2])
+            # case L1 < L2 < R1 = R2
+            elif L1 < L2 and L2 < R1 and R1 == R2:
+                slst1 = s_by_blkse[(L1, R1)]
+                slst2 = s_by_blkse[(L2, R2)]
+                for j1 in slst1:
+                    for j2 in slst2:
+                        if j1 < j2:
+                            ids1 = lm.getid(lm.lits.vS, L1, j1)
+                            ids2 = lm.getid(lm.lits.vS, L2, j2)
+                            wcnf.append([-ids1, -ids2])
+            # case L1 < L2 = R1 < R2
+            elif L1 < L2 and L2 == R1 and R1 < R2:
+                slst1 = s_by_blkse[(L1, R1)]
+                elst2 = e_by_blkse[(L2, R2)]
+                for j1 in slst1:
+                    for occ2 in elst2:
+                        if occ2 <= j1:
+                            ids = lm.getid(lm.lits.vS, L1, j1)
+                            ide = lm.getid(lm.lits.vE, occ2, R2)
+                            wcnf.append([-ids, -ide])
+            # case L1 = L2 = R1 < R2
+            elif L1 == L2 and L2 == R1 and R1 < R2:
+                refs1 = ref_by_blkse[(L1, R1)]
+                elst2 = e_by_blkse[(L2, R2)]
+                for occ1, l1 in refs1:
+                    for occ2 in elst2:
+                        if occ1 < occ2 and occ2 <= occ1 + l1 - 1:
+                            idx = lm.getid(lm.lits.referred, occ1, l1)
+                            ide = lm.getid(lm.lits.vE, occ2, R2)
+                            wcnf.append([-idx, -ide])
+            # case L1 < L2 = R1 = R2
+            elif L1 < L2 and L2 == R1 and R1 == R2:
+                slst1 = s_by_blkse[(L1, R1)]
+                refs2 = ref_by_blkse[(L2, R2)]
+                for j1 in slst1:
+                    for occ2, l2 in refs2:
+                        if occ2 <= j1 and j1 < occ2 + l2 - 1:
+                            ids = lm.getid(lm.lits.vS, L1, j1)
+                            idx = lm.getid(lm.lits.referred, occ2, l2)
+                            wcnf.append([-ids, -idx])
+
     # // end constraint (7) ###############################
 
     # // start constraint (9) ###############################
@@ -461,7 +578,7 @@ if __name__ == "__main__":
         logger.setLevel(CRITICAL)
 
     exp = SLPExp.create()
-    exp.algo = "slp-sat"
+    exp.algo = "slp-sat-fast"
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
 
