@@ -12,8 +12,7 @@ algos = [
     "bidirectional_var0",
     "bidirectional_var1",
     "bidirectional_var2",
-    "slp-sat",
-    "slp-sat-fast",
+    "slp",
 ]
 
 
@@ -27,10 +26,10 @@ def compute_size(filename, algo) -> int:
         cmd = f"uv run src/bidirectional_solver_var1.py --file {filename} | jq '.factor_size'"
     elif algo == "bidirectional_var2":
         cmd = f"uv run src/bidirectional_solver_var2.py --file {filename} | jq '.factor_size'"
-    elif algo == "slp-sat":
-        cmd = f"uv run src/slp_solver.py --file {filename} | jq '.factor_size'"
-    elif algo == "slp-sat-fast":
-        cmd = f"uv run src/slp_fast.py --file {filename} | jq '.factor_size'"
+    elif algo == "slp":
+        cmd = (
+            f"uv run src/slp_solver.py --file {filename} | jq '.factor_size'"
+        )
     else:
         assert False
 
