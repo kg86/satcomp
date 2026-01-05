@@ -1,5 +1,6 @@
 """Verify that the registered solvers output the correct size for a given file."""
 
+import json
 import subprocess
 import sys
 from typing import List
@@ -61,11 +62,9 @@ SOLVERS = [
 
 
 def compute_size(cmd) -> int:
-    return int(
-        subprocess.check_output(cmd + " | jq '.factor_size'", shell=True)
-        .strip()
-        .decode("utf8")
-    )
+    output = subprocess.check_output(cmd, shell=True).strip().decode("utf8")
+    parsed = json.loads(output)
+    return int(parsed["factor_size"])
 
 
 def make_tsv(files: List[str]):
@@ -73,17 +72,17 @@ def make_tsv(files: List[str]):
         Solver(
             "attractor",
             Measure.attractor,
-            "uv run src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'",
+            "uv run src/attractor_solver.py --file {filename} --algo min",
         ),
         Solver(
             "bidirectional_var0",
             Measure.bms,
-            "uv run src/bidirectional_solver_var0.py --file {filename} | jq '.factor_size'",
+            "uv run src/bidirectional_solver_var0.py --file {filename}",
         ),
         Solver(
             "slp",
             Measure.slp,
-            "uv run src/slp_solver.py --file {filename} | jq '.factor_size'",
+            "uv run src/slp_solver.py --file {filename}",
         ),
     ]
     writer = csv.writer(sys.stdout, delimiter="\t")
@@ -104,8 +103,8 @@ if __name__ == "__main__":
         filename, measure, true_size = sys.argv[2:]
         true_size = int(true_size)
         for solver in SOLVERS:
-            print(f"verify {filename} {measure} {true_size} {solver.name}")
             if solver.measure == measure:
+                print(f"verify {filename} {measure} {true_size} {solver.name}")
                 size = compute_size(solver.cmd.format(filename=filename))
                 if true_size != size:
                     msg = f"the output size of {solver.name} for {filename} is expected {true_size}, but is actually {size}"
