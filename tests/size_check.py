@@ -5,49 +5,90 @@ import subprocess
 import sys
 from typing import List
 import csv
+import enum
+import dataclasses
 
 
-algos = [
-    "attractor",
-    "bidirectional_var0",
-    "bidirectional_var1",
-    "bidirectional_var2",
-    "bidirectional-fast",
-    "slp",
-    "slp-fast",
+class Measure(str, enum.Enum):
+    attractor = "attractor"
+    bms = "bms"
+    slp = "slp"
+
+
+@dataclasses.dataclass
+class Solver:
+    name: str
+    measure: Measure
+    cmd: str
+
+
+SOLVERS = [
+    Solver(
+        "attractor",
+        Measure.attractor,
+        "uv run src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'",
+    ),
+    Solver(
+        "bidirectional_var0",
+        Measure.bms,
+        "uv run src/bidirectional_solver_var0.py --file {filename} | jq '.factor_size'",
+    ),
+    Solver(
+        "bidirectional_var1",
+        Measure.bms,
+        "uv run src/bidirectional_solver_var1.py --file {filename} | jq '.factor_size'",
+    ),
+    Solver(
+        "bidirectional_var2",
+        Measure.bms,
+        "uv run src/bidirectional_solver_var2.py --file {filename} | jq '.factor_size'",
+    ),
+    # Solver(
+    #     "bidirectional-fast",
+    #     Measure.bms,
+    #     "uv run src/bidirectional_fast.py --file {filename} | jq '.factor_size'",
+    # ),
+    Solver(
+        "slp",
+        Measure.slp,
+        "uv run src/slp_solver.py --file {filename} | jq '.factor_size'",
+    ),
+    Solver(
+        "slp-fast",
+        Measure.slp,
+        "uv run src/slp_fast.py --file {filename} | jq '.factor_size'",
+    ),
 ]
 
 
-def compute_size(filename, algo) -> int:
-    assert algo in algos
-    if algo == "attractor":
-        cmd = f"uv run src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'"
-    elif algo == "bidirectional_var0":
-        cmd = f"uv run src/bidirectional_solver_var0.py --file {filename} | jq '.factor_size'"
-    elif algo == "bidirectional_var1":
-        cmd = f"uv run src/bidirectional_solver_var1.py --file {filename} | jq '.factor_size'"
-    elif algo == "bidirectional_var2":
-        cmd = f"uv run src/bidirectional_solver_var2.py --file {filename} | jq '.factor_size'"
-    elif algo == "bidirectional-fast":
-        cmd = f"uv run src/bidirectional_fast.py --file {filename} | jq '.factor_size'"
-    elif algo == "slp":
-        cmd = f"uv run src/slp_solver.py --file {filename} | jq '.factor_size'"
-    elif algo == "slp-fast":
-        cmd = f"uv run src/slp_fast.py --file {filename} | jq '.factor_size'"
-    else:
-        assert False
-
-    res = int(subprocess.check_output(cmd, shell=True).strip().decode("utf8"))
-    return res
+def compute_size(cmd) -> int:
+    return int(subprocess.check_output(cmd, shell=True).strip().decode("utf8"))
 
 
 def make_tsv(files: List[str]):
     writer = csv.writer(sys.stdout, delimiter="\t")
     writer.writerow(["filename", "algo", "size"])
+    solvers = [
+        Solver(
+            "attractor",
+            Measure.attractor,
+            "uv run src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'",
+        ),
+        Solver(
+            "bidirectional_var0",
+            Measure.bms,
+            "uv run src/bidirectional_solver_var0.py --file {filename} | jq '.factor_size'",
+        ),
+        Solver(
+            "slp",
+            Measure.slp,
+            "uv run src/slp_solver.py --file {filename} | jq '.factor_size'",
+        ),
+    ]
     for file in files:
-        for algo in algos:
-            size = compute_size(file, algo)
-            writer.writerow([file, algo, size])
+        for solver in solvers:
+            size = compute_size(solver.cmd.format(filename=file))
+            writer.writerow([file, solver.measure, size])
             sys.stdout.flush()
 
 
@@ -57,9 +98,12 @@ if __name__ == "__main__":
         filenames = sys.argv[2:]
         make_tsv(filenames)
     elif prog == "verify":
-        filename, algo, true_size = sys.argv[2:]
+        filename, measure, true_size = sys.argv[2:]
         true_size = int(true_size)
-        size = compute_size(filename, algo)
-        if true_size != size:
-            msg = f"the output size of {algo} for {filename} is expected {true_size}, but is actually {size}"
-            raise Exception(msg)
+        for solver in SOLVERS:
+            print(f"verify {filename} {measure} {true_size} {solver.name}")
+            if solver.measure == measure:
+                size = compute_size(solver.cmd.format(filename=filename))
+                if true_size != size:
+                    msg = f"the output size of {solver.name} for {filename} is expected {true_size}, but is actually {size}"
+                    raise Exception(msg)
