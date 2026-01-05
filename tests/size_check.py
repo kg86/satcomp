@@ -1,5 +1,4 @@
-# verify the output of algorithm
-# python size_check.py "filename, algo, size"
+"""Verify that the registered solvers output the correct size for a given file."""
 
 import subprocess
 import sys
@@ -26,48 +25,50 @@ SOLVERS = [
     Solver(
         "attractor",
         Measure.attractor,
-        "uv run src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'",
+        "uv run src/attractor_solver.py --file {filename} --algo min",
     ),
     Solver(
         "bidirectional_var0",
         Measure.bms,
-        "uv run src/bidirectional_solver_var0.py --file {filename} | jq '.factor_size'",
+        "uv run src/bidirectional_solver_var0.py --file {filename}",
     ),
     Solver(
         "bidirectional_var1",
         Measure.bms,
-        "uv run src/bidirectional_solver_var1.py --file {filename} | jq '.factor_size'",
+        "uv run src/bidirectional_solver_var1.py --file {filename}",
     ),
     Solver(
         "bidirectional_var2",
         Measure.bms,
-        "uv run src/bidirectional_solver_var2.py --file {filename} | jq '.factor_size'",
+        "uv run src/bidirectional_solver_var2.py --file {filename}",
     ),
     # Solver(
     #     "bidirectional-fast",
     #     Measure.bms,
-    #     "uv run src/bidirectional_fast.py --file {filename} | jq '.factor_size'",
+    #     "uv run src/bidirectional_fast.py --file {filename}",
     # ),
     Solver(
         "slp",
         Measure.slp,
-        "uv run src/slp_solver.py --file {filename} | jq '.factor_size'",
+        "uv run src/slp_solver.py --file {filename}",
     ),
     Solver(
         "slp-fast",
         Measure.slp,
-        "uv run src/slp_fast.py --file {filename} | jq '.factor_size'",
+        "uv run src/slp_fast.py --file {filename}",
     ),
 ]
 
 
 def compute_size(cmd) -> int:
-    return int(subprocess.check_output(cmd, shell=True).strip().decode("utf8"))
+    return int(
+        subprocess.check_output(cmd + " | jq '.factor_size'", shell=True)
+        .strip()
+        .decode("utf8")
+    )
 
 
 def make_tsv(files: List[str]):
-    writer = csv.writer(sys.stdout, delimiter="\t")
-    writer.writerow(["filename", "algo", "size"])
     solvers = [
         Solver(
             "attractor",
@@ -85,6 +86,8 @@ def make_tsv(files: List[str]):
             "uv run src/slp_solver.py --file {filename} | jq '.factor_size'",
         ),
     ]
+    writer = csv.writer(sys.stdout, delimiter="\t")
+    writer.writerow(["filename", "measure", "size"])
     for file in files:
         for solver in solvers:
             size = compute_size(solver.cmd.format(filename=file))
