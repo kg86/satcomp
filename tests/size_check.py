@@ -101,11 +101,16 @@ if __name__ == "__main__":
         make_tsv(filenames)
     elif prog == "verify":
         filename, measure, true_size = sys.argv[2:]
+        if measure not in Measure.__members__:
+            raise Exception(f"Invalid measure: {measure}")
+        measure = Measure[measure]
+
         true_size = int(true_size)
-        for solver in SOLVERS:
-            if solver.measure == measure:
-                print(f"verify {filename} {measure} {true_size} {solver.name}")
-                size = compute_size(solver.cmd.format(filename=filename))
-                if true_size != size:
-                    msg = f"the output size of {solver.name} for {filename} is expected {true_size}, but is actually {size}"
-                    raise Exception(msg)
+        target_solvers = [solver for solver in SOLVERS if solver.measure == measure]
+        for solver in target_solvers:
+            print(f"verify {filename} {measure} {true_size} {solver.name}")
+            size = compute_size(solver.cmd.format(filename=filename))
+            if true_size != size:
+                raise Exception(
+                    f"the output size of {solver.name} for {filename} is expected {true_size}, but is actually {size}"
+                )
