@@ -43,11 +43,11 @@ SOLVERS = [
         Measure.bms,
         "uv run src/bidirectional_solver_var2.py --file {filename}",
     ),
-    # Solver(
-    #     "bidirectional-fast",
-    #     Measure.bms,
-    #     "uv run src/bidirectional_fast.py --file {filename}",
-    # ),
+    Solver(
+        "bidirectional-fast",
+        Measure.bms,
+        "uv run src/bidirectional_fast.py --file {filename}",
+    ),
     Solver(
         "slp",
         Measure.slp,
