@@ -12,8 +12,9 @@ algos = [
     "bidirectional_var0",
     "bidirectional_var1",
     "bidirectional_var2",
-    "slp-sat",
-    "slp-sat-fast",
+    "bidirectional-fast",
+    "slp",
+    "slp-fast",
 ]
 
 
@@ -27,9 +28,11 @@ def compute_size(filename, algo) -> int:
         cmd = f"uv run src/bidirectional_solver_var1.py --file {filename} | jq '.factor_size'"
     elif algo == "bidirectional_var2":
         cmd = f"uv run src/bidirectional_solver_var2.py --file {filename} | jq '.factor_size'"
-    elif algo == "slp-sat":
+    elif algo == "bidirectional-fast":
+        cmd = f"uv run src/bidirectional_fast.py --file {filename} | jq '.factor_size'"
+    elif algo == "slp":
         cmd = f"uv run src/slp_solver.py --file {filename} | jq '.factor_size'"
-    elif algo == "slp-sat-fast":
+    elif algo == "slp-fast":
         cmd = f"uv run src/slp_fast.py --file {filename} | jq '.factor_size'"
     else:
         assert False
@@ -55,9 +58,8 @@ if __name__ == "__main__":
         make_tsv(filenames)
     elif prog == "verify":
         filename, algo, true_size = sys.argv[2:]
-        if algo in algos:
-            true_size = int(true_size)
-            size = compute_size(filename, algo)
-            if true_size != size:
-                msg = f"the output size of {algo} for {filename} is expected {true_size}, but is actually {size}"
-                raise Exception(msg)
+        true_size = int(true_size)
+        size = compute_size(filename, algo)
+        if true_size != size:
+            msg = f"the output size of {algo} for {filename} is expected {true_size}, but is actually {size}"
+            raise Exception(msg)
