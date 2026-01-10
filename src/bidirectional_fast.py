@@ -38,9 +38,7 @@ class BiDirLiteral(Enum):
     auxlit = Literal.auxlit
     pstart = auto()  # i: true iff T[i] is start of phrase
     ref = auto()  # (i,j) true iff position T[i] references position T[j]
-    tref = (
-        auto()
-    )  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
+    tref = auto()  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
 
 
 class BiDirLiteralManager(LiteralManager):
@@ -74,14 +72,16 @@ class BiDirLiteralManager(LiteralManager):
         # obj = (name, pos, ref_pos)
         assert len(obj) == 3
         assert obj[1] != obj[2]
-        assert 0 <= obj[1], obj[2] < self.n
+        assert 0 <= obj[1] < self.n
+        assert 0 <= obj[2] < self.n
         assert self.text[obj[1]] == self.text[obj[2]]
 
     def verify_tref(self, obj: Tuple[str, int, int]):
         # obj = (name, pos, ref_pos)
         assert len(obj) == 3
         assert obj[1] != obj[2]
-        assert 0 <= obj[1], obj[2] < self.n
+        assert 0 <= obj[1] < self.n
+        assert 0 <= obj[2] < self.n
         assert self.text[obj[1]] == self.text[obj[2]]
 
 
@@ -213,6 +213,34 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
             lits.append(lm.newid(lm.lits.tref, i, j))
     ############################################################################
     logger.debug("each position has atmost one reference")
+    for i in range(n):
+        refi = [lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)]
+        wcnf.extend(CardEnc.atmost(refi, bound=1, vpool=lm.vpool))
+
+    for c in occ1.keys():
+        for i in occ1[c]:
+            for j in occ_others(occ1, text, i):
+                # if ref(i,j) -> tref(i,j)
+                wcnf.append(
+                    [-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.tref, i, j)]
+                )
+                for k in occ1[c]:
+                    if i != k and j != k:
+                        wcnf.append(  # if tref(i,k) and ref(k,j) -> tref(i,j)
+                            [
+                                -lm.getid(lm.lits.tref, i, k),
+                                -lm.getid(lm.lits.ref, k, j),
+                                lm.getid(lm.lits.tref, i, j),
+                            ]
+                        )
+        # acyclicity of tref: If tref(i,j) -> not tref(j,i)
+    for i in range(n):
+        for j in occ_others(occ1, text, i):
+            wcnf.append([-lm.getid(lm.lits.tref, i, j), -lm.getid(lm.lits.tref, j, i)])
+
+    # a root must be a beginning of a phrase: root(i) -> pstart(i)
+    # sum_j ref(i,j) = 0 => pstart(i)
+    # [or ref_[i,j] , pstart (i)]
     for i in range(n):
         wcnf.append(
             [lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)]
