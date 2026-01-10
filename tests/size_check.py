@@ -1,41 +1,76 @@
-# verify the output of algorithm
-# python size_check.py "filename, algo, size"
+"""Verify that the registered solvers output the correct size for a given file."""
 
+import json
 import subprocess
 import sys
 from typing import List
 import csv
+import enum
+import dataclasses
 
 
-algos = [
-    "attractor",
-    "bidirectional-fast",
-    "slp-sat-fast",
+class Measure(str, enum.Enum):
+    attractor = "attractor"
+    bms = "bms"
+    slp = "slp"
+
+
+@dataclasses.dataclass
+class Solver:
+    name: str
+    measure: Measure
+    cmd: str
+
+
+SOLVERS = [
+    Solver(
+        "attractor",
+        Measure.attractor,
+        "uv run src/attractor_solver.py --file {filename} --algo min",
+    ),
+    Solver(
+        "bidirectional-fast",
+        Measure.bms,
+        "uv run src/bidirectional_fast.py --file {filename}",
+    ),
+    Solver(
+        "slp-fast",
+        Measure.slp,
+        "uv run src/slp_fast.py --file {filename}",
+    ),
 ]
 
 
-def compute_size(filename, algo) -> int:
-    assert algo in algos
-    if algo == "attractor":
-        cmd = f"uv run src/attractor_solver.py --file {filename} --algo min | jq '.factor_size'"
-    elif algo == "bidirectional-fast":
-        cmd = f"uv run src/bidirectional_fast.py --file {filename} | jq '.factor_size'"
-    elif algo == "slp-sat-fast":
-        cmd = f"uv run src/slp_fast.py --file {filename} | jq '.factor_size'"
-    else:
-        assert False
-
-    res = int(subprocess.check_output(cmd, shell=True).strip().decode("utf8"))
-    return res
+def compute_size(cmd) -> int:
+    output = subprocess.check_output(cmd, shell=True).strip().decode("utf8")
+    parsed = json.loads(output)
+    return int(parsed["factor_size"])
 
 
 def make_tsv(files: List[str]):
+    solvers = [
+        Solver(
+            "attractor",
+            Measure.attractor,
+            "uv run src/attractor_solver.py --file {filename} --algo min",
+        ),
+        Solver(
+            "bidirectional-fast",
+            Measure.bms,
+            "uv run src/bidirectional_fast.py --file {filename}",
+        ),
+        Solver(
+            "slp-fast",
+            Measure.slp,
+            "uv run src/slp_fast.py --file {filename}",
+        ),
+    ]
     writer = csv.writer(sys.stdout, delimiter="\t")
-    writer.writerow(["filename", "algo", "size"])
+    writer.writerow(["filename", "measure", "size"])
     for file in files:
-        for algo in algos:
-            size = compute_size(file, algo)
-            writer.writerow([file, algo, size])
+        for solver in solvers:
+            size = compute_size(solver.cmd.format(filename=file))
+            writer.writerow([file, solver.measure, size])
             sys.stdout.flush()
 
 
@@ -45,10 +80,17 @@ if __name__ == "__main__":
         filenames = sys.argv[2:]
         make_tsv(filenames)
     elif prog == "verify":
-        filename, algo, true_size = sys.argv[2:]
-        if algo in algos:
-            true_size = int(true_size)
-            size = compute_size(filename, algo)
+        filename, measure, true_size = sys.argv[2:]
+        if measure not in Measure.__members__:
+            raise Exception(f"Invalid measure: {measure}")
+        measure = Measure[measure]
+
+        true_size = int(true_size)
+        target_solvers = [solver for solver in SOLVERS if solver.measure == measure]
+        for solver in target_solvers:
+            print(f"verify {filename} {measure} {true_size} {solver.name}")
+            size = compute_size(solver.cmd.format(filename=filename))
             if true_size != size:
-                msg = f"the output size of {algo} for {filename} is expected {true_size}, but is actually {size}"
-                raise Exception(msg)
+                raise Exception(
+                    f"the output size of {solver.name} for {filename} is expected {true_size}, but is actually {size}"
+                )
