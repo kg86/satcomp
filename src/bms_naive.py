@@ -4,10 +4,10 @@ import subprocess
 import sys
 from typing import Optional
 
-from bidirectional import BiDirType, bd_info
+from bms import BiDirType, bd_info
 
 
-def bidirectional_naive(input_file: str, timeout: Optional[float] = None) -> BiDirType:
+def bms_naive(input_file: str, timeout: Optional[float] = None) -> BiDirType:
     input_file = os.path.abspath(input_file)
     cmd = f"cd rust && cargo run --bin optimal_bms -- --input_file {input_file}"
     print(cmd)
@@ -22,7 +22,7 @@ def bidirectional_naive(input_file: str, timeout: Optional[float] = None) -> BiD
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Compute the smallest bidirectional macro scheme."
+        description="Compute the smallest bidirectional macro scheme (BMS)."
     )
     parser.add_argument("--file", type=str, help="input file", default="")
 
@@ -35,6 +35,6 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    bd = bidirectional_naive(args.file)
+    bd = bms_naive(args.file)
     text = open(args.file, "rb").read()
     print(bd_info(bd, text))

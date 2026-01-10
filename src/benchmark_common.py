@@ -2,7 +2,7 @@ import csv
 import sqlite3
 
 import attractor_bench
-import bidirectional_bench
+import bms_bench
 import lz_bench
 
 dbname = "out/satcomp.db"
@@ -12,7 +12,7 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
     con = sqlite3.connect(dbname)
     cur = con.cursor()
     cur.execute(f"select file_name from {lz_bench.dbtable}")
-    header = ["file", "file_len"] + lz_bench.algos + ["attractor", "bidirectional"]
+    header = ["file", "file_len"] + lz_bench.algos + ["attractor", "bms"]
     files = sorted(
         list(
             set(
@@ -52,11 +52,9 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
         )
         line["attractor"] = status if target == target_none else target
 
-        # bidirectional
-        status, target = get_values(
-            ["status", target_key], bidirectional_bench.dbtable, file
-        )
-        line["bidirectional"] = status if target == target_none else target
+        # bms
+        status, target = get_values(["status", target_key], bms_bench.dbtable, file)
+        line["bms"] = status if target == target_none else target
 
         lines.append([line[key] for key in header])
 

@@ -1,4 +1,4 @@
-// routines for bidirectional macro schemes
+// routines for bidirectional macro schemes (BMS)
 use cdivsufsort::sort_in_place;
 
 #[derive(Copy, Clone, Debug)]
@@ -259,7 +259,10 @@ pub fn find_in_range(
     if !s.is_empty() {
         for k in minsz..std::cmp::min(maxsz, s.len()) + 1 {
             // k is the number of factors
-            println!("Checking for bidirectional parse of size: {}", k);
+            println!(
+                "Checking for bidirectional macro scheme (BMS) parse of size: {}",
+                k
+            );
             match find_of_size(s, first_phrase_len, k) {
                 None => (),
                 x => return x,
@@ -280,7 +283,7 @@ pub fn find_at_least(s: &[u8], minsz: usize, first_phrase_len: usize) -> Vec<BDP
     res
 }
 
-/// find smallest bidirectional parse of string s
+/// find smallest bidirectional macro scheme (BMS) parse of string s
 pub fn find_optimal(s: &[u8], first_phrase_len: usize) -> Vec<BDPhrase> {
     find_at_least(s, 1, first_phrase_len)
 }

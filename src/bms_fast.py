@@ -1,4 +1,4 @@
-# compute the smallest bidirectional macro scheme by using SAT solver
+# compute the smallest bidirectional macro scheme (BMS) by using SAT solver
 # Original version described in the ESA paper
 import argparse
 import json
@@ -15,7 +15,7 @@ from pysat.examples.rc2 import RC2
 from pysat.formula import WCNF
 
 import lz77
-from bidirectional import BiDirExp, BiDirType, decode
+from bms import BiDirExp, BiDirType, decode
 from mysat import (
     Enum,
     Literal,
@@ -134,11 +134,9 @@ def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
         logger.debug(f"i={i} " + ", ".join(pinfo[i]))
 
 
-def sol2bidirectional(
-    lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes
-) -> BiDirType:
+def sol2bms(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> BiDirType:
     """
-    Compute bidirectional macro schemes from the result of SAT solver.
+    Compute a bidirectional macro scheme (BMS) from the result of SAT solver.
     """
     res = BiDirType([])
     fbegs = []
@@ -188,13 +186,13 @@ def occ_others(occ1: Dict[int, List[int]], text: bytes, i: int):
             yield j
 
 
-def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
+def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     """
-    Compute the max sat formula for computing the smallest bidirectional macro schemes.
+    Compute the max sat formula for computing the smallest bidirectional macro scheme (BMS).
     """
     n = len(text)
     lz77fs = lz77.encode(text)
-    logger.info("bidirectional_solver start")
+    logger.info("bms_solver start")
     logger.info(f"# of text = {n}, # of lz77 = {len(lz77fs)}")
 
     occ1 = make_occa1(text)
@@ -282,14 +280,14 @@ def bidirectional_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     return lm, wcnf
 
 
-def min_bidirectional(
+def min_bms(
     text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int] = []
 ) -> BiDirType:
     """
-    Compute the smallest bidirectional macro schemes.
+    Compute the smallest bidirectional macro scheme (BMS).
     """
     total_start = time.time()
-    lm, wcnf = bidirectional_WCNF(text)
+    lm, wcnf = bms_WCNF(text)
     for lname in lm.nvar.keys():
         logger.info(f"# of [{lname}] literals  = {lm.nvar[lname]}")
 
@@ -307,7 +305,7 @@ def min_bidirectional(
     assert sol is not None
     sold = get_sold(sol)
     show_sol(lm, sold, text)
-    factors = sol2bidirectional(lm, sold, text)
+    factors = sol2bms(lm, sold, text)
 
     logger.debug(factors)
     logger.debug(f"original={text}")
@@ -331,13 +329,13 @@ def get_sold(sol: List[int]) -> Dict[int, bool]:
     return sold
 
 
-def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
-    lm, wcnf = bidirectional_WCNF(text)
+def bms_enumerate(text: bytes) -> Iterator[BiDirType]:
+    lm, wcnf = bms_WCNF(text)
     solset = set()
     overlap = 0
     with RC2(wcnf) as solver:
         for sol in solver.enumerate():
-            factors = sol2bidirectional(lm, get_sold(sol), text)
+            factors = sol2bms(lm, get_sold(sol), text)
             key = tuple(factors)
             if key not in solset:
                 solset.add(key)
@@ -348,7 +346,9 @@ def bidirectional_enumerate(text: bytes) -> Iterator[BiDirType]:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Compute Minimum Bidirectional Scheme")
+    parser = argparse.ArgumentParser(
+        description="Compute Minimum bidirectional macro scheme (BMS)"
+    )
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
@@ -394,10 +394,10 @@ if __name__ == "__main__":
     timer = Timer()
 
     exp = BiDirExp.create()
-    exp.algo = "bidirectional-sat-fast"
+    exp.algo = "bms-sat-fast"
     exp.file_name = os.path.basename(args.file)
     exp.file_len = len(text)
-    factors_sol = min_bidirectional(text, exp, args.contains)
+    factors_sol = min_bms(text, exp, args.contains)
     exp.factors = factors_sol
     exp.factor_size = len(factors_sol)
 

@@ -9,11 +9,11 @@ from typing import List, Optional
 
 from joblib import Parallel, delayed
 
-import bidirectional
-from bidirectional import BiDirExp, BiDirType
+import bms
+from bms import BiDirExp, BiDirType
 
 dbname = "out/satcomp.db"
-dbtable = "bidirectional_bench"
+dbtable = "bms_bench"
 
 algos = ["solver"]
 
@@ -71,7 +71,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     cmd = [
         "uv",
         "run",
-        "src/bidirectional_solver.py",
+        "src/bms_fast.py",
         "--file",
         input_file,
     ]
@@ -128,7 +128,7 @@ def benchmark_program(timeout, algo, file) -> List[str]:
 
     # verify the result
     if exp.status == "complete":
-        if bidirectional.decode(exp.factors) == open(file, "rb").read():
+        if bms.decode(exp.factors) == open(file, "rb").read():
             exp.status = "correct"
         else:
             exp.status = "wrong"
@@ -206,7 +206,7 @@ def export_csv(dbtable, out_file):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run benchmark for algorithms computing the smallest bidirectional scheme."
+        description="Run benchmark for algorithms computing the smallest bidirectional macro scheme (BMS)."
     )
     parser.add_argument(
         "--timeout",
