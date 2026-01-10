@@ -29,29 +29,9 @@ SOLVERS = [
         "uv run src/attractor_solver.py --file {filename} --algo min",
     ),
     Solver(
-        "bidirectional_var0",
-        Measure.bms,
-        "uv run src/bidirectional_solver_var0.py --file {filename}",
-    ),
-    Solver(
-        "bidirectional_var1",
-        Measure.bms,
-        "uv run src/bidirectional_solver_var1.py --file {filename}",
-    ),
-    Solver(
-        "bidirectional_var2",
-        Measure.bms,
-        "uv run src/bidirectional_solver_var2.py --file {filename}",
-    ),
-    Solver(
         "bidirectional-fast",
         Measure.bms,
         "uv run src/bidirectional_fast.py --file {filename}",
-    ),
-    Solver(
-        "slp",
-        Measure.slp,
-        "uv run src/slp_solver.py --file {filename}",
     ),
     Solver(
         "slp-fast",
@@ -75,14 +55,14 @@ def make_tsv(files: List[str]):
             "uv run src/attractor_solver.py --file {filename} --algo min",
         ),
         Solver(
-            "bidirectional_var0",
+            "bidirectional-fast",
             Measure.bms,
-            "uv run src/bidirectional_solver_var0.py --file {filename}",
+            "uv run src/bidirectional_fast.py --file {filename}",
         ),
         Solver(
-            "slp",
+            "slp-fast",
             Measure.slp,
-            "uv run src/slp_solver.py --file {filename}",
+            "uv run src/slp_fast.py --file {filename}",
         ),
     ]
     writer = csv.writer(sys.stdout, delimiter="\t")
