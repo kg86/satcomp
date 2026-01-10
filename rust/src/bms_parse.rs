@@ -259,7 +259,10 @@ pub fn find_in_range(
     if !s.is_empty() {
         for k in minsz..std::cmp::min(maxsz, s.len()) + 1 {
             // k is the number of factors
-            println!("Checking for bidirectional macro scheme (BMS) parse of size: {}", k);
+            println!(
+                "Checking for bidirectional macro scheme (BMS) parse of size: {}",
+                k
+            );
             match find_of_size(s, first_phrase_len, k) {
                 None => (),
                 x => return x,

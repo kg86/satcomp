@@ -280,7 +280,9 @@ def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     return lm, wcnf
 
 
-def min_bms(text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int] = []) -> BiDirType:
+def min_bms(
+    text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int] = []
+) -> BiDirType:
     """
     Compute the smallest bidirectional macro scheme (BMS).
     """

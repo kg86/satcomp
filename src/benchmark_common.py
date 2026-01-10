@@ -53,9 +53,7 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
         line["attractor"] = status if target == target_none else target
 
         # bms
-        status, target = get_values(
-            ["status", target_key], bms_bench.dbtable, file
-        )
+        status, target = get_values(["status", target_key], bms_bench.dbtable, file)
         line["bms"] = status if target == target_none else target
 
         lines.append([line[key] for key in header])
