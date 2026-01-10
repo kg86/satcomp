@@ -14,10 +14,6 @@ Computing NP-hard Repetitiveness Measures via MAX-SAT. In Proc. 30th Annual Euro
 The implementation reported in the ESA 2022 paper is [here](https://github.com/kg86/satcomp/releases/tag/ESA2022).
 The full version of this paper can be found [here](https://arxiv.org/abs/2207.02571).
 
-## Limitations
-
-This software has only been verified to work on Ubuntu.
-
 ## Build instructions
 
 1. Install `uv` and `python3.10` on your OS.
@@ -40,13 +36,6 @@ uv run src/slp_solver.py --str "abracadabra"
 
 The script `shell/example_run.sh` evaluates our solutions on files of the Canterbury and Calgary corpus.
 On success, it creates a JSON file `shell/example_run/benchmark.json` storing various statistics of the conducted benchmark.
-Depending on the used operating system, this script might fail.
-For that reasons, we provide a Docker image.
-The starting point for that is the script `shell/docker/gen.sh`,
-which builds a Docker image, and runs the code inside a Docker container.
-On success, it puts a `shell/docker/plot.tar` file back onto the host machine.
-This file contains LaTex code with tikz/pgf instructions,
-which can generate plots for the aforementioned datasets.
 
 ## Usage
 
@@ -161,10 +150,6 @@ We have a collection of test datasets in the folder `data`.
 To measure the output sizes of these datasets, we provide the script `shell/measure_datasets.sh`.
 It requires the program `jq` to be installed, and outputs the JSON file `shell/measure/stats.json` storing for each file the output size of each computed repetitiveness measure.
 If you apply this script on a SLURM cluster, then it batches the experiments. Collecting the final data has then to be done manually (the last lines in the shell script).
-
-### Notes
-
-The code has been tested only on Linux.
 
 ## Other Misc. Code
 ### Straight-forward algorithms
