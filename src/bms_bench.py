@@ -71,7 +71,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     cmd = [
         "uv",
         "run",
-        "src/bms_fast.py",
+        "src/bms_solver.py",
         "--file",
         input_file,
     ]

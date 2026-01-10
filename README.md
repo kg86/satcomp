@@ -56,7 +56,7 @@ You can run the programs via the `uv` command as follows for the example string 
 ```console
 uv run src/slp_solver.py --str "abracadabra"
 uv run src/attractor_solver.py --algo min --str "abracadabra"
-uv run src/bms_fast.py --str "abracadabra"
+uv run src/bms_solver.py --str "abracadabra"
 ```
 Common to all Python scripts are the input parameters `--str` for giving a string as an input, or `--file` for reading an input file.
 
@@ -138,7 +138,7 @@ uv run src/attractor_solver.py --file data/cantrbry/grammar.lsp --algo min
 We compute a smallest bidirectional macro scheme (BMS) of size `factor_size = 43` for `cp.html-50` of length 50.
 
 ```bash
-uv run src/bms_fast.py --file data/cantrbry_pref/cp.html-50
+uv run src/bms_solver.py --file data/cantrbry_pref/cp.html-50
 ```
 ```json
 {"date": "2022-04-19 20:51:17.510793", "status": "", "algo": "bms-sat", "file_name": "cp.html-50", "file_len": 50, "time_prep": 0.010410785675048828, "time_total": 0.014687776565551758, "sol_nvars": 1140, "sol_nhard": 3517, "sol_nsoft": 50, "sol_navgclause": 2.3810065396644866, "sol_ntotalvars": 8374, "sol_nmaxclause": 761, "factor_size": 43, "factors": [[-1, 60], [-1, 104], [-1, 101], [-1, 97], [-1, 100], [41, 3], [-1, 116], [-1, 105], [-1, 116], [-1, 108], [-1, 101], [-1, 62], [-1, 67], [-1, 111], [-1, 109], [-1, 112], [-1, 114], [-1, 101], [-1, 115], [-1, 115], [-1, 105], [-1, 111], [-1, 110], [-1, 32], [-1, 80], [-1, 111], [-1, 105], [-1, 110], [-1, 116], [-1, 101], [-1, 114], [-1, 115], [-1, 60], [-1, 47], [8, 6], [-1, 10], [-1, 60], [-1, 77], [-1, 69], [-1, 84], [-1, 65], [-1, 32], [-1, 72]]}
