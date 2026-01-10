@@ -21,6 +21,7 @@ def main(fname: str, vtype: str):
         header[1] = "len"
         header[2] = "lz77"
         header[-2] = "SA"
+        # BMS: bidirectional macro scheme (BMS)
         header[-1] = "BMS"
         res.append(" & ".join(header))
         for row in reader:
@@ -57,6 +58,7 @@ def size_table(fname):
         header.pop(1)
         header[1] = "lz77"
         header[-2] = "SA"
+        # BMS: bidirectional macro scheme (BMS)
         header[-1] = "BMS"
         res.append(" & ".join(header))
         for row in reader:

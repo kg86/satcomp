@@ -29,9 +29,9 @@ SOLVERS = [
         "uv run src/attractor_solver.py --file {filename} --algo min",
     ),
     Solver(
-        "bidirectional-fast",
+        "bms-fast",
         Measure.bms,
-        "uv run src/bidirectional_fast.py --file {filename}",
+        "uv run src/bms_fast.py --file {filename}",
     ),
     Solver(
         "slp-fast",
@@ -55,9 +55,9 @@ def make_tsv(files: List[str]):
             "uv run src/attractor_solver.py --file {filename} --algo min",
         ),
         Solver(
-            "bidirectional-fast",
+            "bms-fast",
             Measure.bms,
-            "uv run src/bidirectional_fast.py --file {filename}",
+            "uv run src/bms_fast.py --file {filename}",
         ),
         Solver(
             "slp-fast",

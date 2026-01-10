@@ -136,7 +136,7 @@ def export_csv(out_file):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run benchmark for algorithms computing the smallest bidirectional scheme."
+        description="Run benchmark for algorithms computing the smallest bidirectional macro scheme (BMS)."
     )
     parser.add_argument(
         "--timeout",

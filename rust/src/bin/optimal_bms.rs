@@ -1,4 +1,4 @@
-use satcomp::bidirectional_parse::BDPhrase;
+use satcomp::bms_parse::BDPhrase;
 
 use std::{fs, io};
 use structopt::StructOpt;
@@ -6,7 +6,7 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(
     name = "optimal_bms",
-    about = "find optimal bidirectional macro scheme"
+    about = "find optimal bidirectional macro scheme (BMS)"
 )]
 struct Opt {
     /// Input file, stdin if not present
@@ -40,7 +40,7 @@ fn main() -> io::Result<()> {
 
     // for line in io::stdin().lock().lines() {
     //     let line = line.unwrap().as_bytes().to_vec();
-    //     let r = rustr::bidirectional_parse::find_in_range(
+    //     let r = rustr::bms_parse::find_in_range(
     //         &line,
     //         opt.minsize,
     //         match opt.maxsize {
@@ -57,7 +57,7 @@ fn main() -> io::Result<()> {
     // let args: Vec<String> = env::args().collect();
     // println!("{:?}", args);
     let text = fs::read(&opt.input_file)?;
-    let r = satcomp::bidirectional_parse::find_in_range(
+    let r = satcomp::bms_parse::find_in_range(
         &text,
         opt.minsize,
         opt.maxsize.map_or(usize::MAX, |x| x),
