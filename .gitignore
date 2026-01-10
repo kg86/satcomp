@@ -1,6 +1,35 @@
-data/cantrbry_pref/*
-data/calgary_pref/*
-out/*
-.vscode
+# Outputs / generated files
+out/
+*.log
+*.err
+
+# Editor
+.vscode/
+
+# Python
 __pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.pyright/
+.ruff_cache/
 .tox/
+.venv/
+.uv-cache/
+*.egg-info/
+build/
+dist/
+
+# Rust
+rust/target/
+
+# Data derivatives
+data/cantrbry_pref/
+data/calgary_pref/
+
+# Shell script outputs
+shell/example_run/
+shell/measure/
+
+# OS
+.DS_Store

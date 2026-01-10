@@ -69,7 +69,6 @@ def exp():
         "data/cantrbry/ptt5",
         "data/cantrbry/sum",
         "data/cantrbry/xargs.1",
-        "data/misc/Pipfile",
         "data/misc/abcd.txt",
         "data/misc/banana.txt",
         "data/misc/fib03.txt",
