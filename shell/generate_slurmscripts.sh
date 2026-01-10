@@ -73,7 +73,7 @@ function putScriptRedir {
 for filename in $datasetFolder/*; do
 	basefilename="$(basename $filename)"
 	memory=$kMaxMemory
-	putScriptRedir "uv run src/bms_fast.py" "bms_$basefilename" "$filename" "$memory"
+	putScriptRedir "uv run src/bms_solver.py" "bms_$basefilename" "$filename" "$memory"
 	putScriptRedir "uv run src/attractor_solver.py --algo min" "attr_$basefilename" "$filename" "$memory"
 	# putScriptRedir "uv run src/grammar_solver.py" "grammar_$basefilename" "$filename"
 	putScriptRedir "uv run src/slp_solver.py" "slp_$basefilename" "$filename" "$memory"

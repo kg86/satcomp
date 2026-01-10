@@ -29,14 +29,14 @@ SOLVERS = [
         "uv run src/attractor_solver.py --file {filename} --algo min",
     ),
     Solver(
-        "bms-fast",
+        "bms-solver",
         Measure.bms,
-        "uv run src/bms_fast.py --file {filename}",
+        "uv run src/bms_solver.py --file {filename}",
     ),
     Solver(
-        "slp-fast",
+        "slp-solver",
         Measure.slp,
-        "uv run src/slp_fast.py --file {filename}",
+        "uv run src/slp_solver.py --file {filename}",
     ),
 ]
 
@@ -55,14 +55,14 @@ def make_tsv(files: List[str]):
             "uv run src/attractor_solver.py --file {filename} --algo min",
         ),
         Solver(
-            "bms-fast",
+            "bms-solver",
             Measure.bms,
-            "uv run src/bms_fast.py --file {filename}",
+            "uv run src/bms_solver.py --file {filename}",
         ),
         Solver(
-            "slp-fast",
+            "slp-solver",
             Measure.slp,
-            "uv run src/slp_fast.py --file {filename}",
+            "uv run src/slp_solver.py --file {filename}",
         ),
     ]
     writer = csv.writer(sys.stdout, delimiter="\t")
