@@ -39,6 +39,7 @@ extend-exclude = [".git", ".github", "__pycache__", "rust", "shell", "data"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "ANN"]
+# E741 and ANN should be removed in the future.
 ignore = ["E203", "E741", "ANN"]
 
 [tool.ruff.lint.isort]
