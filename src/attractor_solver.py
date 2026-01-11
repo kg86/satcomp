@@ -202,7 +202,10 @@ def parse_args():
     parser.add_argument(
         "--algo",
         type=str,
-        help="[min: find a minimum string attractor, exact/atmost: find a string attractor whose size is exact/atmost SIZE]",
+        help=(
+            "[min: find a minimum string attractor, exact/atmost: find a string "
+            "attractor whose size is exact/atmost SIZE]"
+        ),
     )
     parser.add_argument(
         "--log_level",

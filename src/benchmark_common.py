@@ -37,9 +37,11 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
         line["file"] = file
         # lz
         for algo in lz_bench.algos:
-            status, file_len, factor_size = cur.execute(
-                f"select status, file_len, {target_key} from {lz_bench.dbtable} WHERE file_name = '{file}' and algo='{algo}'"
-            ).fetchone()
+            query = (
+                f"select status, file_len, {target_key} from {lz_bench.dbtable} "
+                f"WHERE file_name = '{file}' and algo='{algo}'"
+            )
+            status, file_len, factor_size = cur.execute(query).fetchone()
             line["file_len"] = file_len
             if factor_size == target_none:
                 line[algo] = status
