@@ -107,9 +107,7 @@ def pysat_and(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list
     return nvar, new_clauses
 
 
-def pysat_atmost(
-    lm: LiteralManager, xs: list[int], bound: int
-) -> Tuple[int, list[list[int]]]:
+def pysat_atmost(lm: LiteralManager, xs: list[int], bound: int) -> Tuple[int, list[list[int]]]:
     """
     Create a literal and clauses such that the number of true literals in `xs` is at most `bound`.
     """
@@ -150,9 +148,7 @@ def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[
     # return pysat_name_cnf(lm, ex1_clauses)
 
 
-def pysat_name_cnf(
-    lm: LiteralManager, xs: list[list[int]]
-) -> Tuple[int, list[list[int]]]:
+def pysat_name_cnf(lm: LiteralManager, xs: list[list[int]]) -> Tuple[int, list[list[int]]]:
     res_clauses = []
     ex1_vars = []
     for clause in xs:

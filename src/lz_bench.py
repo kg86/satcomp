@@ -87,11 +87,7 @@ def benchmark_mul(timeout, algos, files, out_file, n_jobs):
     if os.path.exists(out_file):
         os.remove(out_file)
     queries = Parallel(n_jobs=n_jobs)(
-        [
-            delayed(benchmark_program)(timeout, algo, file)
-            for file in files
-            for algo in algos
-        ]
+        [delayed(benchmark_program)(timeout, algo, file) for file in files for algo in algos]
     )
     con = sqlite3.connect(dbname)
     cur = con.cursor()

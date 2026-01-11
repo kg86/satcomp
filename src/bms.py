@@ -64,7 +64,6 @@ class BiDirExp:
 
 
 def bd_info(bd: BiDirType, text: bytes) -> str:
-
     return "\n".join(
         [
             f"len={len(bd)}: factors={bd}",

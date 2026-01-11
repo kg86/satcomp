@@ -18,9 +18,7 @@ dbtable = "attractor_bench"
 algos = ["solver"]
 
 
-def run_solver(
-    input_file: str, timeout: Optional[float] = None
-) -> Optional[AttractorExp]:
+def run_solver(input_file: str, timeout: Optional[float] = None) -> Optional[AttractorExp]:
     cmd = [
         "uv",
         "run",
@@ -98,13 +96,7 @@ def benchmark_mul(timeout, algos, files, n_jobs):
     """
     Run benchmark program with multiple processes
     """
-    Parallel(n_jobs=n_jobs)(
-        [
-            delayed(benchmark_program)(timeout, algo, file)
-            for file in files
-            for algo in algos
-        ]
-    )
+    Parallel(n_jobs=n_jobs)([delayed(benchmark_program)(timeout, algo, file) for file in files for algo in algos])
 
 
 def clear_table():

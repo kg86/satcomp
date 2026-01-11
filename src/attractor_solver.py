@@ -46,9 +46,7 @@ def min_substr_hist(min_substrs, th):
     fig.savefig("./out/substrs.png")
 
 
-def attractor_of_size(
-    text: bytes, k: int, op: str, exp: Optional[AttractorExp] = None
-) -> AttractorType:
+def attractor_of_size(text: bytes, k: int, op: str, exp: Optional[AttractorExp] = None) -> AttractorType:
     """
     Compute string attractor of the specified size.
     If such attractor does not exist, return an empty list.
@@ -96,9 +94,7 @@ def attractor_of_size(
         # atmost = CardEnc.atmost(lits, bound=k, top_id=n + 1, encoding=EncType.bitwise) # x
     elif op == "exact":
         # atmost = CardEnc.equals(lits, bound=k, top_id=n + 1, encoding=EncType.ladder) # x
-        exclauses = CardEnc.equals(
-            list(range(1, n + 1)), bound=k, top_id=n + 1, encoding=EncType.totalizer
-        )  # o
+        exclauses = CardEnc.equals(list(range(1, n + 1)), bound=k, top_id=n + 1, encoding=EncType.totalizer)  # o
         # atmost = CardEnc.equals(lits, bound=k, top_id=n + 1, encoding=EncType.mtotalizer) # o
         # atmost = CardEnc.equals(lits, bound=k, top_id=n + 1, encoding=EncType.kmtotalizer) # o
         # atmost = CardEnc.equals(lits, bound=k, top_id=n + 1, encoding=EncType.native) # x
@@ -117,9 +113,7 @@ def attractor_of_size(
     if solver.solve():
         sol = solver.get_model()
         assert sol is not None
-        attractor = AttractorType(
-            list(x - 1 for x in filter(lambda x: 0 < x <= n, sol))
-        )
+        attractor = AttractorType(list(x - 1 for x in filter(lambda x: 0 < x <= n, sol)))
         logger.info(f"#attractor = {len(attractor)}")
     if exp:
         exp.time_total = time.time() - total_start
@@ -154,9 +148,7 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
     return wcnf
 
 
-def min_attractor(
-    text: bytes, exp: Optional[AttractorExp] = None, contain_list: List[int] = []
-) -> AttractorType:
+def min_attractor(text: bytes, exp: Optional[AttractorExp] = None, contain_list: List[int] = []) -> AttractorType:
     """
     Compute the minimum string attractor.
     """

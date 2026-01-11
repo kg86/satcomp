@@ -13,16 +13,7 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
     cur = con.cursor()
     cur.execute(f"select file_name from {lz_bench.dbtable}")
     header = ["file", "file_len"] + lz_bench.algos + ["attractor", "bms"]
-    files = sorted(
-        list(
-            set(
-                x[0]
-                for x in cur.execute(
-                    f"select file_name from {lz_bench.dbtable}"
-                ).fetchall()
-            )
-        )
-    )
+    files = sorted(list(set(x[0] for x in cur.execute(f"select file_name from {lz_bench.dbtable}").fetchall())))
     lines = []
 
     def get_values(keys, table, file):
@@ -49,9 +40,7 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
                 line[algo] = factor_size
 
         # attractor
-        status, target = get_values(
-            ["status", target_key], attractor_bench.dbtable, file
-        )
+        status, target = get_values(["status", target_key], attractor_bench.dbtable, file)
         line["attractor"] = status if target == target_none else target
 
         # bms

@@ -106,9 +106,7 @@ def exp():
     ]
     # files = files[-10:]
     algos = [stralgo.minimum_substr_sa, stralgo.minimum_right_substr_sa]
-    print(
-        "file, len, nlrmin, nrmin, nlrmin/nrmin, total-lrmin, total-rmin, total-lrmin/total-rmin"
-    )
+    print("file, len, nlrmin, nrmin, nlrmin/nrmin, total-lrmin, total-rmin, total-lrmin/total-rmin")
     for f in files:
         text = open(f, "rb").read()
         sa = stralgo.make_sa_MM(text)
@@ -135,9 +133,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
-    parser.add_argument(
-        "--mode", type=str, help="[size_min_substr, size_min_right_substr]", default=""
-    )
+    parser.add_argument("--mode", type=str, help="[size_min_substr, size_min_right_substr]", default="")
     args = parser.parse_args()
 
     if args.mode == "size_min_substr":

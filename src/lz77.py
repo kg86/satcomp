@@ -83,10 +83,7 @@ def equal(text: bytes, f1: LZType, f2: LZType) -> bool:
         if f1[i][0] == -1 and f2[i][0] == -1 and f1[i][1] == f2[i][1]:
             pass
         elif f1[i][0] >= 0 and f2[i][0] >= 0 and f1[i][1] == f2[i][1]:
-            if (
-                text[f1[i][0] : f1[i][0] + f1[i][1]]
-                != text[f2[i][0] : f2[i][0] + f2[i][1]]
-            ):
+            if text[f1[i][0] : f1[i][0] + f1[i][1]] != text[f2[i][0] : f2[i][0] + f2[i][1]]:
                 print(f"i={i}, f1={f1[i]}, f2={f2[i]}")
                 return False
         else:

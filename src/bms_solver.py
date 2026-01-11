@@ -38,9 +38,7 @@ class BiDirLiteral(Enum):
     auxlit = Literal.auxlit
     pstart = auto()  # i: true iff T[i] is start of phrase
     ref = auto()  # (i,j) true iff position T[i] references position T[j]
-    tref = (
-        auto()
-    )  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
+    tref = auto()  # (i,j) true iff position T[i] eventually references position T[j] (transitive closure)
 
 
 class BiDirLiteralManager(LiteralManager):
@@ -221,9 +219,7 @@ def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
         for i in occ1[c]:
             for j in occ_others(occ1, text, i):
                 # if ref(i,j) -> tref(i,j)
-                wcnf.append(
-                    [-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.tref, i, j)]
-                )
+                wcnf.append([-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.tref, i, j)])
                 for k in occ1[c]:
                     if i != k and j != k:
                         wcnf.append(  # if tref(i,k) and ref(k,j) -> tref(i,j)
@@ -242,19 +238,14 @@ def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     # sum_j ref(i,j) = 0 => pstart(i)
     # [or ref_[i,j] , pstart (i)]
     for i in range(n):
-        wcnf.append(
-            [lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)]
-            + [lm.getid(lm.lits.pstart, i)]
-        )
+        wcnf.append([lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)] + [lm.getid(lm.lits.pstart, i)])
 
     # if i = 0 or j = 0 or T[i-1] \neq T[j-1]: not (ref(i,j)) or pstart(i)
     for c in occ1.keys():
         for i in occ1[c]:
             for j in occ_others(occ1, text, i):
                 if i == 0 or j == 0 or text[i - 1] != text[j - 1]:
-                    wcnf.append(
-                        [-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.pstart, i)]
-                    )
+                    wcnf.append([-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.pstart, i)])
     # for i,j > 0, and T[i] = T[j], T[i-1] = T[j-1]
     # if (not ref(i-1,j-1)) and ref(i,j) => pstart(i)
     # <=> ref(i-1,j-1) or not ref(i,j) or pstart(i)
@@ -280,9 +271,7 @@ def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     return lm, wcnf
 
 
-def min_bms(
-    text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int] = []
-) -> BiDirType:
+def min_bms(text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int] = []) -> BiDirType:
     """
     Compute the smallest bidirectional macro scheme (BMS).
     """
@@ -346,9 +335,7 @@ def bms_enumerate(text: bytes) -> Iterator[BiDirType]:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Compute Minimum bidirectional macro scheme (BMS)"
-    )
+    parser = argparse.ArgumentParser(description="Compute Minimum bidirectional macro scheme (BMS)")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
@@ -367,9 +354,7 @@ def parse_args():
     )
 
     args = parser.parse_args()
-    if (args.file == "" and args.str == "") or (
-        args.log_level not in ["DEBUG", "INFO", "CRITICAL"]
-    ):
+    if (args.file == "" and args.str == "") or (args.log_level not in ["DEBUG", "INFO", "CRITICAL"]):
         parser.print_help()
         sys.exit()
     return args
