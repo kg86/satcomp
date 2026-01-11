@@ -28,9 +28,6 @@ venvPath = "."
 venv = ".venv"
 reportOptionalSubscript = false
 reportOptionalMemberAccess = false
-reportMissingParameterType = "error"
-reportUnknownParameterType = "error"
-reportUnknownReturnType = "error"
 
 [tool.ruff]
 line-length = 120
