@@ -12,20 +12,15 @@ dependencies = [
     "joblib>=1.1.0",
     "pandas>=1.4.3",
     "numpy>=1.23.0",
-    "tqdm>=4.64.0"
+    "tqdm>=4.64.0",
 ]
 
 [dependency-groups]
-dev = [
-    "black>=22.6.0",
-    "pyright>=1.1.256",
-    "flake8>=4.0.1",
-    "isort>=5.10.1"
-]
+dev = ["pyright>=1.1.256", "ruff>=0.14.11"]
 
 [tool.uv]
 default-groups = ["dev"]
-cache-keys = [ { file = "pyproject.toml" }, { git = true } ]
+cache-keys = [{ file = "pyproject.toml" }, { git = true }]
 
 
 [tool.pyright]
@@ -33,3 +28,23 @@ venvPath = "."
 venv = ".venv"
 reportOptionalSubscript = false
 reportOptionalMemberAccess = false
+reportMissingParameterType = "error"
+reportUnknownParameterType = "error"
+reportUnknownReturnType = "error"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = [".git", ".github", "__pycache__", "rust", "shell", "data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "ANN"]
+ignore = ["E203", "E741", "ANN"]
+
+[tool.ruff.lint.isort]
+# order-by-type = false
+
+[tool.ruff.lint.flake8-annotations]
+allow-star-arg-any = true
+ignore-fully-untyped = false
+suppress-none-returning = true

@@ -164,10 +164,10 @@ def smallest_SLP_WCNF(text: bytes):  # noqa: C901
             for l in range(2, lpf[j] + 1):
                 if i + l <= j and text[i : i + l] == text[j : j + l]:
                     lm.newid(lm.lits.ref, j, i, l)  # definition of ref_{i<-j,l}
-                    if not (i, l) in refs_by_referred:
+                    if (i, l) not in refs_by_referred:
                         refs_by_referred[i, l] = []
                     refs_by_referred[i, l].append(j)
-                    if not (j, l) in refs_by_referrer:
+                    if (j, l) not in refs_by_referrer:
                         refs_by_referrer[j, l] = []
                     refs_by_referrer[j, l].append(i)
     for i, l in refs_by_referred.keys():
