@@ -9,7 +9,7 @@ import sys
 import time
 from enum import auto
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2
@@ -35,6 +35,8 @@ FORMAT = "[%(lineno)s - %(funcName)10s() ] %(message)s"
 formatter = Formatter(FORMAT)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+Node = Tuple[int, int, int | None]
 
 
 class SLPLiteral(Enum):
@@ -71,7 +73,7 @@ class SLPLiteralManager(LiteralManager):
         }
         super().__init__(self.lits)  # type: ignore
 
-    def newid(self, *obj) -> int:
+    def newid(self, *obj: object) -> int:
         res = super().newid(*obj)
         if len(obj) > 0 and obj[0] in self.verifyf:
             self.verifyf[obj[0]](*obj)
@@ -115,7 +117,7 @@ class SLPLiteralManager(LiteralManager):
         assert i + l <= self.n
 
 
-def compute_lpf(text: bytes):  # non-self-referencing lpf
+def compute_lpf(text: bytes) -> List[int]:  # non-self-referencing lpf
     """
     lpf[i] = length of longest prefix of text[i:] that occurs in text[0:i]
     """
@@ -133,7 +135,9 @@ def compute_lpf(text: bytes):  # non-self-referencing lpf
     return lpf
 
 
-def smallest_SLP_WCNF(text: bytes):  # noqa: C901
+def smallest_SLP_WCNF(
+    text: bytes,
+) -> Tuple[SLPLiteralManager, WCNF, List[Tuple[int, int]], Dict[Tuple[int, int], List[int]]]:  # noqa: C901
     """
     Compute the max sat formula for computing the smallest SLP
     """
@@ -462,7 +466,11 @@ def slp2str(root, slp):
     return res
 
 
-def recover_slp(text: bytes, pstartl, refs_by_referrer):
+def recover_slp(
+    text: bytes,
+    pstartl: List[int],
+    refs_by_referrer: Dict[Tuple[int, int], int],
+) -> Tuple[Node, Dict[Node, object]]:
     n = len(text)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
     leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]

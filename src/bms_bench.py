@@ -113,7 +113,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
     return exp
 
 
-def benchmark_program(timeout, algo, file) -> List[str]:
+def benchmark_program(timeout: Optional[float], algo: str, file: str) -> List[str]:
     """
     Run program with given setting (timeout, algo, file).
     """

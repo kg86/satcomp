@@ -1,7 +1,7 @@
 import argparse
 import sys
 from enum import Enum, auto
-from typing import List, Tuple
+from typing import AnyStr, List, Tuple
 
 import stralgo
 
@@ -124,7 +124,7 @@ def exp():
         print(",".join(map(str, line)))
 
 
-def show(text, substrs: List[Tuple[int, int]]):
+def show(text: AnyStr, substrs: List[Tuple[int, int]]):
     for i, l in substrs:
         print(text[i : i + l])
 

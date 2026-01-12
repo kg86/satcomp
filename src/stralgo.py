@@ -153,7 +153,7 @@ def substr(text: AnyStr) -> List[AnyStr]:
     return res
 
 
-def minimum_substr_naive(text) -> List[Tuple[int, int]]:
+def minimum_substr_naive(text: AnyStr) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring.
     A minimum substring x is a substring that the #occ of x is
@@ -178,7 +178,7 @@ def minimum_right_substr(text):
     return minimum_right_substr_sa(text, sa, isa, lcp)
 
 
-def minimum_right_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_right_substr_sa(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum right substring
     A minimum right substring x is a substring that the #occ of x is
@@ -222,7 +222,7 @@ def minimum_substr(text):
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_sa(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -231,7 +231,7 @@ def minimum_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> Li
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_square(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_square(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -277,7 +277,7 @@ def minimum_substr_square(text, sa: List[int], isa: List[int], lcp: List[int]) -
     return res
 
 
-def minimum_substr_linear(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_linear(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is

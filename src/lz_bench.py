@@ -36,7 +36,7 @@ class LZExp:
         return LZExp("", "", "", "", 0, 0, 0)
 
 
-def benchmark_program(timeout, algo, file) -> List[str]:
+def benchmark_program(timeout: float | None, algo: str, file: str) -> List[str]:
     """
     Run program with given setting (timeout, algo, file).
     """

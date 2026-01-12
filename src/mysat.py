@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from enum import Enum
-from typing import Any, Callable, Tuple
+from typing import Callable, Tuple
 
 from pysat.card import CardEnc, IDPool
 from sympy import And, Basic, Not, Or, Symbol
@@ -30,7 +30,7 @@ class LiteralManager:
         self.true = self.newsym(self.lits.true)
         self.false = self.newsym(self.lits.false)
 
-    def newid(self, *obj) -> int:
+    def newid(self, *obj: object) -> int:
         if len(obj) == 0:
             # obj = ("auxlit", self.nvar["auxlit"])
             obj = (self.lits.auxlit, self.nvar[self.lits.auxlit])
@@ -39,11 +39,11 @@ class LiteralManager:
         self.nvar[obj[0]] += 1
         return self.vpool.id(obj)
 
-    def getid(self, *obj) -> int:
+    def getid(self, *obj: object) -> int:
         assert self.contains(*obj)
         return self.vpool.obj2id[obj]
 
-    def contains(self, *obj) -> bool:
+    def contains(self, *obj: object) -> bool:
         return obj in self.vpool.obj2id
 
     def id2sym(self, id: int) -> Boolean:
@@ -54,13 +54,13 @@ class LiteralManager:
     def sym2id(self, x: Boolean) -> int:
         return int(str(x))
 
-    def getsym(self, *opt) -> Boolean:
+    def getsym(self, *opt: object) -> Boolean:
         return self.id2sym(self.getid(*opt))
 
-    def newsym(self, *obj) -> Boolean:
+    def newsym(self, *obj: object) -> Boolean:
         return self.id2sym(self.newid(*obj))
 
-    def id2obj(self, id: int):
+    def id2obj(self, id: int) -> object:
         return self.vpool.id2obj[id]
 
     def id2str(self, id: int) -> str:
@@ -181,25 +181,25 @@ def sympy_atmost_one(lits: list[Boolean]) -> Boolean:
     return And(*[~lits[i] | ~lits[j] for i in range(n) for j in range(i + 1, n)])  # type: ignore
 
 
-def sympy_exactly_one(lits: list[Boolean]):
+def sympy_exactly_one(lits: list[Boolean]) -> Boolean:
     return And(sympy_atleast_one(lits) & sympy_atmost_one(lits))
 
 
-def sympy_if(x, y) -> Boolean:
+def sympy_if(x: Boolean, y: Boolean) -> Boolean:
     """
     x -> y
     """
     return ~x | y
 
 
-def sympy_iff(x, y) -> Boolean:
+def sympy_iff(x: Boolean, y: Boolean) -> Boolean:
     """
     x <-> y
     """
     return (~x | y) & (x | ~y)
 
 
-def sympy_equal(x, y) -> Boolean:
+def sympy_equal(x: Boolean, y: Boolean) -> Boolean:
     """
     x <-> y
     """
@@ -217,11 +217,11 @@ def sign_dec(x):
     return 1 if x == 1 else 0
 
 
-def defcnf(new_var, x: Boolean, y: Boolean) -> list[list[int]]:
+def defcnf(new_var: Callable[[], int], x: Boolean, y: Boolean) -> list[list[int]]:
     return sympy_cnf_pysat(new_var, Equivalent(x, y))  # type: ignore
 
 
-def literal_sympy_to_pysat(x: Boolean | Basic):
+def literal_sympy_to_pysat(x: Boolean | Basic) -> int:
     """
     Convert sympy literal to pysat literal.
     sympy literal must be represented by integer
@@ -233,13 +233,13 @@ def literal_sympy_to_pysat(x: Boolean | Basic):
         return int(str(x))
 
 
-def cnf_sympy_to_pysat(x: Boolean | Any) -> list[list[int]]:
+def cnf_sympy_to_pysat(x: Boolean | Basic) -> list[list[int]]:
     """
     Convert cnf of sympy to cnf of pysat.
     x is sympy cnf formula whose literal is number
     """
 
-    def convert_clause(y) -> list[int]:
+    def convert_clause(y: Boolean | Basic) -> list[int]:
         if isinstance(y, Symbol) or isinstance(y, Not):
             return [literal_sympy_to_pysat(y)]
         elif isinstance(y, Or):
@@ -256,7 +256,7 @@ def cnf_sympy_to_pysat(x: Boolean | Any) -> list[list[int]]:
     return [convert_clause(clause) for clause in x.args]
 
 
-def sympy_cnf_pysat(new_var, x: Boolean | Any) -> list[list[int]]:
+def sympy_cnf_pysat(new_var: Callable[[], int], x: Boolean | Basic) -> list[list[int]]:
     """
     Convert any sympy equation to cnf of pysat which is boolean equivalent.
 
