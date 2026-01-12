@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from dataclasses import dataclass
 from typing import Any, Union
@@ -42,7 +44,7 @@ class AttractorExp:
         self.sol_navgclause = avg_var_in_clause
 
     @classmethod
-    def create(cls):
+    def create(cls) -> AttractorExp:
         return AttractorExp(
             date=str(datetime.datetime.now()),
             status="",

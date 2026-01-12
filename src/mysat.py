@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import typing
 from collections import defaultdict
 from enum import Enum
 from typing import Callable, Tuple
@@ -21,7 +22,7 @@ class Literal(Enum):
 
 
 class LiteralManager:
-    def __init__(self, lits=Literal):
+    def __init__(self, lits=Literal) -> None:
         self.lits = lits
         # self.lits = Literal
         self.vpool = IDPool()
@@ -206,14 +207,14 @@ def sympy_equal(x: Boolean, y: Boolean) -> Boolean:
     return (x & y) | (~x & ~y)
 
 
-def sign_enc(x):
+def sign_enc(x: int) -> typing.Literal[1, -1]:
     """
     Convert x= 1 or 0 to 1 or -1.
     """
     return 1 if x == 1 else -1
 
 
-def sign_dec(x):
+def sign_dec(x: int) -> typing.Literal[0, 1]:
     return 1 if x == 1 else 0
 
 
@@ -256,7 +257,7 @@ def cnf_sympy_to_pysat(x: Boolean | Basic) -> list[list[int]]:
     return [convert_clause(clause) for clause in x.args]
 
 
-def sympy_cnf_pysat(new_var: Callable[[], int], x: Boolean | Basic) -> list[list[int]]:
+def sympy_cnf_pysat(new_var: Callable[[], int], x: Boolean) -> list[list[int]]:
     """
     Convert any sympy equation to cnf of pysat which is boolean equivalent.
 
@@ -264,7 +265,7 @@ def sympy_cnf_pysat(new_var: Callable[[], int], x: Boolean | Basic) -> list[list
     """
     new_formula = []
 
-    def rec(eq: Boolean | Basic) -> int:
+    def rec(eq: Boolean) -> int:
         if isinstance(eq, Symbol) or isinstance(eq, Not):
             return literal_sympy_to_pysat(eq)
         elif isinstance(eq, And):

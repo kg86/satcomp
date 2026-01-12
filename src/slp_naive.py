@@ -24,15 +24,15 @@ logger.addHandler(handler)
 
 
 class Node(object):
-    def __init__(self, left, right):
+    def __init__(self, left: str, right: str) -> None:
         self.left = left
         self.right = right
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "(%s %s)" % (self.left, self.right)
 
 
-def enum_ordered(labels):
+def enum_ordered(labels: str) -> str | Node:
     if len(labels) == 1:
         yield labels[0]
     else:
@@ -45,7 +45,7 @@ def enum_ordered(labels):
 ##############################################################################################
 
 
-def minimize_tree(root, nodedic):
+def minimize_tree(root: str | Node, nodedic: dict[str | tuple[int, int], str]) -> str | Node:
     # print(root)
     if type(root) is Node:
         left = minimize_tree(root.left, nodedic)
@@ -63,7 +63,7 @@ def minimize_tree(root, nodedic):
         return root
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

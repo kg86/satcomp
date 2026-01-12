@@ -1,9 +1,9 @@
-from typing import AnyStr, Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 from tqdm import tqdm
 
 
-def make_sa_MM(text):
+def make_sa_MM(text: str) -> list[int]:
     """
     Make sufix array by Manber and Myers algorithm.
     """
@@ -16,7 +16,7 @@ def make_sa_MM(text):
     sa = list(range(n))
     while d < n:
 
-        def at(i):
+        def at(i: int) -> tuple[int, int]:
             key1 = rank[i]
             key2 = rank[i + d] if (i + d) < len(rank) else -1
             return (key1, key2)
@@ -34,7 +34,7 @@ def make_sa_MM(text):
     return sa
 
 
-def get_lcp(text, i, j):
+def get_lcp(text: str, i: int, j: int) -> int:
     n = len(text)
     l = 0
     while i < n and j < n:
@@ -46,7 +46,7 @@ def get_lcp(text, i, j):
     return l
 
 
-def make_isa(sa):
+def make_isa(sa: list[int]) -> list[int]:
     """
     Make inverse suffix array.
     """
@@ -57,7 +57,7 @@ def make_isa(sa):
     return isa
 
 
-def make_lcpa_kasai(text, sa, isa=None):
+def make_lcpa_kasai(text: str, sa: list[int], isa: list[int] | None = None) -> list[int]:
     """
     Make longest common prefix array by Kasai algorithm.
     """
@@ -75,7 +75,7 @@ def make_lcpa_kasai(text, sa, isa=None):
     return lcp
 
 
-def get_bwt(text, sa):
+def get_bwt(text: str, sa: list[int]) -> list[str]:
     n = len(text)
     res = []
 
@@ -102,11 +102,11 @@ def get_lcprange(lcp: List[int], i: int, least_lcp: Optional[int] = None) -> Tup
     return (b, e)
 
 
-def maximal_repeat(text, sa, lcp):
+def maximal_repeat(text: str, sa: list[int], lcp: list[int]) -> list[tuple[int, int]]:
     n = len(text)
     res = []
 
-    def is_bwt_distinct(lcp_range):
+    def is_bwt_distinct(lcp_range: tuple[int, int]) -> bool:
         if sa[lcp_range[0]] == 0:
             return True
         for i in range(lcp_range[0] + 1, lcp_range[1] + 1):
@@ -126,7 +126,7 @@ def maximal_repeat(text, sa, lcp):
     return res
 
 
-def occ_pos_naive(text, pattern):
+def occ_pos_naive(text: str, pattern: str) -> list[int]:
     res = []
     beg = 0
     occ = text.find(pattern, beg)
@@ -137,14 +137,14 @@ def occ_pos_naive(text, pattern):
     return res
 
 
-def num_occ(text, pattern):
+def num_occ(text: str, pattern: str) -> int:
     """
     Compute the number of occurrences of the pattern in text.
     """
     return len(occ_pos_naive(text, pattern))
 
 
-def substr(text: AnyStr) -> List[AnyStr]:
+def substr(text: str) -> List[str]:
     n = len(text)
     res = []
     for i in range(n):
@@ -153,7 +153,7 @@ def substr(text: AnyStr) -> List[AnyStr]:
     return res
 
 
-def minimum_substr_naive(text: AnyStr) -> List[Tuple[int, int]]:
+def minimum_substr_naive(text: str) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring.
     A minimum substring x is a substring that the #occ of x is
@@ -171,14 +171,14 @@ def minimum_substr_naive(text: AnyStr) -> List[Tuple[int, int]]:
     return res
 
 
-def minimum_right_substr(text):
+def minimum_right_substr(text: str) -> list[tuple[int, int]]:
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
     return minimum_right_substr_sa(text, sa, isa, lcp)
 
 
-def minimum_right_substr_sa(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_right_substr_sa(text: str, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum right substring
     A minimum right substring x is a substring that the #occ of x is
@@ -215,14 +215,14 @@ def minimum_right_substr_sa(text: AnyStr, sa: List[int], isa: List[int], lcp: Li
     return res
 
 
-def minimum_substr(text):
+def minimum_substr(text: str) -> list[tuple[int, int]]:
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_sa(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_sa(text: str, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -231,7 +231,7 @@ def minimum_substr_sa(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_square(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_square(text: str, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -277,7 +277,7 @@ def minimum_substr_square(text: AnyStr, sa: List[int], isa: List[int], lcp: List
     return res
 
 
-def minimum_substr_linear(text: AnyStr, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_linear(text: str, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -346,7 +346,7 @@ def minimum_substr_linear(text: AnyStr, sa: List[int], isa: List[int], lcp: List
     return res
 
 
-def substr_cover(text, sa, lcp, isa, b, l):
+def substr_cover(text: str, sa: list[int], lcp: list[int], isa: list[int], b: int, l: int) -> set[int]:
     """
     return occ of text[b:b+l] in text.
     """
@@ -359,13 +359,13 @@ def substr_cover(text, sa, lcp, isa, b, l):
     return cover
 
 
-def print_sa(text, sa):
+def print_sa(text: str, sa: list[int]) -> None:
     n = len(text)
     for i in range(n):
         print("\t".join(map(str, [i, sa[i], text[sa[i] :]])))
 
 
-def print_sa_lcp(text, sa, lcp):
+def print_sa_lcp(text: str, sa: list[int], lcp: list[int]) -> None:
     n = len(text)
     for i in range(n):
         print(
@@ -384,7 +384,7 @@ def print_sa_lcp(text, sa, lcp):
         )
 
 
-def verify_sa(text, sa):
+def verify_sa(text: str, sa: list[int]):
     n = len(text)
     for i in range(1, n):
         # print('{} < {} ?'.format(text[sa[i - 1]:], text[sa[i]:]))
