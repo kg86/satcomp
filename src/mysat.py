@@ -22,20 +22,16 @@ class Literal(Enum):
 
 
 class LiteralManager:
-    def __init__(self, lits=Literal) -> None:
-        self.lits = lits
-        # self.lits = Literal
+    def __init__(self) -> None:
         self.vpool = IDPool()
         self.syms: dict[int, Boolean] = dict()
         self.nvar = defaultdict(int)
-        self.true = self.newsym(self.lits.true)
-        self.false = self.newsym(self.lits.false)
+        self.true = self.newsym(Literal.true)
+        self.false = self.newsym(Literal.false)
 
     def newid(self, *obj: object) -> int:
         if len(obj) == 0:
-            # obj = ("auxlit", self.nvar["auxlit"])
-            obj = (self.lits.auxlit, self.nvar[self.lits.auxlit])
-        assert obj[0] in self.lits
+            obj = (Literal.auxlit, self.nvar[Literal.auxlit])
         assert not self.contains(*obj)
         self.nvar[obj[0]] += 1
         return self.vpool.id(obj)

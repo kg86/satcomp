@@ -49,41 +49,25 @@ class BiDirLiteralManager(LiteralManager):
     def __init__(self, text: bytes):
         self.text = text
         self.n = len(self.text)
-        self.lits = BiDirLiteral
-        self.verifyf = {
-            BiDirLiteral.pstart: self.verify_pstart,
-            BiDirLiteral.ref: self.verify_ref,
-            BiDirLiteral.tref: self.verify_tref,
-        }
-        super().__init__(self.lits)  # type: ignore
+        super().__init__()
 
-    def newid(self, *obj):
-        res = super().newid(*obj)
-        if len(obj) > 0 and obj[0] in self.verifyf:
-            # @TODO resolve type errors
-            self.verifyf[obj[0]](obj)  # type:ignore
-        return res
+    def add_pstart(self, pos: int) -> None:
+        assert 0 <= pos < self.n
+        self.newid(BiDirLiteral.pstart, pos)
 
-    def verify_pstart(self, obj: Tuple[str, int]):
-        # obj = (name, pos)
-        assert len(obj) == 2
-        assert 0 <= obj[1] < self.n
+    def add_ref(self, pos: int, ref_pos: int) -> None:
+        assert pos != ref_pos
+        assert 0 <= pos < self.n
+        assert 0 <= ref_pos < self.n
+        assert self.text[pos] == self.text[ref_pos]
+        self.newid(BiDirLiteral.ref, pos, ref_pos)
 
-    def verify_ref(self, obj: Tuple[str, int, int]):
-        # obj = (name, pos, ref_pos)
-        assert len(obj) == 3
-        assert obj[1] != obj[2]
-        assert 0 <= obj[1] < self.n
-        assert 0 <= obj[2] < self.n
-        assert self.text[obj[1]] == self.text[obj[2]]
-
-    def verify_tref(self, obj: Tuple[str, int, int]):
-        # obj = (name, pos, ref_pos)
-        assert len(obj) == 3
-        assert obj[1] != obj[2]
-        assert 0 <= obj[1] < self.n
-        assert 0 <= obj[2] < self.n
-        assert self.text[obj[1]] == self.text[obj[2]]
+    def add_tref(self, pos: int, ref_pos: int) -> None:
+        assert pos != ref_pos
+        assert 0 <= pos < self.n
+        assert 0 <= ref_pos < self.n
+        assert self.text[pos] == self.text[ref_pos]
+        self.newid(BiDirLiteral.tref, pos, ref_pos)
 
 
 def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]) -> CNF:
@@ -101,7 +85,7 @@ def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> Dict
         for j in occ[text[i]]:
             if i == j:
                 continue
-            if sol[lm.getid(lm.lits.ref, i, j)]:
+            if sol[lm.getid(BiDirLiteral.ref, i, j)]:
                 refs[i] = j
                 break
     logger.debug(f"refs={refs}")
@@ -119,14 +103,14 @@ def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
     for i in range(n):
         pinfo[i].append(chr(text[i]))
         for j in occ_others(occ, text, i):
-            key = (lm.lits.ref, i, j)
+            key = (BiDirLiteral.ref, i, j)
             if sol[lm.getid(*key)]:
                 pinfo[i].append(str(key))
-        fbeg_key = (lm.lits.pstart, i)
+        fbeg_key = (BiDirLiteral.pstart, i)
         if sol[lm.getid(*fbeg_key)]:
             pinfo[i].append(str(fbeg_key))
         for j in occ_others(occ, text, i):
-            key = (lm.lits.tref, i, j)
+            key = (BiDirLiteral.tref, i, j)
             if sol[lm.getid(*key)]:
                 pinfo[i].append(str(key))
     for i in range(n):
@@ -142,7 +126,7 @@ def sol2bms(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> BiDir
     n = len(text)
     refs = sol2refs(lm, sol, text)
     for i in range(n):
-        if sol[lm.getid(lm.lits.pstart, i)]:
+        if sol[lm.getid(BiDirLiteral.pstart, i)]:
             fbegs.append(i)
     fbegs.append(n)
 
@@ -203,50 +187,52 @@ def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
     lits = []
     for i in range(n):
         # pstart(i) is true iff a factor begins at i
-        lits.append(lm.newid(lm.lits.pstart, i))
+        lits.append(lm.add_pstart(i))
     for i in range(n):
         for j in occ_others(occ1, text, i):
             # ref(i, j) is true iff i refers to j
-            lits.append(lm.newid(lm.lits.ref, i, j))
+            lits.append(lm.add_ref(i, j))
             # tref(i, j) is true iff i eventualy refers to j
-            lits.append(lm.newid(lm.lits.tref, i, j))
+            lits.append(lm.add_tref(i, j))
     ############################################################################
     logger.debug("each position has atmost one reference")
     for i in range(n):
-        refi = [lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)]
+        refi = [lm.getid(BiDirLiteral.ref, i, j) for j in occ_others(occ1, text, i)]
         wcnf.extend(CardEnc.atmost(refi, bound=1, vpool=lm.vpool))
 
     for c in occ1.keys():
         for i in occ1[c]:
             for j in occ_others(occ1, text, i):
                 # if ref(i,j) -> tref(i,j)
-                wcnf.append([-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.tref, i, j)])
+                wcnf.append([-lm.getid(BiDirLiteral.ref, i, j), lm.getid(BiDirLiteral.tref, i, j)])
                 for k in occ1[c]:
                     if i != k and j != k:
                         wcnf.append(  # if tref(i,k) and ref(k,j) -> tref(i,j)
                             [
-                                -lm.getid(lm.lits.tref, i, k),
-                                -lm.getid(lm.lits.ref, k, j),
-                                lm.getid(lm.lits.tref, i, j),
+                                -lm.getid(BiDirLiteral.tref, i, k),
+                                -lm.getid(BiDirLiteral.ref, k, j),
+                                lm.getid(BiDirLiteral.tref, i, j),
                             ]
                         )
         # acyclicity of tref: If tref(i,j) -> not tref(j,i)
     for i in range(n):
         for j in occ_others(occ1, text, i):
-            wcnf.append([-lm.getid(lm.lits.tref, i, j), -lm.getid(lm.lits.tref, j, i)])
+            wcnf.append([-lm.getid(BiDirLiteral.tref, i, j), -lm.getid(BiDirLiteral.tref, j, i)])
 
     # a root must be a beginning of a phrase: root(i) -> pstart(i)
     # sum_j ref(i,j) = 0 => pstart(i)
     # [or ref_[i,j] , pstart (i)]
     for i in range(n):
-        wcnf.append([lm.getid(lm.lits.ref, i, j) for j in occ_others(occ1, text, i)] + [lm.getid(lm.lits.pstart, i)])
+        wcnf.append(
+            [lm.getid(BiDirLiteral.ref, i, j) for j in occ_others(occ1, text, i)] + [lm.getid(BiDirLiteral.pstart, i)]
+        )
 
     # if i = 0 or j = 0 or T[i-1] \neq T[j-1]: not (ref(i,j)) or pstart(i)
     for c in occ1.keys():
         for i in occ1[c]:
             for j in occ_others(occ1, text, i):
                 if i == 0 or j == 0 or text[i - 1] != text[j - 1]:
-                    wcnf.append([-lm.getid(lm.lits.ref, i, j), lm.getid(lm.lits.pstart, i)])
+                    wcnf.append([-lm.getid(BiDirLiteral.ref, i, j), lm.getid(BiDirLiteral.pstart, i)])
     # for i,j > 0, and T[i] = T[j], T[i-1] = T[j-1]
     # if (not ref(i-1,j-1)) and ref(i,j) => pstart(i)
     # <=> ref(i-1,j-1) or not ref(i,j) or pstart(i)
@@ -256,18 +242,18 @@ def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
                 if i > 0 and j > 0 and text[i - 1] == text[j - 1]:
                     wcnf.append(
                         [
-                            lm.getid(lm.lits.ref, i - 1, j - 1),
-                            -lm.getid(lm.lits.ref, i, j),
-                            lm.getid(lm.lits.pstart, i),
+                            lm.getid(BiDirLiteral.ref, i - 1, j - 1),
+                            -lm.getid(BiDirLiteral.ref, i, j),
+                            lm.getid(BiDirLiteral.pstart, i),
                         ]
                     )
 
     # the first position is always a beginning of a phrase
-    wcnf.append([lm.getid(lm.lits.pstart, 0)])
+    wcnf.append([lm.getid(BiDirLiteral.pstart, 0)])
 
     # objective: minimizes the number of factors
     for i in range(n):
-        wcnf.append([-lm.getid(lm.lits.pstart, i)], weight=1)
+        wcnf.append([-lm.getid(BiDirLiteral.pstart, i)], weight=1)
 
     return lm, wcnf
 
@@ -282,7 +268,7 @@ def min_bms(text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int]
         logger.info(f"# of [{lname}] literals  = {lm.nvar[lname]}")
 
     for i in contain_list:
-        fbeg0 = lm.getid(lm.lits.pstart, i)
+        fbeg0 = lm.getid(BiDirLiteral.pstart, i)
         wcnf.append([fbeg0])
 
     if exp:
