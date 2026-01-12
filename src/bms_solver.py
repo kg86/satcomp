@@ -60,7 +60,8 @@ class BiDirLiteralManager(LiteralManager):
     def newid(self, *obj):
         res = super().newid(*obj)
         if len(obj) > 0 and obj[0] in self.verifyf:
-            self.verifyf[obj[0]](obj)
+            # @TODO resolve type errors
+            self.verifyf[obj[0]](obj)  # type:ignore
         return res
 
     def verify_pstart(self, obj: Tuple[str, int]):

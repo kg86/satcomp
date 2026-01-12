@@ -18,11 +18,14 @@ from pysat.formula import WCNF
 #     Tuple[SLPNodeType, Dict[SLPNodeType, Optional[Tuple[SLPNodeType, SLPNodeType]]]],
 # )
 
+SLPNode = NewType("SLPNode", Tuple[int, int, Optional[int]])
+# root node, dict mapping nodes to list of children
+SLPMulti = NewType("SLPMulti", Tuple[SLPNode, Dict[SLPNode, List[SLPNode]]])
 SLPType = NewType(
     "SLPType",
     Tuple[
-        Tuple[int, int, Optional[int]],  # root node
-        Dict[Tuple[int, int, Optional[int]], List[Tuple[int, int, Optional[int]]]],  # children
+        SLPNode,  # root node
+        Dict[SLPNode, Tuple[SLPNode, SLPNode] | None],  # children
     ],
 )
 
