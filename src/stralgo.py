@@ -75,16 +75,12 @@ def make_lcpa_kasai(text: bytes, sa: list[int], isa: list[int] | None = None) ->
     return lcp
 
 
-def get_bwt(text: bytes, sa: list[int]) -> list[bytes]:
+def get_bwt(text: bytes, sa: list[int]) -> list[int]:
     n = len(text)
-    res: list[bytes] = []
+    res = []
 
     for i in range(n):
-        idx = sa[i] - 1
-        if idx == -1:
-            res.append(text[-1:])
-        else:
-            res.append(text[idx : idx + 1])
+        res.append(text[sa[i] - 1])
     return res
 
 

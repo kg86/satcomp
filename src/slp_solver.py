@@ -36,8 +36,6 @@ formatter = Formatter(FORMAT)
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-Node = Tuple[int, int, int | None]
-
 
 class SLPLiteral(Enum):
     true = Literal.true
@@ -466,11 +464,7 @@ def slp2str(root, slp):
     return res
 
 
-def recover_slp(
-    text: bytes,
-    pstartl: List[int],
-    refs_by_referrer: Dict[Tuple[int, int], int],
-) -> Tuple[Node, Dict[Node, object]]:
+def recover_slp(text, pstartl, refs_by_referrer):
     n = len(text)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
     leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]
