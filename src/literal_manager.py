@@ -13,10 +13,10 @@ class LiteralManager:
         self.true = self.sym("true")
         self.false = self.sym("false")
 
-    def id(self, *opt) -> int:
+    def id(self, *opt: object) -> int:
         return self.vpool.id(opt)
 
-    def sym(self, *opt) -> Boolean:
+    def sym(self, *opt: object) -> Boolean:
         return Symbol(str(self.id(*opt)))
 
     def symid(self, x: Boolean) -> int:

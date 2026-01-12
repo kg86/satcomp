@@ -31,7 +31,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-def min_substr_hist(min_substrs, th):
+def min_substr_hist(min_substrs: list[tuple[int, int]], th: int) -> None:
     """
     Plot histogram of string lengths less than the threshold.
     """
@@ -173,7 +173,7 @@ def min_attractor(text: bytes, exp: Optional[AttractorExp] = None, contain_list:
     return attractor
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum String Attractors.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

@@ -18,7 +18,7 @@ def bms_naive(input_file: str, timeout: Optional[float] = None) -> BiDirType:
     return BiDirType(bd)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute the smallest bidirectional macro scheme (BMS).")
     parser.add_argument("--file", type=str, help="input file", default="")
 

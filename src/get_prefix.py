@@ -17,7 +17,7 @@ def make_dataset():
                 main(file, os.path.join(out_dir, out_file), pref)
 
 
-def main(in_file, out_file, pref_len: int):
+def main(in_file: str, out_file: str, pref_len: int):
     text = open(in_file, "rb").read()
     open(out_file, "wb").write(text[:pref_len])
 

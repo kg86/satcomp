@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from dataclasses import dataclass
 from typing import Dict, List, NewType, Optional, Tuple
@@ -59,7 +61,7 @@ class SLPExp:
         self.sol_navgclause = avg_var_in_clause
 
     @classmethod
-    def create(cls):
+    def create(cls) -> SLPExp:
         return SLPExp(
             date=str(datetime.datetime.now()),
             status="",

@@ -9,7 +9,7 @@ import sys
 import time
 from enum import auto
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
-from typing import Optional
+from typing import Dict, List, Tuple
 
 from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2
@@ -115,7 +115,7 @@ class SLPLiteralManager(LiteralManager):
         assert i + l <= self.n
 
 
-def compute_lpf(text: bytes):  # non-self-referencing lpf
+def compute_lpf(text: bytes) -> List[int]:  # non-self-referencing lpf
     """
     lpf[i] = length of longest prefix of text[i:] that occurs in text[0:i]
     """
@@ -133,7 +133,9 @@ def compute_lpf(text: bytes):  # non-self-referencing lpf
     return lpf
 
 
-def smallest_SLP_WCNF(text: bytes):  # noqa: C901
+def smallest_SLP_WCNF(
+    text: bytes,
+) -> Tuple[SLPLiteralManager, WCNF, List[Tuple[int, int]], Dict[Tuple[int, int], List[int]]]:  # noqa: C901
     """
     Compute the max sat formula for computing the smallest SLP
     """
@@ -462,7 +464,7 @@ def slp2str(root, slp):
     return res
 
 
-def recover_slp(text: bytes, pstartl, refs_by_referrer):
+def recover_slp(text, pstartl, refs_by_referrer):
     n = len(text)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
     leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]
@@ -481,7 +483,7 @@ def recover_slp(text: bytes, pstartl, refs_by_referrer):
     return (root, slp)
 
 
-def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
+def smallest_SLP(text: bytes, exp: SLPExp | None = None) -> SLPType:
     """
     Compute the smallest SLP.
     """
@@ -530,7 +532,7 @@ def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
     return SLPType((root, slp))
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

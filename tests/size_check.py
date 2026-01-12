@@ -1,12 +1,12 @@
 """Verify that the registered solvers output the correct size for a given file."""
 
+import csv
+import dataclasses
+import enum
 import json
 import subprocess
 import sys
 from typing import List
-import csv
-import enum
-import dataclasses
 
 
 class Measure(str, enum.Enum):
@@ -41,7 +41,7 @@ SOLVERS = [
 ]
 
 
-def compute_size(cmd) -> int:
+def compute_size(cmd: str) -> int:
     output = subprocess.check_output(cmd, shell=True).strip().decode("utf8")
     parsed = json.loads(output)
     return int(parsed["factor_size"])

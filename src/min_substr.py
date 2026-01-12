@@ -1,7 +1,7 @@
 import argparse
 import sys
 from enum import Enum, auto
-from typing import List, Tuple
+from typing import AnyStr, List, Tuple
 
 import stralgo
 
@@ -13,9 +13,9 @@ class Mode(Enum):
     exp = auto()
 
 
-def main(input_file):
+def main(input_file: str) -> None:
     print(input_file)
-    with open(input_file, "r") as f:
+    with open(input_file, "rb") as f:
         text = f.read()
     n = len(text)
     print(n)
@@ -28,7 +28,7 @@ def main(input_file):
 
 
 def test():
-    text = "ab"
+    text = b"ab"
     assert len(stralgo.minimum_substr(text)) == 2
     pos_lens = stralgo.minimum_substr(text)
     show(text, pos_lens)
@@ -124,12 +124,12 @@ def exp():
         print(",".join(map(str, line)))
 
 
-def show(text, substrs: List[Tuple[int, int]]):
+def show(text: AnyStr, substrs: List[Tuple[int, int]]):
     for i, l in substrs:
         print(text[i : i + l])
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
@@ -165,11 +165,11 @@ if __name__ == "__main__":
         elif args.mode == Mode.exp:
             exp()
     else:
-        text = ""
+        text = b""
         if args.str != "":
             text = bytes(args.str, "utf-8")
         elif args.file != "":
-            text = open(args.file, "rb").read()
+            text: bytes = open(args.file, "rb").read()
 
         if args.mode == Mode.size_min_substr:
             res = stralgo.minimum_substr(text)

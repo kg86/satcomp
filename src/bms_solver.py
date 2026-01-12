@@ -12,7 +12,7 @@ from typing import Dict, Iterator, List, Optional, Tuple
 
 from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2
-from pysat.formula import WCNF
+from pysat.formula import CNF, WCNF
 
 import lz77
 from bms import BiDirExp, BiDirType, decode
@@ -57,7 +57,7 @@ class BiDirLiteralManager(LiteralManager):
         }
         super().__init__(self.lits)  # type: ignore
 
-    def newid(self, *obj) -> int:
+    def newid(self, *obj):
         res = super().newid(*obj)
         if len(obj) > 0 and obj[0] in self.verifyf:
             self.verifyf[obj[0]](obj)
@@ -85,11 +85,11 @@ class BiDirLiteralManager(LiteralManager):
         assert self.text[obj[1]] == self.text[obj[2]]
 
 
-def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]):
+def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]) -> CNF:
     return CardEnc.equals(lits, bound=bound, vpool=lm.vpool)
 
 
-def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
+def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> Dict[int, int]:
     """
     Reference dictionary refs[i] = j s.t. position i refers to position j.
     """
@@ -334,7 +334,7 @@ def bms_enumerate(text: bytes) -> Iterator[BiDirType]:
                 overlap += 1
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum bidirectional macro scheme (BMS)")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

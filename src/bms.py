@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from dataclasses import dataclass
 from typing import List, NewType, Tuple
@@ -43,7 +45,7 @@ class BiDirExp:
         self.sol_navgclause = avg_var_in_clause
 
     @classmethod
-    def create(cls):
+    def create(cls) -> BiDirExp:
         return BiDirExp(
             date=str(datetime.datetime.now()),
             status="",

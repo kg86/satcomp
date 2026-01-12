@@ -1,22 +1,22 @@
-from typing import AnyStr, Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 from tqdm import tqdm
 
 
-def make_sa_MM(text):
+def make_sa_MM(text: bytes) -> list[int]:
     """
     Make sufix array by Manber and Myers algorithm.
     """
-    if not (isinstance(text, str) or isinstance(text, bytes)):
-        assert "text must be str or bytes"
+    if not isinstance(text, bytes):
+        assert "text must be bytes"
     n = len(text)
     d = 1
-    rank = [ord(text[i]) if isinstance(text, str) else text[i] for i in range(n)]
+    rank = [text[i] for i in range(n)]
     rank2 = [0 for _ in range(n)]
     sa = list(range(n))
     while d < n:
 
-        def at(i):
+        def at(i: int) -> tuple[int, int]:
             key1 = rank[i]
             key2 = rank[i + d] if (i + d) < len(rank) else -1
             return (key1, key2)
@@ -34,7 +34,7 @@ def make_sa_MM(text):
     return sa
 
 
-def get_lcp(text, i, j):
+def get_lcp(text: bytes, i: int, j: int) -> int:
     n = len(text)
     l = 0
     while i < n and j < n:
@@ -46,7 +46,7 @@ def get_lcp(text, i, j):
     return l
 
 
-def make_isa(sa):
+def make_isa(sa: list[int]) -> list[int]:
     """
     Make inverse suffix array.
     """
@@ -57,7 +57,7 @@ def make_isa(sa):
     return isa
 
 
-def make_lcpa_kasai(text, sa, isa=None):
+def make_lcpa_kasai(text: bytes, sa: list[int], isa: list[int] | None = None) -> list[int]:
     """
     Make longest common prefix array by Kasai algorithm.
     """
@@ -75,7 +75,7 @@ def make_lcpa_kasai(text, sa, isa=None):
     return lcp
 
 
-def get_bwt(text, sa):
+def get_bwt(text: bytes, sa: list[int]) -> list[int]:
     n = len(text)
     res = []
 
@@ -102,11 +102,11 @@ def get_lcprange(lcp: List[int], i: int, least_lcp: Optional[int] = None) -> Tup
     return (b, e)
 
 
-def maximal_repeat(text, sa, lcp):
+def maximal_repeat(text: bytes, sa: list[int], lcp: list[int]) -> list[tuple[int, int]]:
     n = len(text)
     res = []
 
-    def is_bwt_distinct(lcp_range):
+    def is_bwt_distinct(lcp_range: tuple[int, int]) -> bool:
         if sa[lcp_range[0]] == 0:
             return True
         for i in range(lcp_range[0] + 1, lcp_range[1] + 1):
@@ -126,7 +126,7 @@ def maximal_repeat(text, sa, lcp):
     return res
 
 
-def occ_pos_naive(text, pattern):
+def occ_pos_naive(text: bytes, pattern: bytes) -> list[int]:
     res = []
     beg = 0
     occ = text.find(pattern, beg)
@@ -137,23 +137,23 @@ def occ_pos_naive(text, pattern):
     return res
 
 
-def num_occ(text, pattern):
+def num_occ(text: bytes, pattern: bytes) -> int:
     """
     Compute the number of occurrences of the pattern in text.
     """
     return len(occ_pos_naive(text, pattern))
 
 
-def substr(text: AnyStr) -> List[AnyStr]:
+def substr(text: bytes) -> list[bytes]:
     n = len(text)
-    res = []
+    res: list[bytes] = []
     for i in range(n):
         for j in range(i, n):
             res.append(text[i : j + 1])
     return res
 
 
-def minimum_substr_naive(text) -> List[Tuple[int, int]]:
+def minimum_substr_naive(text: bytes) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring.
     A minimum substring x is a substring that the #occ of x is
@@ -171,14 +171,14 @@ def minimum_substr_naive(text) -> List[Tuple[int, int]]:
     return res
 
 
-def minimum_right_substr(text):
+def minimum_right_substr(text: bytes) -> list[tuple[int, int]]:
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
     return minimum_right_substr_sa(text, sa, isa, lcp)
 
 
-def minimum_right_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_right_substr_sa(text: bytes, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum right substring
     A minimum right substring x is a substring that the #occ of x is
@@ -215,14 +215,14 @@ def minimum_right_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int])
     return res
 
 
-def minimum_substr(text):
+def minimum_substr(text: bytes) -> list[tuple[int, int]]:
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_sa(text: bytes, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -231,7 +231,7 @@ def minimum_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> Li
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_square(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_square(text: bytes, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -277,7 +277,7 @@ def minimum_substr_square(text, sa: List[int], isa: List[int], lcp: List[int]) -
     return res
 
 
-def minimum_substr_linear(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
+def minimum_substr_linear(text: bytes, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -346,7 +346,7 @@ def minimum_substr_linear(text, sa: List[int], isa: List[int], lcp: List[int]) -
     return res
 
 
-def substr_cover(text, sa, lcp, isa, b, l):
+def substr_cover(text: bytes, sa: list[int], lcp: list[int], isa: list[int], b: int, l: int) -> set[int]:
     """
     return occ of text[b:b+l] in text.
     """
@@ -359,13 +359,13 @@ def substr_cover(text, sa, lcp, isa, b, l):
     return cover
 
 
-def print_sa(text, sa):
+def print_sa(text: bytes, sa: list[int]) -> None:
     n = len(text)
     for i in range(n):
         print("\t".join(map(str, [i, sa[i], text[sa[i] :]])))
 
 
-def print_sa_lcp(text, sa, lcp):
+def print_sa_lcp(text: bytes, sa: list[int], lcp: list[int]) -> None:
     n = len(text)
     for i in range(n):
         print(
@@ -384,7 +384,7 @@ def print_sa_lcp(text, sa, lcp):
         )
 
 
-def verify_sa(text, sa):
+def verify_sa(text: bytes, sa: list[int]):
     n = len(text)
     for i in range(1, n):
         # print('{} < {} ?'.format(text[sa[i - 1]:], text[sa[i]:]))
@@ -407,8 +407,8 @@ def gen_binary(n: int) -> Iterable[str]:
 
 
 if __name__ == "__main__":
-    text = "bananabanana$"
-    text = "banana"
+    text = b"bananabanana$"
+    text = b"banana"
     sa = make_sa_MM(text)
     verify_sa(text, sa)
 
