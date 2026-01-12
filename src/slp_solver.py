@@ -9,7 +9,7 @@ import sys
 import time
 from enum import auto
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from pysat.card import CardEnc
 from pysat.examples.rc2 import RC2

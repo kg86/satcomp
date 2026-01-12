@@ -49,7 +49,7 @@ def main(fname: str, vtype: str):
     print(table_template.format(table_format, table_body))
 
 
-def size_table(fname):
+def size_table(fname: str) -> None:
     res = []
     # header = ''
     with open(fname) as csvfile:
@@ -78,7 +78,7 @@ def size_table(fname):
     print(table_template.format(table_format, table_body))
 
 
-def covert(elm):
+def covert(elm: str) -> str:
     trans = elm
     try:
         trans = int(elm)
@@ -91,7 +91,7 @@ def covert(elm):
             return elm
 
 
-def naive(fname):
+def naive(fname: str) -> None:
     with open(fname) as csvfile:
         reader = csv.reader(csvfile)
         _ = next(reader)

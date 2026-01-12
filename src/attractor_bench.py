@@ -67,7 +67,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> Optional[Att
     return exp
 
 
-def benchmark_program(timeout, algo, file):
+def benchmark_program(timeout: float | None, algo: str, file: str) -> None:
     """
     Runs program with given setting (timeout, algo, file).
     """
@@ -92,7 +92,7 @@ def benchmark_program(timeout, algo, file):
     con.commit()
 
 
-def benchmark_mul(timeout, algos, files, n_jobs):
+def benchmark_mul(timeout: float | None, algos: list[str], files: list[str], n_jobs: int) -> None:
     """
     Run benchmark program with multiple processes
     """
@@ -115,7 +115,7 @@ def clear_table():
     cur.execute(f"CREATE TABLE {dbtable} ({', '.join(key for key in d.keys())})")
 
 
-def export_csv(out_file):
+def export_csv(out_file: str) -> None:
     """
     Store table as csv format in `out_file`.
     """
@@ -126,7 +126,7 @@ def export_csv(out_file):
     df.to_csv(out_file, index=False)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run benchmark for algorithms computing the smallest bidirectional macro scheme (BMS)."
     )

@@ -2,6 +2,8 @@
 # We use the following program by @TNishimoto
 # https://github.com/TNishimoto/lzrr
 
+from __future__ import annotations
+
 import argparse
 import datetime
 import os
@@ -32,7 +34,7 @@ class LZExp:
     factor_size: int
 
     @classmethod
-    def create(cls):
+    def create(cls) -> LZExp:
         return LZExp("", "", "", "", 0, 0, 0)
 
 
@@ -80,7 +82,7 @@ def benchmark_program(timeout: float | None, algo: str, file: str) -> List[str]:
     return list(map(str, expd.values()))
 
 
-def benchmark_mul(timeout, algos, files, out_file, n_jobs):
+def benchmark_mul(timeout: float | None, algos: list[str], files: list[str], out_file: str, n_jobs: int) -> None:
     """
     Run benchmark program with multiple processes
     """
@@ -100,7 +102,7 @@ def benchmark_mul(timeout, algos, files, out_file, n_jobs):
     con.commit()
 
 
-def clear_table(table_name):
+def clear_table(table_name: str):
     """
     Delete table if exists, and create new table.
     """
@@ -117,7 +119,7 @@ def clear_table(table_name):
     con.commit()
 
 
-def export_csv(table_name, out_file):
+def export_csv(table_name: str, out_file: str) -> None:
     """
     Store table as csv format in `out_file`.
     """
@@ -128,7 +130,7 @@ def export_csv(table_name, out_file):
     df.to_csv(out_file, index=False)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run benchmark for algorithms computing the smallest bidirectional macro scheme (BMS)."
     )

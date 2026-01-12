@@ -7,7 +7,7 @@ from itertools import combinations
 # https://oeis.org/A339391
 
 
-def blocks_ranges(w):
+def blocks_ranges(w: bytes) -> dict[bytes, list[set[int]]]:
     blocks = dict()
     for i in range(len(w)):
         for j in range(i + 1, len(w) + 1):
@@ -19,7 +19,7 @@ def blocks_ranges(w):
     return blocks
 
 
-def is_attractor(S, w):
+def is_attractor(S: set[int], w: bytes) -> bool:
     br = blocks_ranges(w)
     for b in br:
         for i in range(len(br[b])):
@@ -30,11 +30,12 @@ def is_attractor(S, w):
     return True
 
 
-def lsa(w):  # length of smallest attractor of w
+def lsa(w: bytes) -> int:  # length of smallest attractor of w
     for r in range(1, len(w) + 1):
         for s in combinations(range(len(w)), r):
             if is_attractor(set(s), w):
                 return r
+    raise RuntimeError("Unreachable: no attractor size found")
 
 
 # def a(n):  # only search strings starting with 0 by symmetry
@@ -42,7 +43,7 @@ def lsa(w):  # length of smallest attractor of w
 # print([a(n) for n in range(1, 20)])
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum String Attractors.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

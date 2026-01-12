@@ -13,7 +13,7 @@ class Mode(Enum):
     exp = auto()
 
 
-def main(input_file):
+def main(input_file: str) -> None:
     print(input_file)
     with open(input_file, "rb") as f:
         text = f.read()
@@ -129,7 +129,7 @@ def show(text: AnyStr, substrs: List[Tuple[int, int]]):
         print(text[i : i + l])
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

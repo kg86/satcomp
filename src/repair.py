@@ -57,7 +57,7 @@ def repair(text: bytes) -> int:
     return 1 + len(inttext) + last_nonterminal - FIRST_NONTERMINAL
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
