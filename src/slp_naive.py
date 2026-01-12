@@ -48,7 +48,9 @@ def enum_ordered(labels: bytes) -> Iterator[int | Node]:
 ##############################################################################################
 
 
-def minimize_tree(root, nodedic):
+def minimize_tree(
+    root: int | Node, nodedic: dict[tuple[int | Node, int | Node] | int | Node, int | Node]
+) -> int | Node:
     # print(root)
     if type(root) is Node:
         left = minimize_tree(root.left, nodedic)

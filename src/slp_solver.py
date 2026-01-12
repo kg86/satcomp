@@ -64,7 +64,7 @@ class SLPLiteralManager(LiteralManager):
         self.text = text
         self.n = len(self.text)
         self.lits = SLPLiteral
-        super().__init__(self.lits)  # type: ignore
+        super().__init__()
 
     def add_phrase(self, i: int, l: int) -> None:
         # T[i:i+l) is phrase of grammar parsing
