@@ -111,7 +111,6 @@ def exp():
         "data/misc/trib08.txt",
         "data/misc/trib09.txt",
     ]
-    # files = files[-10:]
     algos = [stralgo.minimum_substr_sa, stralgo.minimum_right_substr_sa]
     print("file, len, nlrmin, nrmin, nlrmin/nrmin, total-lrmin, total-rmin, total-lrmin/total-rmin")
     for f in files:
@@ -127,7 +126,6 @@ def exp():
             res.append(len(pos_len))
             res.append(total_len)
         line.extend([res[0], res[2], res[0] / res[2], res[1], res[3], res[1] / res[3]])
-        # print(line)
         print(",".join(map(str, line)))
 
 

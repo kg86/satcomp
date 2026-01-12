@@ -40,9 +40,7 @@ def repair(text: bytes) -> int:
     FIRST_NONTERMINAL = 256
     last_nonterminal = FIRST_NONTERMINAL
     while True:
-        # print(inttext)
         chosen_entry = mostfreq(inttext)
-        # print(chosen_entry)
         if chosen_entry[1] == 1:
             break
         chosen_pair = chosen_entry[0]
@@ -57,7 +55,6 @@ def repair(text: bytes) -> int:
                 inttext[i] = last_nonterminal
                 inttext.pop(i + 1)
         last_nonterminal += 1
-    # print(len(inttext) + last_nonterminal - FIRST_NONTERMINAL)
     return 1 + len(inttext) + last_nonterminal - FIRST_NONTERMINAL
 
 

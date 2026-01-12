@@ -13,12 +13,6 @@ from pysat.formula import WCNF
 # if x == None -> references Node [i,j,None]
 # if x == Int -> If j-i==1, x is a leaf with symbol x, otherwise is an internal node
 # whose children are defined via a Dict
-# SLPNodeType = NewType("SLPNodeType", Tuple[int, int, Optional[int]])
-
-# SLPType = NewType(
-#     "SLPType",
-#     Tuple[SLPNodeType, Dict[SLPNodeType, Optional[Tuple[SLPNodeType, SLPNodeType]]]],
-# )
 
 SLPNode = NewType("SLPNode", Tuple[int, int, Optional[int]])
 # root node, dict mapping nodes to list of children
@@ -90,48 +84,5 @@ class SLPExp:
         )
 
 
-# def slp_info(slp: SLPType, text: bytes) -> str:
-#     return "\n".join(
-#         [
-#             f"len={len(slp)}: factors={slp}",
-#             f"len of text = {len(text)}",
-#             f"decode={decode(slp)}",
-#             f"equals original? {decode(slp)==text}",
-#         ]
-#     )
-
-
-# def decode(slp: SLPType) -> bytes:
-#     """
-#     Computes the decoded string from a given SLP
-#     """
-#     (root, slpmap) = slp
-
-#     def decode_aux(root: SLPNodeType) -> List[int]:
-#         res = []
-#         (i, j, ref) = root
-#         if j - i == 1:
-#             res.append(ref)
-#         else:
-#             children = slpmap[root]
-#             assert children != None
-#             if ref is None:
-#                 res += decode_aux(children[0])
-#                 res += decode_aux(children[1])
-#             else:
-#                 n = SLPNodeType((ref, ref + j - i, None))
-#                 res += decode_aux(n)
-#         return []
-
-#     res = []
-#     if root != None:
-#         res = decode_aux(root)
-#     return bytes(res)
-
-
 if __name__ == "__main__":
     pass
-    # factors_naive = SLPType([(13, 8), (0, 11), (-1, 98), (-1, 97)])
-    # factors_sol = SLPType([(8, 8), (13, 8), (-1, 97), (-1, 98), (16, 3)])
-    # print(decode(factors_naive))
-    # print(decode(factors_sol))

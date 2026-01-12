@@ -57,7 +57,6 @@ def minimize_tree(
     root: int | Node, nodedic: dict[tuple[int | Node, int | Node] | int | Node, int | Node]
 ) -> int | Node:
     """Deduplicate identical subtrees by interning them into `nodedic`."""
-    # print(root)
     if type(root) is Node:
         left = minimize_tree(root.left, nodedic)
         right = minimize_tree(root.right, nodedic)
@@ -68,7 +67,6 @@ def minimize_tree(
             nodedic[left, right] = root
             return root
     else:
-        # print(type(root))
         if root not in nodedic:
             nodedic[root] = root
         return root

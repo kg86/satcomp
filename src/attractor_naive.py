@@ -43,51 +43,14 @@ def lsa(w: bytes) -> int:  # length of smallest attractor of w
     raise RuntimeError("Unreachable: no attractor size found")
 
 
-# def a(n):  # only search strings starting with 0 by symmetry
-#     return max(lsa("0" + "".join(u)) for u in product("01", repeat=n - 1))
-# print([a(n) for n in range(1, 20)])
-
-
 def parse_args() -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute Minimum String Attractors.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
     parser.add_argument("--output", type=str, help="output file", default="")
-    # parser.add_argument(
-    #     "--contains",
-    #     nargs="+",
-    #     type=int,
-    #     help="list of text positions that must be included in the string attractor, starting with index 1",
-    #     default=[],
-    # )
-    # parser.add_argument(
-    #     "--size",
-    #     type=int,
-    #     help="exact size or upper bound of attractor size to search",
-    #     default=0,
-    # )
-    # parser.add_argument(
-    #     "--algo",
-    #     type=str,
-    #     help=(
-    #         "[min: find a minimum string attractor, exact/atmost: find a string "
-    #         "attractor whose size is exact/atmost SIZE]"
-    #     ),
-    # )
-    # parser.add_argument(
-    #     "--log_level",
-    #     type=str,
-    #     help="log level, DEBUG/INFO/CRITICAL",
-    #     default="CRITICAL",
-    # )
     args = parser.parse_args()
-    if (
-        args.file == "" and args.str == ""
-        # or args.algo not in ["exact", "atmost", "min"]
-        # or (args.algo in ["exact", "atmost"] and args.size <= 0)
-        # or (args.log_level not in ["DEBUG", "INFO", "CRITICAL"])
-    ):
+    if args.file == "" and args.str == "":
         parser.print_help()
         sys.exit()
 
