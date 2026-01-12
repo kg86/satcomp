@@ -35,7 +35,6 @@ target-version = "py310"
 extend-exclude = [".git", ".github", "__pycache__", "rust", "shell", "data"]
 
 [tool.ruff.lint]
-# select = ["ANN", "E", "F", "I", "W"]
 select = ["E", "F", "I", "W"]
 ignore = ["E203", "E741"]
 
@@ -44,6 +43,5 @@ ignore = ["E203", "E741"]
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true
-# ignore-fully-untyped = false
 ignore-fully-untyped = true
 suppress-none-returning = true
