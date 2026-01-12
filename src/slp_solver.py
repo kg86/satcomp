@@ -73,7 +73,7 @@ class SLPLiteralManager(LiteralManager):
         }
         super().__init__(self.lits)  # type: ignore
 
-    def newid(self, *obj: object) -> int:
+    def newid(self, *obj):
         res = super().newid(*obj)
         if len(obj) > 0 and obj[0] in self.verifyf:
             self.verifyf[obj[0]](*obj)
@@ -489,7 +489,7 @@ def recover_slp(
     return (root, slp)
 
 
-def smallest_SLP(text: bytes, exp: Optional[SLPExp] = None) -> SLPType:
+def smallest_SLP(text, exp=None):
     """
     Compute the smallest SLP.
     """

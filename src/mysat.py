@@ -31,7 +31,7 @@ class LiteralManager:
         self.true = self.newsym(self.lits.true)
         self.false = self.newsym(self.lits.false)
 
-    def newid(self, *obj: object) -> int:
+    def newid(self, *obj):
         if len(obj) == 0:
             # obj = ("auxlit", self.nvar["auxlit"])
             obj = (self.lits.auxlit, self.nvar[self.lits.auxlit])

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import copy
 import json
@@ -5,6 +7,7 @@ import os
 import sys
 import time
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
+from typing import Iterator
 
 from attractor_bench_format import AttractorExp
 
@@ -24,7 +27,7 @@ logger.addHandler(handler)
 
 
 class Node(object):
-    def __init__(self, left: str, right: str) -> None:
+    def __init__(self, left: int | Node, right: int | Node) -> None:
         self.left = left
         self.right = right
 
@@ -32,7 +35,7 @@ class Node(object):
         return "(%s %s)" % (self.left, self.right)
 
 
-def enum_ordered(labels: str) -> str | Node:
+def enum_ordered(labels: bytes) -> Iterator[int | Node]:
     if len(labels) == 1:
         yield labels[0]
     else:
@@ -45,7 +48,7 @@ def enum_ordered(labels: str) -> str | Node:
 ##############################################################################################
 
 
-def minimize_tree(root: str | Node, nodedic: dict[str | tuple[int, int], str]) -> str | Node:
+def minimize_tree(root, nodedic):
     # print(root)
     if type(root) is Node:
         left = minimize_tree(root.left, nodedic)
@@ -88,7 +91,7 @@ if __name__ == "__main__":
         text = bytes(args.str, "utf-8")
 
     else:
-        text = open(args.file, "rb").read()
+        text: bytes = open(args.file, "rb").read()
 
     if args.log_level == "DEBUG":
         logger.setLevel(DEBUG)

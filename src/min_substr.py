@@ -15,7 +15,7 @@ class Mode(Enum):
 
 def main(input_file):
     print(input_file)
-    with open(input_file, "r") as f:
+    with open(input_file, "rb") as f:
         text = f.read()
     n = len(text)
     print(n)
@@ -28,7 +28,7 @@ def main(input_file):
 
 
 def test():
-    text = "ab"
+    text = b"ab"
     assert len(stralgo.minimum_substr(text)) == 2
     pos_lens = stralgo.minimum_substr(text)
     show(text, pos_lens)
@@ -165,11 +165,11 @@ if __name__ == "__main__":
         elif args.mode == Mode.exp:
             exp()
     else:
-        text = ""
+        text = b""
         if args.str != "":
             text = bytes(args.str, "utf-8")
         elif args.file != "":
-            text = open(args.file, "rb").read()
+            text: bytes = open(args.file, "rb").read()
 
         if args.mode == Mode.size_min_substr:
             res = stralgo.minimum_substr(text)
