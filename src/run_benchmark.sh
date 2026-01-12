@@ -1,5 +1,4 @@
 #!/bin/bash
-# timeout=3600
 timeout=6
 jobs=4
 files="data/calgary/* data/misc/fib0[0-9].txt data/misc/pds* data/misc/thuemorse* data/misc/trib*"

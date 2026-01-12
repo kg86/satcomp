@@ -24,5 +24,4 @@ def main(in_file: str, out_file: str, pref_len: int):
 
 
 if __name__ == "__main__":
-    # main(sys.argv[1], sys.argv[2], int(sys.argv[3]))
     make_dataset()

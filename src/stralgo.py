@@ -22,7 +22,6 @@ def make_sa_MM(text: bytes) -> list[int]:
             return (key1, key2)
 
         sa.sort(key=at)
-        # print_sa(text, sa)
 
         rank2[0] = 0
         for i in range(1, n):
@@ -118,7 +117,6 @@ def maximal_repeat(text: bytes, sa: list[int], lcp: list[int]) -> list[tuple[int
     lcp_range_prev = (0, 0)
     for i in range(1, n):
         lcp_range_cur = get_lcprange(lcp, i, lcp[i])
-        # print(i, lcp_range_cur, is_bwt_distinct(lcp_range_cur))
         if lcp[i] > 0 and lcp_range_prev != lcp_range_cur and is_bwt_distinct(lcp_range_cur):
             res.append((sa[i], lcp[i]))
         lcp_range_prev = lcp_range_cur
@@ -195,7 +193,6 @@ def minimum_right_substr_sa(text: bytes, sa: List[int], isa: List[int], lcp: Lis
         if lcp[i - 1] == lcp[i]:
             continue
         lcp_range = get_lcprange(lcp, i)
-        # print(i, lcp_range)
         if (lcp_range, lcp[i]) in already_computed:
             continue
         cur = lcp_range[0]
@@ -249,8 +246,6 @@ def minimum_substr_square(text: bytes, sa: List[int], isa: List[int], lcp: List[
             continue
         lcp_range = get_lcprange(lcp, i)
         assert (lcp_range[1] - lcp_range[0] + 1) > 1
-        # for k in range(lcp_range[0], lcp_range[1]):
-        #     assert text[sa[k] : sa[k] + lcp[i]] == text[sa[k + 1] : sa[k + 1] + lcp[i]]
         if (lcp_range, lcp[i]) in already_computed:
             continue
         cur = lcp_range[0]
@@ -274,7 +269,6 @@ def minimum_substr_square(text: bytes, sa: List[int], isa: List[int], lcp: List[
                 res.append((sa[cur], lcp[i] + 1))
             assert cur < lcp_range_sub[1] + 1
             cur = lcp_range_sub[1] + 1
-    # print("#res=", len(res))
     return res
 
 
@@ -389,7 +383,6 @@ def verify_sa(text: bytes, sa: list[int]):
     """Sanity-check that `sa` is sorted by suffix lexicographic order."""
     n = len(text)
     for i in range(1, n):
-        # print('{} < {} ?'.format(text[sa[i - 1]:], text[sa[i]:]))
         assert text[sa[i - 1] :] < text[sa[i] :]
 
 

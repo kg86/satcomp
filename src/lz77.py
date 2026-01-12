@@ -44,7 +44,6 @@ def encode(text: bytes) -> LZType:
             res.append((-1, text[i]))
             i += 1
         else:
-            # print(i, (psv, psv_len), (nsv, nsv_len))
             prev, prev_len = (psv, psv_len) if psv_len > nsv_len else (nsv, nsv_len)
             assert prev_len > 0
             res.append((prev, prev_len))
@@ -63,7 +62,6 @@ def decode_(factors: LZType) -> Tuple[List[bytes], bytes]:
     text = []
     res = []
     for factor in factors:
-        # print(factor, f"text length = {len(text)}")
         bs = []
         if factor[0] == -1:
             bs.append(factor[1])

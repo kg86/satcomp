@@ -13,9 +13,6 @@ from sympy.logic.boolalg import Boolean, BooleanFalse, BooleanTrue, Equivalent, 
 
 debug = False
 
-# ClauseType = NewType("ClauseType", List[int])
-# CNFType = NewType("ClauseType", List[Clause])
-
 
 class Literal(Enum):
     """Well-known reserved literals used by `LiteralManager`."""
@@ -87,20 +84,6 @@ class LiteralManager:
         return self.vpool.top
 
 
-# def pysat_or(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
-#     nvar = new_var()
-#     new_clauses = []
-#     # nvar <=> or(xs)
-#     # (nvar => or(xs)) and (or(xs) => nvar)
-#     # ((not nvar) OR or(xs)) and ((not or(xs)) OR nvar)
-#     # ((not nvar) OR or(xs)) and ((and(not x)) OR nvar)
-#     # ((not nvar) OR or(xs)) and (and (not x OR nvar))
-#     new_clauses.append([-nvar] + xs)
-#     for x in xs:
-#         new_clauses.append([nvar,-x])
-#     nvar, new_clauses
-
-
 def pysat_or(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
     """Introduce a fresh variable equivalent to OR over `xs` (Tseitin encoding)."""
     nvar = new_var()
@@ -144,24 +127,13 @@ def pysat_atleast_one(xs: list[int]) -> list[int]:
     return xs
 
 
-# def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[int]]]:
-#     new_clauses = pysat_atleast_one(xs)
-#     nvar, clauses = pysat_atmost(lm, xs, bound=1)
-#     new_clauses.extend(clauses)
-#     return pysat_and(lm.newid, new_clauses)
-
-
 def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[int]]]:
     """Introduce a fresh variable for the CNF encoding of `exactly_one(xs)`."""
     ex1_clauses = CardEnc.atmost(xs, bound=1, vpool=lm.vpool)
-    # _, ex1_clauses = pysat_atmost(lm, xs, bound=1)
-    # res_clauses = []
     ex1_clauses.append(pysat_atleast_one(xs))
     res_var, res_clauses = pysat_name_cnf(lm, ex1_clauses)  # type: ignore
-    # res_clauses.extend(ex1_clauses)
 
     return res_var, res_clauses
-    # return pysat_name_cnf(lm, ex1_clauses)
 
 
 def pysat_name_cnf(lm: LiteralManager, xs: list[list[int]]) -> Tuple[int, list[list[int]]]:
@@ -308,7 +280,6 @@ def sympy_cnf_pysat(new_var: Callable[[], int], x: Boolean) -> list[list[int]]:
             new_clauses.append(new_clause)
             if debug:
                 print(f"{nvar}={Or(*literals)}, cnf={And(*new_clauses)}")  # type: ignore
-            # assert is_nnf(And(*new_clauses))
             new_formula.extend(new_clauses)
             return nvar
 

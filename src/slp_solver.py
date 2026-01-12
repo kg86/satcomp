@@ -109,7 +109,6 @@ def compute_lpf(text: bytes) -> List[int]:  # non-self-referencing lpf
                 l += 1
             if l > lpf[i]:
                 lpf[i] = l
-    # print(f"{lpf}")
     return lpf
 
 
@@ -122,7 +121,6 @@ def smallest_SLP_WCNF(
     wcnf = WCNF()
 
     lm = SLPLiteralManager(text)
-    # print("sloooow algorithm for lpf... (should use linear time algorithm)")
     lpf = compute_lpf(text)
 
     # defining the literals  ########################################
@@ -370,7 +368,6 @@ def postorder_cmp(x: SLPNode, y: SLPNode) -> typing.Literal[-1, 0, 1]:
     j1 = x[1]
     i2 = y[0]
     j2 = y[1]
-    # print(f"compare: {x} vs {y}")
     if i1 == i2 and i2 == j2:
         return 0
     if j1 <= i2:
@@ -392,11 +389,8 @@ def build_slp_aux(nodes: list[SLPNode], slp: dict[SLPNode, list[SLPNode]]) -> SL
     """Recover a multi-ary parse tree from a postorder list of nodes."""
     root = nodes.pop()
     root_i = root[0]
-    # root_j = root[1]
-    # print(f"root_i,root_j = {root_i},{root_j}")
     children = []
     while len(nodes) > 0 and nodes[-1][0] >= root_i:
-        # print(f"nodes[-1] = {nodes[-1]}")
         c = build_slp_aux(nodes, slp)
         children.append(c)
     children.reverse()
@@ -430,7 +424,6 @@ def binarize_slp(
 
 def slp2str(root: SLPNode, slp: dict[SLPNode, tuple[SLPNode, SLPNode] | None]) -> list[int]:
     """Expand an SLP back into the sequence of terminal symbols."""
-    # print(f"root={root}")
     res = []
     (i, j, ref) = root
     if j - i == 1:
@@ -491,20 +484,17 @@ def smallest_SLP(text: bytes, exp: SLPExp | None = None) -> SLPType:
         x = lm.getid(lm.lits.pstart, i)
         if x in sol:
             posl.append(i)
-    # print(f"posl={posl}")
     phrasel = []
     for occ, l in phrases:
         x = lm.getid(lm.lits.phrase, occ, l)
         if x in sol:
             phrasel.append((occ, occ + l))
-    # print(f"phrasel={phrasel}")
     refs = {}
     for j, l in refs_by_referrer.keys():
         for i in refs_by_referrer[j, l]:
             if lm.getid(lm.lits.ref, j, i, l) in sol:
                 refs[j, l] = i
     root, slp = recover_slp(text, posl, refs)
-    # print(f"root={root}, slp = {slp}, slpkeys={slp.keys()}")
 
     slpsize = len(posl) - 2 + len(set(text))
 
