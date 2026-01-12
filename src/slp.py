@@ -82,7 +82,3 @@ class SLPExp:
             sol_nmaxclause=0,
             factors="",
         )
-
-
-if __name__ == "__main__":
-    pass
