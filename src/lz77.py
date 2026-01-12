@@ -1,3 +1,5 @@
+"""LZ77 factorization (encode/decode) helpers."""
+
 # factors is 2-tuple list
 # if factors[i][0] == -1, it represents the character factors[i][1]
 # otherwise, it represents the previous appeared substring text[factors[i][0]:factors[i][0]+factors[i][1]]
@@ -10,6 +12,7 @@ LZType = NewType("LZType", List[Tuple[int, int]])
 
 
 def encode(text: bytes) -> LZType:
+    """Compute an LZ77 factorization of `text`."""
     res = LZType([])
     n = len(text)
     sa = stralgo.make_sa_MM(text)
@@ -51,10 +54,12 @@ def encode(text: bytes) -> LZType:
 
 
 def factor_strs(factors: LZType) -> List[bytes]:
+    """Return the factor strings corresponding to `factors`."""
     return decode_(factors)[0]
 
 
 def decode_(factors: LZType) -> Tuple[List[bytes], bytes]:
+    """Decode to both factor strings and the reconstructed text."""
     text = []
     res = []
     for factor in factors:
@@ -72,10 +77,12 @@ def decode_(factors: LZType) -> Tuple[List[bytes], bytes]:
 
 
 def decode(factors: LZType) -> bytes:
+    """Decode and return the reconstructed text."""
     return decode_(factors)[1]
 
 
 def equal(text: bytes, f1: LZType, f2: LZType) -> bool:
+    """Return whether two factorizations represent the same substrings in `text`."""
     # verify factor form
     if len(f1) != len(f2):
         return False

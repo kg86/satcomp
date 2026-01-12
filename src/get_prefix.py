@@ -1,10 +1,11 @@
-# trim the specified length prefix of given file, and save it.
+"""Trim prefixes of input files to create prefix datasets."""
 
 import glob
 import os
 
 
 def make_dataset():
+    """Create prefix-trimmed datasets for a fixed set of input corpora."""
     dirs = ["data/calgary", "data/cantrbry"]
     prefs = range(50, 500, 50)
     prefs = [10000]

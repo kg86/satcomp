@@ -1,9 +1,12 @@
+"""Experimental implementation of the RePair grammar-based compressor."""
+
 import argparse
 import sys
 from typing import List, Tuple
 
 
 def mostfreq(inttext: List[int]) -> Tuple[Tuple[int, int], int]:
+    """Return the most frequent adjacent pair and its frequency."""
     frequencies = dict()
     parity = 0
     for i in range(0, len(inttext) - 1):
@@ -26,6 +29,7 @@ def mostfreq(inttext: List[int]) -> Tuple[Tuple[int, int], int]:
 
 
 def repair(text: bytes) -> int:
+    """Run a simple RePair loop and return the resulting grammar size proxy."""
     print(text)
     inttext = []
     for i in range(0, len(text)):
@@ -58,6 +62,7 @@ def repair(text: bytes) -> int:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

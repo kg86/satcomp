@@ -1,8 +1,11 @@
+"""Generate the period-doubling sequence and write it to files."""
+
 char0 = "a"
 char1 = "b"
 
 
 def pds(text: str) -> str:
+    """Apply one period-doubling morphism step to `text`."""
     n = len(text)
     res = ""
     for i in range(n):
@@ -16,6 +19,7 @@ def pds(text: str) -> str:
 
 
 def make_dataset():
+    """Write a small sequence of period-doubling strings to `data/misc/`."""
     file_template = "data/misc/pds{}.txt"
     num = 8
     res = ["" for _ in range(num)]

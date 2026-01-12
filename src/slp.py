@@ -1,3 +1,5 @@
+"""Data structures for straight-line programs (SLP) and their experiment records."""
+
 from __future__ import annotations
 
 import datetime
@@ -33,6 +35,8 @@ SLPType = NewType(
 @dataclass_json
 @dataclass
 class SLPExp:
+    """Serializable experiment record for an SLP run (solver output + stats)."""
+
     date: str
     status: str
     algo: str
@@ -49,7 +53,8 @@ class SLPExp:
     factor_size: int
     factors: str
 
-    def fill(self, wcnf: WCNF):
+    def fill(self, wcnf: WCNF) -> None:
+        """Fill solver statistics from a `WCNF` instance."""
         self.sol_nvars = wcnf.nv
         self.sol_nhard = len(wcnf.hard)
         self.sol_nsoft = len(wcnf.soft)
@@ -65,6 +70,7 @@ class SLPExp:
 
     @classmethod
     def create(cls) -> SLPExp:
+        """Create an empty/default experiment record."""
         return SLPExp(
             date=str(datetime.datetime.now()),
             status="",

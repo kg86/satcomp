@@ -1,3 +1,5 @@
+"""Data structures and utilities for bidirectional macro schemes (BMS)."""
+
 from __future__ import annotations
 
 import datetime
@@ -14,6 +16,8 @@ BiDirType = NewType("BiDirType", List[Tuple[int, int]])
 @dataclass_json
 @dataclass
 class BiDirExp:
+    """Serializable experiment record for a BMS run (solver output + stats)."""
+
     date: str
     status: str
     algo: str
@@ -30,7 +34,8 @@ class BiDirExp:
     factor_size: int
     factors: BiDirType
 
-    def fill(self, wcnf: WCNF):
+    def fill(self, wcnf: WCNF) -> None:
+        """Fill solver statistics from a `WCNF` instance."""
         self.sol_nvars = wcnf.nv
         self.sol_nhard = len(wcnf.hard)
         self.sol_nsoft = len(wcnf.soft)
@@ -46,6 +51,7 @@ class BiDirExp:
 
     @classmethod
     def create(cls) -> BiDirExp:
+        """Create an empty/default experiment record."""
         return BiDirExp(
             date=str(datetime.datetime.now()),
             status="",
@@ -66,6 +72,7 @@ class BiDirExp:
 
 
 def bd_info(bd: BiDirType, text: bytes) -> str:
+    """Return a human-readable summary for a decoded BMS."""
     return "\n".join(
         [
             f"len={len(bd)}: factors={bd}",
@@ -77,9 +84,7 @@ def bd_info(bd: BiDirType, text: bytes) -> str:
 
 
 def decode_len(factors: BiDirType) -> int:
-    """
-    Computes the length of decoded string from a given bidirectional macro scheme (BMS).
-    """
+    """Compute the decoded string length from a BMS factor list."""
     res = 0
     for f in factors:
         res += 1 if f[0] == -1 else f[1]
@@ -87,9 +92,7 @@ def decode_len(factors: BiDirType) -> int:
 
 
 def decode(factors: BiDirType) -> bytes:
-    """
-    Computes the decoded string from a given bidirectional macro scheme (BMS).
-    """
+    """Decode and return the string represented by a BMS factor list."""
     n = decode_len(factors)
     res = [-1 for _ in range(n)]
     nfs = len(factors)

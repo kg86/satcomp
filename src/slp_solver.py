@@ -1,4 +1,4 @@
-"""Fast Implementation of the SLP Solver (TALG 2025, Section 3.3)"""
+"""Compute the smallest SLP by using SAT solver."""
 
 import argparse
 import functools
@@ -39,6 +39,8 @@ logger.addHandler(handler)
 
 
 class SLPLiteral(Enum):
+    """Literal kinds used by the SLP SAT encoding."""
+
     true = Literal.true
     false = Literal.false
     auxlit = Literal.auxlit
@@ -56,9 +58,7 @@ class SLPLiteral(Enum):
 
 
 class SLPLiteralManager(LiteralManager):
-    """
-    Manage literals used for solvers.
-    """
+    """Manage literals used for solvers."""
 
     def __init__(self, text: bytes):
         self.text = text
@@ -67,6 +67,7 @@ class SLPLiteralManager(LiteralManager):
         super().__init__()
 
     def add_phrase(self, i: int, l: int) -> None:
+        """Register the literal kind representing that `text[i:i+l)` is a phrase."""
         # T[i:i+l) is phrase of grammar parsing
         assert 0 <= i < self.n
         assert 0 < l <= self.n
@@ -74,11 +75,13 @@ class SLPLiteralManager(LiteralManager):
         self.newid(self.lits.phrase, i, l)
 
     def add_pstart(self, i: int) -> int:
+        """Register and return the literal ID representing `pstart(i)`."""
         # i is a starting position of a phrase of grammar parsing
         assert 0 <= i <= self.n
         return self.newid(self.lits.pstart, i)
 
     def add_ref(self, j: int, i: int, l: int) -> None:
+        """Register the literal kind representing `ref(j, i, l)`."""
         # phrase (j,j+l) references T[i,i+l)  (T[i,i+l] <- T[j,j+l])
         assert 0 <= i < self.n
         assert i < i + l <= j < j + l <= self.n
@@ -86,6 +89,7 @@ class SLPLiteralManager(LiteralManager):
         self.newid(self.lits.ref, j, i, l)
 
     def add_referred(self, i: int, l: int) -> None:
+        """Register the literal kind representing `referred(i, l)`."""
         # T[i,i+l) is referenced by some phrase
         assert 0 <= i < self.n
         assert 0 < l <= self.n
@@ -94,9 +98,7 @@ class SLPLiteralManager(LiteralManager):
 
 
 def compute_lpf(text: bytes) -> List[int]:  # non-self-referencing lpf
-    """
-    lpf[i] = length of longest prefix of text[i:] that occurs in text[0:i]
-    """
+    """Compute `lpf[i]` as the longest prefix of `text[i:]` occurring in `text[:i]`."""
     n = len(text)
     lpf = []
     for i in range(0, n):
@@ -114,9 +116,7 @@ def compute_lpf(text: bytes) -> List[int]:  # non-self-referencing lpf
 def smallest_SLP_WCNF(
     text: bytes,
 ) -> Tuple[SLPLiteralManager, WCNF, List[Tuple[int, int]], Dict[Tuple[int, int], List[int]]]:  # noqa: C901
-    """
-    Compute the max sat formula for computing the smallest SLP
-    """
+    """Compute a MaxSAT formula for the minimum SLP problem."""
     n = len(text)
     logger.info(f"text length = {len(text)}")
     wcnf = WCNF()
@@ -365,6 +365,7 @@ def smallest_SLP_WCNF(
 
 
 def postorder_cmp(x: SLPNode, y: SLPNode) -> typing.Literal[-1, 0, 1]:
+    """Comparator for sorting nodes into a postorder suitable for reconstruction."""
     i1 = x[0]
     j1 = x[1]
     i2 = y[0]
@@ -388,6 +389,7 @@ def postorder_cmp(x: SLPNode, y: SLPNode) -> typing.Literal[-1, 0, 1]:
 # find the direct children of [root_i,root_j) and add it to slp
 # slp[j,l,i] is a list of nodes that are direct children of [i,j)
 def build_slp_aux(nodes: list[SLPNode], slp: dict[SLPNode, list[SLPNode]]) -> SLPNode:
+    """Recover a multi-ary parse tree from a postorder list of nodes."""
     root = nodes.pop()
     root_i = root[0]
     # root_j = root[1]
@@ -407,6 +409,7 @@ def build_slp_aux(nodes: list[SLPNode], slp: dict[SLPNode, list[SLPNode]]) -> SL
 def binarize_slp(
     root: SLPNode, slp_in: dict[SLPNode, list[SLPNode]], slp_out: dict[SLPNode, tuple[SLPNode, SLPNode] | None]
 ) -> SLPNode:
+    """Convert the multi-ary tree `slp_in` into a binary tree `slp_out`."""
     children = slp_in[root]
     numc = len(children)
     assert numc == 0 or numc >= 2
@@ -426,6 +429,7 @@ def binarize_slp(
 
 
 def slp2str(root: SLPNode, slp: dict[SLPNode, tuple[SLPNode, SLPNode] | None]) -> list[int]:
+    """Expand an SLP back into the sequence of terminal symbols."""
     # print(f"root={root}")
     res = []
     (i, j, ref) = root
@@ -448,6 +452,7 @@ def slp2str(root: SLPNode, slp: dict[SLPNode, tuple[SLPNode, SLPNode] | None]) -
 def recover_slp(
     text: bytes, pstartl: list[int], refs_by_referrer: dict[tuple[int, int], int]
 ) -> tuple[SLPNode, dict[SLPNode, tuple[SLPNode, SLPNode] | None]]:
+    """Reconstruct a binary SLP from a SAT solution (`pstart` positions and references)."""
     n = len(text)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
     leaves: list[SLPNode] = [SLPNode((j, j + l, refs_by_referrer[j, l])) for (j, l) in refs_by_referrer.keys()]
@@ -470,9 +475,7 @@ def recover_slp(
 
 
 def smallest_SLP(text: bytes, exp: SLPExp | None = None) -> SLPType:
-    """
-    Compute the smallest SLP.
-    """
+    """Compute a minimum-size SLP."""
     total_start = time.time()
     lm, wcnf, phrases, refs_by_referrer = smallest_SLP_WCNF(text)
     rc2 = RC2(wcnf)
@@ -519,6 +522,7 @@ def smallest_SLP(text: bytes, exp: SLPExp | None = None) -> SLPType:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

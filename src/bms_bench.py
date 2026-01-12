@@ -1,3 +1,5 @@
+"""Benchmark runner for BMS implementations (solver and naive baseline)."""
+
 import argparse
 import datetime
 import os
@@ -19,6 +21,7 @@ algos = ["solver"]
 
 
 def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
+    """Run the Rust baseline implementation and wrap results as `BiDirExp`."""
     input_file = os.path.abspath(input_file)
     current_dir = os.path.abspath(".")
     os.chdir("rust")
@@ -66,6 +69,7 @@ def run_naive(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
 
 
 def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
+    """Run the Python SAT-based solver and parse its JSON output."""
     cmd = [
         "uv",
         "run",
@@ -114,9 +118,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> BiDirExp:
 
 
 def benchmark_program(timeout: Optional[float], algo: str, file: str) -> List[str]:
-    """
-    Run program with given setting (timeout, algo, file).
-    """
+    """Run the program with a given (timeout, algo, file) setting."""
     if algo == "naive":
         exp = run_naive(file, timeout)
     elif algo == "solver":
@@ -135,9 +137,7 @@ def benchmark_program(timeout: Optional[float], algo: str, file: str) -> List[st
 
 
 def benchmark_single(timeout: Optional[float], algos: list[str], files: list[str], out_file: str) -> None:
-    """
-    Run program with single process.
-    """
+    """Run the benchmark using a single process."""
     f = open(out_file, "w")
     for file in files:
         for algo in algos:
@@ -151,9 +151,7 @@ def benchmark_single(timeout: Optional[float], algos: list[str], files: list[str
 
 
 def benchmark_mul(timeout: Optional[float], algos: list[str], files: list[str], out_file: str, n_jobs: int) -> None:
-    """
-    Run programs with multiple processes.
-    """
+    """Run the benchmark using multiple processes."""
     if os.path.exists(out_file):
         os.remove(out_file)
     queries = Parallel(n_jobs=n_jobs)(
@@ -171,9 +169,7 @@ def benchmark_mul(timeout: Optional[float], algos: list[str], files: list[str], 
 
 
 def clear_table(dbtable: str) -> None:
-    """
-    Delete table if exists, and create new table.
-    """
+    """Delete the table if it exists, then create a new one."""
     con = sqlite3.connect(dbname)
     cur = con.cursor()
     exp = BiDirExp.create()
@@ -188,9 +184,7 @@ def clear_table(dbtable: str) -> None:
 
 
 def export_csv(dbtable: str, out_file: str) -> None:
-    """
-    Export table as csv format.
-    """
+    """Export the SQLite table as a CSV file."""
     con = sqlite3.connect(dbname)
     import pandas as pd
 
@@ -199,6 +193,7 @@ def export_csv(dbtable: str, out_file: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
         description="Run benchmark for algorithms computing the smallest bidirectional macro scheme (BMS)."
     )

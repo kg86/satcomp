@@ -1,3 +1,5 @@
+"""Benchmark runner for external LZ-family compressors."""
+
 # Run a benchmark for LZ77, LZRR, lcpcomp, lexparse
 # We use the following program by @TNishimoto
 # https://github.com/TNishimoto/lzrr
@@ -25,6 +27,8 @@ algos = ["lz", "lzrr", "lex", "lcp"]
 
 @dataclass
 class LZExp:
+    """Serializable experiment record for an external compressor run."""
+
     date: str
     status: str
     algo: str
@@ -35,13 +39,12 @@ class LZExp:
 
     @classmethod
     def create(cls) -> LZExp:
+        """Create an empty/default experiment record."""
         return LZExp("", "", "", "", 0, 0, 0)
 
 
 def benchmark_program(timeout: float | None, algo: str, file: str) -> List[str]:
-    """
-    Run program with given setting (timeout, algo, file).
-    """
+    """Run the external compressor with a given (timeout, algo, file) setting."""
     base_name = os.path.basename(file)
     out_file = f"out/lz/{base_name}.{algo}"
     cmd = [
@@ -83,9 +86,7 @@ def benchmark_program(timeout: float | None, algo: str, file: str) -> List[str]:
 
 
 def benchmark_mul(timeout: float | None, algos: list[str], files: list[str], out_file: str, n_jobs: int) -> None:
-    """
-    Run benchmark program with multiple processes
-    """
+    """Run the benchmark with multiple processes."""
     if os.path.exists(out_file):
         os.remove(out_file)
     queries = Parallel(n_jobs=n_jobs)(
@@ -103,9 +104,7 @@ def benchmark_mul(timeout: float | None, algos: list[str], files: list[str], out
 
 
 def clear_table(table_name: str):
-    """
-    Delete table if exists, and create new table.
-    """
+    """Delete the table if it exists, then create a new one."""
     con = sqlite3.connect(dbname)
     cur = con.cursor()
     exp = LZExp.create()
@@ -120,9 +119,7 @@ def clear_table(table_name: str):
 
 
 def export_csv(table_name: str, out_file: str) -> None:
-    """
-    Store table as csv format in `out_file`.
-    """
+    """Store the SQLite table as a CSV file in `out_file`."""
     con = sqlite3.connect(dbname)
     import pandas as pd
 
@@ -131,6 +128,7 @@ def export_csv(table_name: str, out_file: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
         description="Run benchmark for algorithms computing the smallest bidirectional macro scheme (BMS)."
     )

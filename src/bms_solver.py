@@ -1,5 +1,5 @@
-# compute the smallest bidirectional macro scheme (BMS) by using SAT solver
-# Original version described in the ESA paper
+"""Compute the smallest bidirectional macro scheme (BMS) by using SAT solver."""
+
 import argparse
 import json
 import os
@@ -33,6 +33,8 @@ logger.addHandler(handler)
 
 
 class BiDirLiteral(Enum):
+    """Literal kinds used by the BMS SAT encoding."""
+
     true = Literal.true
     false = Literal.false
     auxlit = Literal.auxlit
@@ -42,42 +44,42 @@ class BiDirLiteral(Enum):
 
 
 class BiDirLiteralManager(LiteralManager):
-    """
-    Manage literals used for solvers.
-    """
+    """Manage literals used for solvers."""
 
-    def __init__(self, text: bytes):
+    def __init__(self, text: bytes) -> None:
         self.text = text
         self.n = len(self.text)
         super().__init__()
 
-    def add_pstart(self, pos: int) -> None:
+    def add_pstart(self, pos: int) -> int:
+        """Create and return the literal ID for `pstart(pos)`."""
         assert 0 <= pos < self.n
-        self.newid(BiDirLiteral.pstart, pos)
+        return self.newid(BiDirLiteral.pstart, pos)
 
-    def add_ref(self, pos: int, ref_pos: int) -> None:
+    def add_ref(self, pos: int, ref_pos: int) -> int:
+        """Create and return the literal ID for `ref(pos, ref_pos)`."""
         assert pos != ref_pos
         assert 0 <= pos < self.n
         assert 0 <= ref_pos < self.n
         assert self.text[pos] == self.text[ref_pos]
-        self.newid(BiDirLiteral.ref, pos, ref_pos)
+        return self.newid(BiDirLiteral.ref, pos, ref_pos)
 
-    def add_tref(self, pos: int, ref_pos: int) -> None:
+    def add_tref(self, pos: int, ref_pos: int) -> int:
+        """Create and return the literal ID for `tref(pos, ref_pos)`."""
         assert pos != ref_pos
         assert 0 <= pos < self.n
         assert 0 <= ref_pos < self.n
         assert self.text[pos] == self.text[ref_pos]
-        self.newid(BiDirLiteral.tref, pos, ref_pos)
+        return self.newid(BiDirLiteral.tref, pos, ref_pos)
 
 
 def pysat_equal(lm: BiDirLiteralManager, bound: int, lits: List[int]) -> CNF:
+    """Return CNF encoding of `sum(lits) == bound`."""
     return CardEnc.equals(lits, bound=bound, vpool=lm.vpool)
 
 
 def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> Dict[int, int]:
-    """
-    Reference dictionary refs[i] = j s.t. position i refers to position j.
-    """
+    """Return `refs[i] = j` mapping each position to its reference position."""
     n = len(text)
     occ = make_occa1(text)
     refs = dict()
@@ -93,9 +95,7 @@ def sol2refs(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> Dict
 
 
 def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
-    """
-    Show the result of SAT solver.
-    """
+    """Log a human-readable view of the SAT solver assignment."""
     n = len(text)
     occ = make_occa1(text)
     pinfo = defaultdict(list)
@@ -118,9 +118,7 @@ def show_sol(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes):
 
 
 def sol2bms(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> BiDirType:
-    """
-    Compute a bidirectional macro scheme (BMS) from the result of SAT solver.
-    """
+    """Compute a BMS factor list from a SAT solver assignment."""
     res = BiDirType([])
     fbegs = []
     n = len(text)
@@ -141,9 +139,7 @@ def sol2bms(lm: BiDirLiteralManager, sol: Dict[int, bool], text: bytes) -> BiDir
 
 
 def make_occa1(text: bytes) -> Dict[int, List[int]]:
-    """
-    occurrences of characters
-    """
+    """Return occurrences (positions) for each character value in `text`."""
     occ = defaultdict(list)
     for i in range(len(text)):
         occ[text[i]].append(i)
@@ -151,9 +147,7 @@ def make_occa1(text: bytes) -> Dict[int, List[int]]:
 
 
 def make_occa2(text: bytes) -> Dict[bytes, List[int]]:
-    """
-    occurrences of length-2 substrings
-    """
+    """Return occurrences (positions) for each length-2 substring in `text`."""
     match2 = defaultdict(list)
     for i in range(len(text) - 1):
         match2[text[i : i + 2]].append(i)
@@ -161,18 +155,14 @@ def make_occa2(text: bytes) -> Dict[bytes, List[int]]:
 
 
 def occ_others(occ1: Dict[int, List[int]], text: bytes, i: int):
-    """
-    returns occurrences of `text[i]` in `text` except `i`.
-    """
+    """Yield occurrences of `text[i]` in `text` excluding position `i`."""
     for j in occ1[text[i]]:
         if i != j:
             yield j
 
 
 def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
-    """
-    Compute the max sat formula for computing the smallest bidirectional macro scheme (BMS).
-    """
+    """Compute a MaxSAT formula for the minimum BMS problem."""
     n = len(text)
     lz77fs = lz77.encode(text)
     logger.info("bms_solver start")
@@ -259,9 +249,7 @@ def bms_WCNF(text: bytes) -> Tuple[BiDirLiteralManager, WCNF]:
 
 
 def min_bms(text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int] = []) -> BiDirType:
-    """
-    Compute the smallest bidirectional macro scheme (BMS).
-    """
+    """Compute a minimum-size bidirectional macro scheme (BMS)."""
     total_start = time.time()
     lm, wcnf = bms_WCNF(text)
     for lname in lm.nvar.keys():
@@ -296,9 +284,7 @@ def min_bms(text: bytes, exp: Optional[BiDirExp] = None, contain_list: List[int]
 
 
 def get_sold(sol: List[int]) -> Dict[int, bool]:
-    """
-    Compute dictionary res[literal_id] = True or False.
-    """
+    """Convert a pysat model list into a `{var_id: bool}` mapping."""
     sold = dict()
     for x in sol:
         sold[abs(x)] = x > 0
@@ -306,6 +292,7 @@ def get_sold(sol: List[int]) -> Dict[int, bool]:
 
 
 def bms_enumerate(text: bytes) -> Iterator[BiDirType]:
+    """Enumerate distinct BMS solutions produced by the solver."""
     lm, wcnf = bms_WCNF(text)
     solset = set()
     overlap = 0
@@ -322,6 +309,7 @@ def bms_enumerate(text: bytes) -> Iterator[BiDirType]:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute Minimum bidirectional macro scheme (BMS)")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
