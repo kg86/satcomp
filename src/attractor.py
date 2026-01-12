@@ -27,9 +27,7 @@ def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
 def main():
     text = """<Y 1874>
 <A T. HARDY>
-<T Madding Crowd(Penguin 197""".encode(
-        "utf8"
-    )
+<T Madding Crowd(Penguin 197""".encode("utf8")
     attractor = AttractorType(
         [
             0,

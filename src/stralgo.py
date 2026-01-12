@@ -84,9 +84,7 @@ def get_bwt(text, sa):
     return res
 
 
-def get_lcprange(
-    lcp: List[int], i: int, least_lcp: Optional[int] = None
-) -> Tuple[int, int]:
+def get_lcprange(lcp: List[int], i: int, least_lcp: Optional[int] = None) -> Tuple[int, int]:
     """
     Compute the maximum range lcp[j1:j2] such that
     least_lcp <= lcp[j] for j in [j1+1:j2]
@@ -122,11 +120,7 @@ def maximal_repeat(text, sa, lcp):
     for i in range(1, n):
         lcp_range_cur = get_lcprange(lcp, i, lcp[i])
         # print(i, lcp_range_cur, is_bwt_distinct(lcp_range_cur))
-        if (
-            lcp[i] > 0
-            and lcp_range_prev != lcp_range_cur
-            and is_bwt_distinct(lcp_range_cur)
-        ):
+        if lcp[i] > 0 and lcp_range_prev != lcp_range_cur and is_bwt_distinct(lcp_range_cur):
             res.append((sa[i], lcp[i]))
         lcp_range_prev = lcp_range_cur
     return res
@@ -184,9 +178,7 @@ def minimum_right_substr(text):
     return minimum_right_substr_sa(text, sa, isa, lcp)
 
 
-def minimum_right_substr_sa(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
+def minimum_right_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum right substring
     A minimum right substring x is a substring that the #occ of x is
@@ -230,9 +222,7 @@ def minimum_substr(text):
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_sa(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
+def minimum_substr_sa(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -241,9 +231,7 @@ def minimum_substr_sa(
     return minimum_substr_linear(text, sa, isa, lcp)
 
 
-def minimum_substr_square(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
+def minimum_substr_square(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -289,9 +277,7 @@ def minimum_substr_square(
     return res
 
 
-def minimum_substr_linear(
-    text, sa: List[int], isa: List[int], lcp: List[int]
-) -> List[Tuple[int, int]]:
+def minimum_substr_linear(text, sa: List[int], isa: List[int], lcp: List[int]) -> List[Tuple[int, int]]:
     """
     Compute the set of (b, l) s.t. text[b:b+l] is a minimum substring
     A minimum substring x is a substring that the #occ of x is
@@ -317,9 +303,7 @@ def minimum_substr_linear(
     root = Node(0, 0, -1)
     leaf = Node(n - sa[0], 0, -1)
     path = [root, leaf]  # post order traversal
-    parent_c = (
-        []
-    )  # [(u, c, v)]: (u, v) is a pair of parent and child, and c is the first label on the edge
+    parent_c = []  # [(u, c, v)]: (u, v) is a pair of parent and child, and c is the first label on the edge
     for i in range(1, n):
         child = None
         while lcp[i] < path[-1].depth:
@@ -353,12 +337,8 @@ def minimum_substr_linear(
     for parent, c, child in parent_c:
         if (
             parent == root
-            or child.end - child.begin
-            != isa[sa[child.end] + 1] - isa[sa[child.begin] + 1]
-            or (
-                (isa[sa[child.end] + 1] + 1 < n)
-                and lcp[isa[sa[child.end] + 1] + 1] >= parent.depth
-            )
+            or child.end - child.begin != isa[sa[child.end] + 1] - isa[sa[child.begin] + 1]
+            or ((isa[sa[child.end] + 1] + 1 < n) and lcp[isa[sa[child.end] + 1] + 1] >= parent.depth)
             or lcp[isa[sa[child.begin] + 1]] >= parent.depth
         ):
             res.append((sa[child.begin], parent.depth + 1))
@@ -438,12 +418,8 @@ if __name__ == "__main__":
 
     print(substr_cover(text, sa, lcp, isa, 3, 1))
     mstr_naive = sorted([text[b : b + l] for b, l in minimum_substr_naive(text)])
-    mstr_square = sorted(
-        [text[b : b + l] for b, l in minimum_substr_square(text, sa, isa, lcp)]
-    )
-    mstr_linear = sorted(
-        [text[b : b + l] for b, l in minimum_substr_linear(text, sa, isa, lcp)]
-    )
+    mstr_square = sorted([text[b : b + l] for b, l in minimum_substr_square(text, sa, isa, lcp)])
+    mstr_linear = sorted([text[b : b + l] for b, l in minimum_substr_linear(text, sa, isa, lcp)])
     print("minimum substr naive")
     print(mstr_naive)
     print(mstr_square)

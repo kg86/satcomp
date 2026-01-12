@@ -63,7 +63,10 @@ def parse_args():
     # parser.add_argument(
     #     "--algo",
     #     type=str,
-    #     help="[min: find a minimum string attractor, exact/atmost: find a string attractor whose size is exact/atmost SIZE]",
+    #     help=(
+    #         "[min: find a minimum string attractor, exact/atmost: find a string "
+    #         "attractor whose size is exact/atmost SIZE]"
+    #     ),
     # )
     # parser.add_argument(
     #     "--log_level",
@@ -73,8 +76,7 @@ def parse_args():
     # )
     args = parser.parse_args()
     if (
-        args.file == ""
-        and args.str == ""
+        args.file == "" and args.str == ""
         # or args.algo not in ["exact", "atmost", "min"]
         # or (args.algo in ["exact", "atmost"] and args.size <= 0)
         # or (args.log_level not in ["DEBUG", "INFO", "CRITICAL"])

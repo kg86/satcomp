@@ -8,9 +8,7 @@ def mostfreq(inttext: List[int]) -> Tuple[Tuple[int, int], int]:
     parity = 0
     for i in range(0, len(inttext) - 1):
         pair = (inttext[i], inttext[i + 1])
-        if (
-            inttext[i] == inttext[i + 1]
-        ):  # do not count character runs doubly like aaa -> 2
+        if inttext[i] == inttext[i + 1]:  # do not count character runs doubly like aaa -> 2
             parity += 1
             if parity == 2:
                 parity = 0

@@ -20,9 +20,7 @@ SLPType = NewType(
     "SLPType",
     Tuple[
         Tuple[int, int, Optional[int]],  # root node
-        Dict[
-            Tuple[int, int, Optional[int]], List[Tuple[int, int, Optional[int]]]
-        ],  # children
+        Dict[Tuple[int, int, Optional[int]], List[Tuple[int, int, Optional[int]]]],  # children
     ],
 )
 

@@ -164,10 +164,10 @@ def smallest_SLP_WCNF(text: bytes):  # noqa: C901
             for l in range(2, lpf[j] + 1):
                 if i + l <= j and text[i : i + l] == text[j : j + l]:
                     lm.newid(lm.lits.ref, j, i, l)  # definition of ref_{i<-j,l}
-                    if not (i, l) in refs_by_referred:
+                    if (i, l) not in refs_by_referred:
                         refs_by_referred[i, l] = []
                     refs_by_referred[i, l].append(j)
-                    if not (j, l) in refs_by_referrer:
+                    if (j, l) not in refs_by_referrer:
                         refs_by_referrer[j, l] = []
                     refs_by_referrer[j, l].append(i)
     for i, l in refs_by_referred.keys():
@@ -201,9 +201,7 @@ def smallest_SLP_WCNF(text: bytes):  # noqa: C901
             vpool=lm.vpool,
         )
         wcnf.extend(clauses)
-        clause = pysat_atleast_one(
-            [lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]]
-        )
+        clause = pysat_atleast_one([lm.getid(lm.lits.ref, j, i, l) for i in refs_by_referrer[j, l]])
         var_atleast, clause_atleast = pysat_name_cnf(lm, [clause])
         wcnf.extend(clause_atleast)
         phrase = lm.getid(lm.lits.phrase, j, l)
@@ -230,9 +228,7 @@ def smallest_SLP_WCNF(text: bytes):  # noqa: C901
         )
         wcnf.extend(clauses)
         referredid = lm.getid(lm.lits.referred, i, l)
-        wcnf.extend(
-            pysat_iff(ref_sources, referredid)
-        )  # q_{i,l} <=> \exists ref_{i<-j,l}
+        wcnf.extend(pysat_iff(ref_sources, referredid))  # q_{i,l} <=> \exists ref_{i<-j,l}
     # // end constraint (5) ###############################
 
     # // start constraint (6) ###############################
@@ -314,11 +310,7 @@ def smallest_SLP_WCNF(text: bytes):  # noqa: C901
                 refs2 = ref_by_blkse[(L2, R2)]
                 for occ1, l1 in refs1:
                     for occ2, l2 in refs2:
-                        if (
-                            occ1 < occ2
-                            and occ2 <= occ1 + l1 - 1
-                            and occ1 + l1 < occ2 + l2
-                        ):
+                        if occ1 < occ2 and occ2 <= occ1 + l1 - 1 and occ1 + l1 < occ2 + l2:
                             idx1 = lm.getid(lm.lits.referred, occ1, l1)
                             idx2 = lm.getid(lm.lits.referred, occ2, l2)
                             wcnf.append([-idx1, -idx2])
