@@ -1,3 +1,5 @@
+"""Benchmark runner for minimum string attractor algorithms."""
+
 import argparse
 import datetime
 import os
@@ -19,6 +21,7 @@ algos = ["solver"]
 
 
 def run_solver(input_file: str, timeout: Optional[float] = None) -> Optional[AttractorExp]:
+    """Run `src/attractor_solver.py` on a single input file and parse its JSON output."""
     cmd = [
         "uv",
         "run",
@@ -68,9 +71,7 @@ def run_solver(input_file: str, timeout: Optional[float] = None) -> Optional[Att
 
 
 def benchmark_program(timeout: float | None, algo: str, file: str) -> None:
-    """
-    Runs program with given setting (timeout, algo, file).
-    """
+    """Run the program with a given (timeout, algo, file) setting."""
     if algo == "solver":
         exp = run_solver(file, timeout)
     else:
@@ -93,16 +94,12 @@ def benchmark_program(timeout: float | None, algo: str, file: str) -> None:
 
 
 def benchmark_mul(timeout: float | None, algos: list[str], files: list[str], n_jobs: int) -> None:
-    """
-    Run benchmark program with multiple processes
-    """
+    """Run the benchmark with multiple processes."""
     Parallel(n_jobs=n_jobs)([delayed(benchmark_program)(timeout, algo, file) for file in files for algo in algos])
 
 
 def clear_table():
-    """
-    Delete table if exists, and create new table.
-    """
+    """Delete the table if it exists, then create a new one."""
     con = sqlite3.connect(dbname)
     cur = con.cursor()
     exp = AttractorExp.create()
@@ -116,9 +113,7 @@ def clear_table():
 
 
 def export_csv(out_file: str) -> None:
-    """
-    Store table as csv format in `out_file`.
-    """
+    """Store the SQLite table as a CSV file in `out_file`."""
     con = sqlite3.connect(dbname)
     import pandas as pd
 
@@ -127,6 +122,7 @@ def export_csv(out_file: str) -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(
         description="Run benchmark for algorithms computing the smallest bidirectional macro scheme (BMS)."
     )

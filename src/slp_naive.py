@@ -1,3 +1,5 @@
+"""Naive SLP construction/experimentation helpers."""
+
 from __future__ import annotations
 
 import argparse
@@ -27,6 +29,8 @@ logger.addHandler(handler)
 
 
 class Node(object):
+    """Binary tree node used by the naive enumeration code."""
+
     def __init__(self, left: int | Node, right: int | Node) -> None:
         self.left = left
         self.right = right
@@ -36,6 +40,7 @@ class Node(object):
 
 
 def enum_ordered(labels: bytes) -> Iterator[int | Node]:
+    """Yield all full binary trees whose leaves are `labels` in left-to-right order."""
     if len(labels) == 1:
         yield labels[0]
     else:
@@ -51,6 +56,7 @@ def enum_ordered(labels: bytes) -> Iterator[int | Node]:
 def minimize_tree(
     root: int | Node, nodedic: dict[tuple[int | Node, int | Node] | int | Node, int | Node]
 ) -> int | Node:
+    """Deduplicate identical subtrees by interning them into `nodedic`."""
     # print(root)
     if type(root) is Node:
         left = minimize_tree(root.left, nodedic)
@@ -69,6 +75,7 @@ def minimize_tree(
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

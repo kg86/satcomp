@@ -1,12 +1,12 @@
+"""String algorithm utilities (SA/LCP and related helpers)."""
+
 from typing import Iterable, List, Optional, Tuple
 
 from tqdm import tqdm
 
 
 def make_sa_MM(text: bytes) -> list[int]:
-    """
-    Make sufix array by Manber and Myers algorithm.
-    """
+    """Make suffix array using the Manber-Myers algorithm."""
     if not isinstance(text, bytes):
         assert "text must be bytes"
     n = len(text)
@@ -35,6 +35,7 @@ def make_sa_MM(text: bytes) -> list[int]:
 
 
 def get_lcp(text: bytes, i: int, j: int) -> int:
+    """Return the longest common prefix length of `text[i:]` and `text[j:]`."""
     n = len(text)
     l = 0
     while i < n and j < n:
@@ -47,9 +48,7 @@ def get_lcp(text: bytes, i: int, j: int) -> int:
 
 
 def make_isa(sa: list[int]) -> list[int]:
-    """
-    Make inverse suffix array.
-    """
+    """Make the inverse suffix array."""
     n = len(sa)
     isa = [0 for _ in range(n)]
     for i in range(n):
@@ -58,9 +57,7 @@ def make_isa(sa: list[int]) -> list[int]:
 
 
 def make_lcpa_kasai(text: bytes, sa: list[int], isa: list[int] | None = None) -> list[int]:
-    """
-    Make longest common prefix array by Kasai algorithm.
-    """
+    """Make the LCP array using the Kasai algorithm."""
     n = len(text)
     if isa is None:
         isa = make_isa(sa)
@@ -76,6 +73,7 @@ def make_lcpa_kasai(text: bytes, sa: list[int], isa: list[int] | None = None) ->
 
 
 def get_bwt(text: bytes, sa: list[int]) -> list[int]:
+    """Return the Burrows-Wheeler transform of `text` given its suffix array."""
     n = len(text)
     res = []
 
@@ -103,6 +101,7 @@ def get_lcprange(lcp: List[int], i: int, least_lcp: Optional[int] = None) -> Tup
 
 
 def maximal_repeat(text: bytes, sa: list[int], lcp: list[int]) -> list[tuple[int, int]]:
+    """Compute maximal repeats using the suffix array and LCP array."""
     n = len(text)
     res = []
 
@@ -127,6 +126,7 @@ def maximal_repeat(text: bytes, sa: list[int], lcp: list[int]) -> list[tuple[int
 
 
 def occ_pos_naive(text: bytes, pattern: bytes) -> list[int]:
+    """Return all starting indices where `pattern` occurs in `text` (naive scan)."""
     res = []
     beg = 0
     occ = text.find(pattern, beg)
@@ -138,13 +138,12 @@ def occ_pos_naive(text: bytes, pattern: bytes) -> list[int]:
 
 
 def num_occ(text: bytes, pattern: bytes) -> int:
-    """
-    Compute the number of occurrences of the pattern in text.
-    """
+    """Compute the number of occurrences of `pattern` in `text`."""
     return len(occ_pos_naive(text, pattern))
 
 
 def substr(text: bytes) -> list[bytes]:
+    """Return the list of all substrings of `text` (quadratic size)."""
     n = len(text)
     res: list[bytes] = []
     for i in range(n):
@@ -172,6 +171,7 @@ def minimum_substr_naive(text: bytes) -> List[Tuple[int, int]]:
 
 
 def minimum_right_substr(text: bytes) -> list[tuple[int, int]]:
+    """Compute minimum right substrings (via SA/LCP helper)."""
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
@@ -216,6 +216,7 @@ def minimum_right_substr_sa(text: bytes, sa: List[int], isa: List[int], lcp: Lis
 
 
 def minimum_substr(text: bytes) -> list[tuple[int, int]]:
+    """Compute minimum substrings (via SA/LCP helper)."""
     sa = make_sa_MM(text)
     isa = make_isa(sa)
     lcp = make_lcpa_kasai(text, sa, isa)
@@ -347,9 +348,7 @@ def minimum_substr_linear(text: bytes, sa: List[int], isa: List[int], lcp: List[
 
 
 def substr_cover(text: bytes, sa: list[int], lcp: list[int], isa: list[int], b: int, l: int) -> set[int]:
-    """
-    return occ of text[b:b+l] in text.
-    """
+    """Return the set of covered positions for all occurrences of `text[b:b+l]`."""
     lcp_range = get_lcprange(lcp, isa[b], l)
     print(lcp_range)
     cover = set()
@@ -360,12 +359,14 @@ def substr_cover(text: bytes, sa: list[int], lcp: list[int], isa: list[int], b: 
 
 
 def print_sa(text: bytes, sa: list[int]) -> None:
+    """Print a suffix array table (debug helper)."""
     n = len(text)
     for i in range(n):
         print("\t".join(map(str, [i, sa[i], text[sa[i] :]])))
 
 
 def print_sa_lcp(text: bytes, sa: list[int], lcp: list[int]) -> None:
+    """Print a suffix array + LCP table (debug helper)."""
     n = len(text)
     for i in range(n):
         print(
@@ -385,6 +386,7 @@ def print_sa_lcp(text: bytes, sa: list[int], lcp: list[int]) -> None:
 
 
 def verify_sa(text: bytes, sa: list[int]):
+    """Sanity-check that `sa` is sorted by suffix lexicographic order."""
     n = len(text)
     for i in range(1, n):
         # print('{} < {} ?'.format(text[sa[i - 1]:], text[sa[i]:]))
@@ -392,9 +394,7 @@ def verify_sa(text: bytes, sa: list[int]):
 
 
 def gen_binary(n: int) -> Iterable[str]:
-    """
-    Generates all binary strings of length `n`.
-    """
+    """Generate all binary strings of length `n` over the alphabet {a,b}."""
     if n == 1:
         yield "a"
         yield "b"

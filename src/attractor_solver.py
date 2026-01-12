@@ -1,5 +1,7 @@
 # Compute minimum string attractors by pysat
 
+"""Compute minimum string attractors using a SAT/MaxSAT formulation."""
+
 import argparse
 import json
 import os
@@ -32,9 +34,7 @@ logger.addHandler(handler)
 
 
 def min_substr_hist(min_substrs: list[tuple[int, int]], th: int) -> None:
-    """
-    Plot histogram of string lengths less than the threshold.
-    """
+    """Plot a histogram of substring lengths relative to the threshold."""
     # histogram
     nmin_substrs_th1 = [l for b, l in min_substrs if l < th]
     nmin_substrs_th2 = [l for b, l in min_substrs if l >= th]
@@ -124,9 +124,7 @@ def attractor_of_size(text: bytes, k: int, op: str, exp: Optional[AttractorExp] 
 
 
 def min_attractor_WCNF(text: bytes) -> WCNF:
-    """
-    Compute the max sat formula for computing the minimum string attractor.
-    """
+    """Compute a MaxSAT formula for the minimum string attractor problem."""
     n = len(text)
 
     sa = stralgo.make_sa_MM(text)
@@ -149,9 +147,7 @@ def min_attractor_WCNF(text: bytes) -> WCNF:
 
 
 def min_attractor(text: bytes, exp: Optional[AttractorExp] = None, contain_list: List[int] = []) -> AttractorType:
-    """
-    Compute the minimum string attractor.
-    """
+    """Compute a minimum string attractor."""
     total_start = time.time()
     wcnf = min_attractor_WCNF(text)
     for i in contain_list:
@@ -174,6 +170,7 @@ def min_attractor(text: bytes, exp: Optional[AttractorExp] = None, contain_list:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute Minimum String Attractors.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

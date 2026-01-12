@@ -1,3 +1,5 @@
+"""Naive (exponential-time) algorithms for minimum string attractors."""
+
 import argparse
 import sys
 import time
@@ -8,6 +10,7 @@ from itertools import combinations
 
 
 def blocks_ranges(w: bytes) -> dict[bytes, list[set[int]]]:
+    """Return, for each substring, the list of occurrence position-sets."""
     blocks = dict()
     for i in range(len(w)):
         for j in range(i + 1, len(w) + 1):
@@ -20,6 +23,7 @@ def blocks_ranges(w: bytes) -> dict[bytes, list[set[int]]]:
 
 
 def is_attractor(S: set[int], w: bytes) -> bool:
+    """Check whether `S` hits every distinct substring occurrence of `w`."""
     br = blocks_ranges(w)
     for b in br:
         for i in range(len(br[b])):
@@ -31,6 +35,7 @@ def is_attractor(S: set[int], w: bytes) -> bool:
 
 
 def lsa(w: bytes) -> int:  # length of smallest attractor of w
+    """Return the length of a smallest string attractor (brute force)."""
     for r in range(1, len(w) + 1):
         for s in combinations(range(len(w)), r):
             if is_attractor(set(s), w):
@@ -44,6 +49,7 @@ def lsa(w: bytes) -> int:  # length of smallest attractor of w
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute Minimum String Attractors.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

@@ -1,3 +1,5 @@
+"""Utilities for computing/inspecting minimum substrings in strings."""
+
 import argparse
 import sys
 from enum import Enum, auto
@@ -7,6 +9,8 @@ import stralgo
 
 
 class Mode(Enum):
+    """Mode selector for the `min_substr` CLI."""
+
     size_min_substr = auto()
     size_min_right_substr = auto()
     test = auto()
@@ -14,6 +18,7 @@ class Mode(Enum):
 
 
 def main(input_file: str) -> None:
+    """Print the number of minimum substrings for the file."""
     print(input_file)
     with open(input_file, "rb") as f:
         text = f.read()
@@ -28,6 +33,7 @@ def main(input_file: str) -> None:
 
 
 def test():
+    """Run a small self-check on a tiny example string."""
     text = b"ab"
     assert len(stralgo.minimum_substr(text)) == 2
     pos_lens = stralgo.minimum_substr(text)
@@ -39,6 +45,7 @@ def test():
 
 
 def exp():
+    """Run a small experiment over a fixed file list and print summary stats."""
     files = [
         "data/calgary/bib",
         "data/calgary/book1",
@@ -125,11 +132,13 @@ def exp():
 
 
 def show(text: AnyStr, substrs: List[Tuple[int, int]]):
+    """Print each substring occurrence `(pos, length)` as an extracted slice."""
     for i, l in substrs:
         print(text[i : i + l])
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments and normalize `mode` into a `Mode` enum value."""
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

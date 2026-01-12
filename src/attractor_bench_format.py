@@ -1,3 +1,5 @@
+"""Format for attractor benchmark."""
+
 from __future__ import annotations
 
 import datetime
@@ -13,6 +15,8 @@ from attractor import AttractorType
 @dataclass_json
 @dataclass
 class AttractorExp:
+    """Serializable experiment record for an attractor run (solver output + stats)."""
+
     date: str
     status: str
     algo: str
@@ -29,7 +33,8 @@ class AttractorExp:
     factor_size: int
     factors: Union[Any, AttractorType]
 
-    def fill(self, wcnf: WCNF):
+    def fill(self, wcnf: WCNF) -> None:
+        """Fill the experiment with the solution."""
         self.sol_nvars = wcnf.nv
         self.sol_nhard = len(wcnf.hard)
         self.sol_nsoft = len(wcnf.soft)
@@ -45,6 +50,7 @@ class AttractorExp:
 
     @classmethod
     def create(cls) -> AttractorExp:
+        """Create a new experiment."""
         return AttractorExp(
             date=str(datetime.datetime.now()),
             status="",

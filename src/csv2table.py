@@ -1,3 +1,5 @@
+"""Convert benchmark CSV outputs into LaTeX table snippets."""
+
 import csv
 import sys
 
@@ -50,6 +52,7 @@ def main(fname: str, vtype: str):
 
 
 def size_table(fname: str) -> None:
+    """Print a LaTeX size-only table for the given benchmark CSV."""
     res = []
     # header = ''
     with open(fname) as csvfile:
@@ -79,6 +82,7 @@ def size_table(fname: str) -> None:
 
 
 def covert(elm: str) -> str:
+    """Convert a scalar string to a LaTeX `\\num{...}` when possible."""
     trans = elm
     try:
         trans = int(elm)
@@ -92,6 +96,7 @@ def covert(elm: str) -> str:
 
 
 def naive(fname: str) -> None:
+    """Print rows in a simple `&`-separated LaTeX-friendly format."""
     with open(fname) as csvfile:
         reader = csv.reader(csvfile)
         _ = next(reader)

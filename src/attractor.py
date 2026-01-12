@@ -1,3 +1,5 @@
+"""Utilities for verifying (and experimenting with) string attractors."""
+
 from typing import List, NewType
 
 import stralgo
@@ -6,9 +8,7 @@ AttractorType = NewType("AttractorType", List[int])
 
 
 def verify_attractor(text: bytes, attractor: AttractorType) -> bool:
-    """
-    Verify the attractor.
-    """
+    """Verify the attractor."""
 
     # run fast
     sa = stralgo.make_sa_MM(text)

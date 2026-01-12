@@ -1,3 +1,5 @@
+"""Helpers for aggregating benchmark results into CSV tables."""
+
 import csv
 import sqlite3
 
@@ -9,6 +11,7 @@ dbname = "out/satcomp.db"
 
 
 def comp_bench(out_file: str, target_key: str, target_none: str):
+    """Write an aggregated benchmark CSV from the per-task SQLite tables."""
     con = sqlite3.connect(dbname)
     cur = con.cursor()
     cur.execute(f"select file_name from {lz_bench.dbtable}")

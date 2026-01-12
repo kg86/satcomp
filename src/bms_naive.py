@@ -1,3 +1,5 @@
+"""Wrapper script for the Rust optimal-BMS implementation."""
+
 import argparse
 import os
 import subprocess
@@ -8,6 +10,7 @@ from bms import BiDirType, bd_info
 
 
 def bms_naive(input_file: str, timeout: Optional[float] = None) -> BiDirType:
+    """Run the Rust baseline and return the parsed BMS factors."""
     input_file = os.path.abspath(input_file)
     cmd = f"cd rust && cargo run --bin optimal_bms -- --input_file {input_file}"
     print(cmd)
@@ -19,6 +22,7 @@ def bms_naive(input_file: str, timeout: Optional[float] = None) -> BiDirType:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Compute the smallest bidirectional macro scheme (BMS).")
     parser.add_argument("--file", type=str, help="input file", default="")
 

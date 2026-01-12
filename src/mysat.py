@@ -1,3 +1,5 @@
+"""SAT helper utilities (CNF encodings and a literal manager)."""
+
 from __future__ import annotations
 
 import typing
@@ -16,12 +18,16 @@ debug = False
 
 
 class Literal(Enum):
+    """Well-known reserved literals used by `LiteralManager`."""
+
     true = 1
     false = 2
     auxlit = 3
 
 
 class LiteralManager:
+    """Allocate stable integer IDs for SAT literals and map them to SymPy symbols."""
+
     def __init__(self) -> None:
         self.vpool = IDPool()
         self.syms: dict[int, Boolean] = dict()
@@ -30,6 +36,7 @@ class LiteralManager:
         self.false = self.newsym(Literal.false)
 
     def newid(self, *obj: object) -> int:
+        """Allocate and return a fresh integer ID for the given key tuple."""
         if len(obj) == 0:
             obj = (Literal.auxlit, self.nvar[Literal.auxlit])
         assert not self.contains(*obj)
@@ -37,36 +44,46 @@ class LiteralManager:
         return self.vpool.id(obj)
 
     def getid(self, *obj: object) -> int:
+        """Return the existing ID for `obj` (must already be allocated)."""
         assert self.contains(*obj)
         return self.vpool.obj2id[obj]
 
     def contains(self, *obj: object) -> bool:
+        """Return whether an ID has already been allocated for `obj`."""
         return obj in self.vpool.obj2id
 
     def id2sym(self, id: int) -> Boolean:
+        """Return a cached SymPy symbol representing `id`."""
         if id not in self.syms:
             self.syms[id] = Symbol(str(id))
         return self.syms[id]
 
     def sym2id(self, x: Boolean) -> int:
+        """Convert a SymPy literal symbol back to its integer ID."""
         return int(str(x))
 
     def getsym(self, *opt: object) -> Boolean:
+        """Return the SymPy symbol corresponding to a previously allocated key."""
         return self.id2sym(self.getid(*opt))
 
     def newsym(self, *obj: object) -> Boolean:
+        """Allocate a fresh key and return it as a SymPy symbol."""
         return self.id2sym(self.newid(*obj))
 
     def id2obj(self, id: int) -> object:
+        """Return the key tuple associated with `id`."""
         return self.vpool.id2obj[id]
 
     def id2str(self, id: int) -> str:
+        """Return a human-readable string representation of `id`'s key tuple."""
         return str(self.id2obj(id))
 
     def sym2str(self, x: Boolean) -> str:
+        """Return the key tuple string representation for a SymPy symbol."""
         return self.id2str(self.sym2id(x))
 
     def top(self) -> int:
+        """Return the maximum allocated variable ID."""
         return self.vpool.top
 
 
@@ -85,6 +102,7 @@ class LiteralManager:
 
 
 def pysat_or(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
+    """Introduce a fresh variable equivalent to OR over `xs` (Tseitin encoding)."""
     nvar = new_var()
     new_clauses = []
     for x in xs:
@@ -95,6 +113,7 @@ def pysat_or(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[
 
 
 def pysat_and(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list[int]]]:
+    """Introduce a fresh variable equivalent to AND over `xs` (Tseitin encoding)."""
     nvar = new_var()
     new_clauses = []
     for x in xs:
@@ -105,9 +124,7 @@ def pysat_and(new_var: Callable[[], int], xs: list[int]) -> Tuple[int, list[list
 
 
 def pysat_atmost(lm: LiteralManager, xs: list[int], bound: int) -> Tuple[int, list[list[int]]]:
-    """
-    Create a literal and clauses such that the number of true literals in `xs` is at most `bound`.
-    """
+    """Encode that the number of true literals in `xs` is at most `bound`."""
 
     atmost_clauses = CardEnc.atmost(xs, bound=bound, vpool=lm.vpool)
 
@@ -123,6 +140,7 @@ def pysat_atmost(lm: LiteralManager, xs: list[int], bound: int) -> Tuple[int, li
 
 
 def pysat_atleast_one(xs: list[int]) -> list[int]:
+    """Return a single CNF clause encoding `OR(xs)`."""
     return xs
 
 
@@ -134,6 +152,7 @@ def pysat_atleast_one(xs: list[int]) -> list[int]:
 
 
 def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[int]]]:
+    """Introduce a fresh variable for the CNF encoding of `exactly_one(xs)`."""
     ex1_clauses = CardEnc.atmost(xs, bound=1, vpool=lm.vpool)
     # _, ex1_clauses = pysat_atmost(lm, xs, bound=1)
     # res_clauses = []
@@ -146,6 +165,7 @@ def pysat_exactlyone(lm: LiteralManager, xs: list[int]) -> Tuple[int, list[list[
 
 
 def pysat_name_cnf(lm: LiteralManager, xs: list[list[int]]) -> Tuple[int, list[list[int]]]:
+    """Introduce a fresh variable equivalent to AND over the CNF `xs`."""
     res_clauses = []
     ex1_vars = []
     for clause in xs:
@@ -158,63 +178,63 @@ def pysat_name_cnf(lm: LiteralManager, xs: list[list[int]]) -> Tuple[int, list[l
 
 
 def pysat_if_and_then_or(xs: list[int], ys: list[int]) -> list[int]:
+    """Return a single clause encoding `(AND(xs)) => (OR(ys))`."""
     return [-x for x in xs] + ys
 
 
 def pysat_if(x: int, y: int) -> list[int]:
+    """Return a single clause encoding `x => y` (i.e., `¬x ∨ y`)."""
     return [-x, y]
 
 
 def pysat_iff(x: int, y: int) -> list[list[int]]:
+    """Return CNF clauses encoding `x <=> y`."""
     return [[-x, y], [x, -y]]
 
 
 def sympy_atleast_one(lits: list[Boolean]) -> Boolean:
+    """Return a SymPy formula encoding `OR(lits)`."""
     return Or(*lits)  # type: ignore
 
 
 def sympy_atmost_one(lits: list[Boolean]) -> Boolean:
+    """Return a SymPy formula encoding `at_most_one(lits)`."""
     n = len(lits)
     return And(*[~lits[i] | ~lits[j] for i in range(n) for j in range(i + 1, n)])  # type: ignore
 
 
 def sympy_exactly_one(lits: list[Boolean]) -> Boolean:
+    """Return a SymPy formula encoding `exactly_one(lits)`."""
     return And(sympy_atleast_one(lits) & sympy_atmost_one(lits))
 
 
 def sympy_if(x: Boolean, y: Boolean) -> Boolean:
-    """
-    x -> y
-    """
+    """Return the implication `x -> y`."""
     return ~x | y
 
 
 def sympy_iff(x: Boolean, y: Boolean) -> Boolean:
-    """
-    x <-> y
-    """
+    """Return the bi-implication `x <-> y`."""
     return (~x | y) & (x | ~y)
 
 
 def sympy_equal(x: Boolean, y: Boolean) -> Boolean:
-    """
-    x <-> y
-    """
+    """Return the bi-implication `x <-> y`."""
     return (x & y) | (~x & ~y)
 
 
 def sign_enc(x: int) -> typing.Literal[1, -1]:
-    """
-    Convert x= 1 or 0 to 1 or -1.
-    """
+    """Convert `x` in {0,1} into {+1,-1}."""
     return 1 if x == 1 else -1
 
 
 def sign_dec(x: int) -> typing.Literal[0, 1]:
+    """Convert a signed pysat literal to a 0/1 sign bit."""
     return 1 if x == 1 else 0
 
 
 def defcnf(new_var: Callable[[], int], x: Boolean, y: Boolean) -> list[list[int]]:
+    """Return a CNF encoding of `x <=> y` (introducing fresh variables as needed)."""
     return sympy_cnf_pysat(new_var, Equivalent(x, y))  # type: ignore
 
 
