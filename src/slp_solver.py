@@ -7,6 +7,7 @@ import math
 import os
 import sys
 import time
+import typing
 from enum import auto
 from logging import CRITICAL, DEBUG, INFO, Formatter, StreamHandler, getLogger
 from typing import Dict, List, Tuple
@@ -26,7 +27,7 @@ from mysat import (
     pysat_name_cnf,
     pysat_or,
 )
-from slp import SLPExp, SLPType
+from slp import SLPExp, SLPNode, SLPType
 
 logger = getLogger(__name__)
 handler = StreamHandler()
@@ -63,56 +64,33 @@ class SLPLiteralManager(LiteralManager):
         self.text = text
         self.n = len(self.text)
         self.lits = SLPLiteral
-        self.verifyf = {
-            SLPLiteral.phrase: self.verify_phrase,
-            SLPLiteral.pstart: self.verify_pstart,
-            SLPLiteral.ref: self.verify_ref,
-            SLPLiteral.referred: self.verify_referred,
-        }
         super().__init__(self.lits)  # type: ignore
 
-    def newid(self, *obj) -> int:
-        res = super().newid(*obj)
-        if len(obj) > 0 and obj[0] in self.verifyf:
-            self.verifyf[obj[0]](*obj)
-        return res
-
-    def verify_phrase(self, *obj):
-        # obj = (name, i, l) (representing T[i:i+l)) is phrase of grammar parsing
-        assert len(obj) == 3
-        name, i, l = obj
-        assert name == self.lits.phrase
+    def add_phrase(self, i: int, l: int) -> None:
+        # T[i:i+l) is phrase of grammar parsing
         assert 0 <= i < self.n
         assert 0 < l <= self.n
         assert i + l <= self.n
+        self.newid(self.lits.phrase, i, l)
 
-    def verify_pstart(self, *obj):
-        # print(f"verify_pstart, {obj}")
-        # obj = (name, i) i is a starting position of a phrase of grammar parsing
-        assert len(obj) == 2
-        name, i = obj
-        assert name == self.lits.pstart
+    def add_pstart(self, i: int) -> int:
+        # i is a starting position of a phrase of grammar parsing
         assert 0 <= i <= self.n
+        return self.newid(self.lits.pstart, i)
 
-    def verify_ref(self, *obj):
-        # print(f"verify_ref, {obj}")
-        # obj = (name, j, i, l) phrase (j,j+l) references T[i,i+l)  (T[i,i+l] <- T[j,j+l])
-        assert len(obj) == 4
-        name, j, i, l = obj
-        assert name == self.lits.ref
+    def add_ref(self, j: int, i: int, l: int) -> None:
+        # phrase (j,j+l) references T[i,i+l)  (T[i,i+l] <- T[j,j+l])
         assert 0 <= i < self.n
         assert i < i + l <= j < j + l <= self.n
         assert 0 < l <= self.n
+        self.newid(self.lits.ref, j, i, l)
 
-    def verify_referred(self, *obj):
-        # print(f"verify_referred, {obj}")
-        # obj = (name, i, l) T[i,i+l) is referenced by some phrase
-        assert len(obj) == 3
-        name, i, l = obj
-        assert name == self.lits.referred
+    def add_referred(self, i: int, l: int) -> None:
+        # T[i,i+l) is referenced by some phrase
         assert 0 <= i < self.n
         assert 0 < l <= self.n
         assert i + l <= self.n
+        self.newid(self.lits.referred, i, l)
 
 
 def compute_lpf(text: bytes) -> List[int]:  # non-self-referencing lpf
@@ -153,11 +131,11 @@ def smallest_SLP_WCNF(
     # phrase(i,l) defined for all i, l > 1 with l <= lpf[i]
     phrases = []
     for i in range(n + 1):
-        lm.newid(lm.lits.pstart, i)  # definition of p_i
+        lm.add_pstart(i)  # definition of p_i
     for i in range(n):
         for l in range(1, max(2, lpf[i] + 1)):
             phrases.append((i, l))
-            lm.newid(lm.lits.phrase, i, l)  # definition of f_{i,l}
+            lm.add_phrase(i, l)  # definition of f_{i,l}
 
     refs_by_referred = {}
     refs_by_referrer = {}
@@ -165,7 +143,7 @@ def smallest_SLP_WCNF(
         for j in range(i + 1, n):
             for l in range(2, lpf[j] + 1):
                 if i + l <= j and text[i : i + l] == text[j : j + l]:
-                    lm.newid(lm.lits.ref, j, i, l)  # definition of ref_{i<-j,l}
+                    lm.add_ref(j, i, l)  # definition of ref_{i<-j,l}
                     if (i, l) not in refs_by_referred:
                         refs_by_referred[i, l] = []
                     refs_by_referred[i, l].append(j)
@@ -173,7 +151,7 @@ def smallest_SLP_WCNF(
                         refs_by_referrer[j, l] = []
                     refs_by_referrer[j, l].append(i)
     for i, l in refs_by_referred.keys():
-        lm.newid(lm.lits.referred, i, l)
+        lm.add_referred(i, l)
 
     # // start constraint (1) ###############################
     # phrase(i,l) = true <=> pstart[i] = pstart[i+l] = true, pstart[i+1..i+l) = false
@@ -386,7 +364,7 @@ def smallest_SLP_WCNF(
     return lm, wcnf, phrases, refs_by_referrer
 
 
-def postorder_cmp(x, y):
+def postorder_cmp(x: SLPNode, y: SLPNode) -> typing.Literal[-1, 0, 1]:
     i1 = x[0]
     j1 = x[1]
     i2 = y[0]
@@ -409,7 +387,7 @@ def postorder_cmp(x, y):
 # given a list of nodes that in postorder of subtree rooted at root,
 # find the direct children of [root_i,root_j) and add it to slp
 # slp[j,l,i] is a list of nodes that are direct children of [i,j)
-def build_slp_aux(nodes, slp):
+def build_slp_aux(nodes: list[SLPNode], slp: dict[SLPNode, list[SLPNode]]) -> SLPNode:
     root = nodes.pop()
     root_i = root[0]
     # root_j = root[1]
@@ -426,26 +404,28 @@ def build_slp_aux(nodes, slp):
 
 
 # turn multi-ary tree into binary tree
-def binarize_slp(root, slp):
-    children = slp[root]
+def binarize_slp(
+    root: SLPNode, slp_in: dict[SLPNode, list[SLPNode]], slp_out: dict[SLPNode, tuple[SLPNode, SLPNode] | None]
+) -> SLPNode:
+    children = slp_in[root]
     numc = len(children)
     assert numc == 0 or numc >= 2
     if numc == 2:
-        slp[root] = (binarize_slp(children[0], slp), binarize_slp(children[1], slp))
+        slp_out[root] = (binarize_slp(children[0], slp_in, slp_out), binarize_slp(children[1], slp_in, slp_out))
     elif numc > 0:
         leftc = children[0]
         for i in range(1, len(children)):
-            n = (root[0], children[i][1], None) if i < len(children) - 1 else root
-            slp[n] = (leftc, children[i])
+            n = SLPNode((root[0], children[i][1], None)) if i < len(children) - 1 else root
+            slp_out[n] = (leftc, children[i])
             leftc = n
         for c in children:
-            binarize_slp(c, slp)
+            binarize_slp(c, slp_in, slp_out)
     else:
-        slp[root] = None
+        slp_out[root] = None
     return root
 
 
-def slp2str(root, slp):
+def slp2str(root: SLPNode, slp: dict[SLPNode, tuple[SLPNode, SLPNode] | None]) -> list[int]:
     # print(f"root={root}")
     res = []
     (i, j, ref) = root
@@ -454,32 +434,38 @@ def slp2str(root, slp):
     else:
         children = slp[root]
         if ref is None:
+            assert children is not None
             assert len(children) == 2
             res += slp2str(children[0], slp)
             res += slp2str(children[1], slp)
         else:
             assert children is None
-            n = (ref, ref + j - i, None)
+            n = SLPNode((ref, ref + j - i, None))
             res += slp2str(n, slp)
     return res
 
 
-def recover_slp(text, pstartl, refs_by_referrer):
+def recover_slp(
+    text: bytes, pstartl: list[int], refs_by_referrer: dict[tuple[int, int], int]
+) -> tuple[SLPNode, dict[SLPNode, tuple[SLPNode, SLPNode] | None]]:
     n = len(text)
     referred = set((refs_by_referrer[j, l], l) for (j, l) in refs_by_referrer.keys())
-    leaves = [(j, j + l, refs_by_referrer[j, l]) for (j, l) in refs_by_referrer.keys()]
+    leaves: list[SLPNode] = [SLPNode((j, j + l, refs_by_referrer[j, l])) for (j, l) in refs_by_referrer.keys()]
     for i in range(len(pstartl) - 1):
         if pstartl[i + 1] - pstartl[i] == 1:
-            leaves.append((pstartl[i], pstartl[i + 1], text[pstartl[i]]))
-    internal = [(occ, occ + l, None) for (occ, l) in referred]
-    nodes = leaves + internal
+            leaves.append(SLPNode((pstartl[i], pstartl[i + 1], text[pstartl[i]])))
+    internal: list[SLPNode] = [SLPNode((occ, occ + l, None)) for (occ, l) in referred]
+    nodes: list[SLPNode] = leaves + internal
     if len(nodes) > 1:
-        nodes.append((0, n, None))
+        nodes.append(SLPNode((0, n, None)))
 
     nodes.sort(key=functools.cmp_to_key(postorder_cmp))
+    # node in slpmulti may have more than two children.
+    slpmulti = {}
+    root = build_slp_aux(nodes, slpmulti)
+    # nodes in slp must have two children or no children.
     slp = {}
-    root = build_slp_aux(nodes, slp)
-    binarize_slp(root, slp)
+    binarize_slp(root, slpmulti, slp)
     return (root, slp)
 
 
