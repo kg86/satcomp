@@ -483,7 +483,7 @@ def recover_slp(text, pstartl, refs_by_referrer):
     return (root, slp)
 
 
-def smallest_SLP(text, exp=None):
+def smallest_SLP(text: bytes, exp: SLPExp | None = None) -> SLPType:
     """
     Compute the smallest SLP.
     """
@@ -532,7 +532,7 @@ def smallest_SLP(text, exp=None):
     return SLPType((root, slp))
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum SLP.")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")

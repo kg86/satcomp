@@ -16,7 +16,7 @@ def comp_bench(out_file: str, target_key: str, target_none: str):
     files = sorted(list(set(x[0] for x in cur.execute(f"select file_name from {lz_bench.dbtable}").fetchall())))
     lines = []
 
-    def get_values(keys, table, file):
+    def get_values(keys: list[str], table: str, file: str) -> list[str]:
         query = f"select {','.join(keys)} from {table} WHERE file_name = '{file}'"
         res = cur.execute(query).fetchone()
         if res is None:

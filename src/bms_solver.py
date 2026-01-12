@@ -334,7 +334,7 @@ def bms_enumerate(text: bytes) -> Iterator[BiDirType]:
                 overlap += 1
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Compute Minimum bidirectional macro scheme (BMS)")
     parser.add_argument("--file", type=str, help="input file", default="")
     parser.add_argument("--str", type=str, help="input string", default="")
